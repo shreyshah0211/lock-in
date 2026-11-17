@@ -1,5 +1,20 @@
 # Build log
 
+## v6 (16 Nov 2026)
+Two additions asked for by the owner: a globe that opens into a map, and logging by voice.
+
+- **Globe and map.** Home has a card with a small turning globe and a dot wherever friends trained in the last 48 hours. Tapping it grows the globe to the full screen and unrolls it into a flat map (about a second and a half; closing runs it backwards into the card). On the map each tap on a dot goes one level deeper: the region, the city, then the gym with the list of who checked in there; a row opens that person. Drag to pan, pinch or scroll to zoom, three buttons for zoom in, zoom out and the whole world.
+- **What the map shows.** Only people you follow, at the gym named on a check-in they posted, for 48 hours. Never a live position. Other campuses appear as sample totals with no people. With your own data on, your own check-in appears at your gym; friends are still the samples and the card says so.
+- **How it is drawn.** One canvas painter draws the globe, the flat map and every frame between, so there is no map service and nothing to load. Outlines are Natural Earth (world at 1:110m, Pacific Northwest at 1:50m, Seattle shoreline at 1:10m) and US Census state borders, packed into 44 KB by `tools/geodata.js`. Lake Washington, Lake Union and Mercer Island are sketched by hand. The flat map stops at 78 north and 58 south. With reduced motion on, the globe does not turn and the map opens flat at once.
+- **Say it.** A "Say it" button on Home, in the Food tab, on the camera screen and in the check-in form. You describe a workout or a meal; the app works out which it is. A meal opens the usual draft with calories and protein to confirm. A workout fills the check-in form (type, minutes, effort, lifts with weight, reps and sets, and a tag such as exam week); said before the photo, it waits on the camera screen and fills in once the photo is taken, so the 48-hour rule still rests on a photo. If it cannot tell which it was, it asks once.
+- **Where the words come from.** In Chrome on a computer, Claude's dictation: a microphone button, words appearing as you talk, and it works the result out when you stop. On a phone inside the Claude app, pages are not given a microphone, so the sheet opens the keyboard and its microphone key does the listening. Opened as a plain file, the browser's own speech recognition is used where there is one. The page receives words only, never sound. The first use asks permission; if refused, the sheet switches to the keyboard and does not ask again.
+- **Who works it out.** Claude, when the page may ask it. Otherwise built-in rules: they recognise 14 common lifts, "225 for 5", "3 sets of 8", "3 by 10 at 135", minutes and hours, effort words and tags, and match meals against the small built-in food list.
+- The old "Type it" sheet for meals is gone: the Say it sheet takes typing too.
+
+Verified on the final build: the map test (37 checks: unrolling, going deeper, follow-only, 48-hour cut-off, pan, zoom, limits, close, your own data, reduced motion, desktop), the voice test (47 checks with a simulated microphone and simulated Claude: dictation to a meal, dictation to a workout through the camera to a posted check-in, the form's own button, an unclear description, the keyboard route with the built-in rules, a refused microphone, desktop), and every earlier suite.
+
+Not verified: a real microphone, real speech through Claude's dictation, the live model turning real speech into a workout or meal, and anything on a physical iPhone.
+
 ## v5 (16 Nov 2026)
 Made usable on an iPhone as the owner's own app, without leaving the Claude-hosted page (the only place photo recognition works without a server).
 
