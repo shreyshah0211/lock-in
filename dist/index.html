@@ -817,6 +817,68 @@ body{overscroll-behavior:none}
   .cam-top{padding-top:calc(16px + env(safe-area-inset-top,0px))}
 }
 
+/* ---------- the globe and its map ---------- */
+.gcard{position:relative;display:flex;align-items:stretch;width:100%;height:132px;border-radius:28px;overflow:hidden;background:var(--iron);color:#fff;text-align:left}
+.gcard::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 120% at 100% 100%,rgba(70,104,255,.34),transparent 62%);pointer-events:none}
+.gc-t{position:relative;z-index:1;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:16px 0 16px 18px}
+.gc-t b{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.gc-t>span{font-size:13px;color:#C5CBE6;max-width:15em}
+.gc-t em{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-style:normal;font-size:13px;font-weight:700;color:#fff}
+.gcard canvas{position:relative;flex:none;width:176px;height:132px}
+.sheet.map{background:transparent;animation:none;overflow:hidden;max-height:none;top:0;border-radius:0}
+.scrim:has(+ .sheet.map){background:transparent;animation:none}
+.mapw{position:absolute;inset:0;color:#fff}
+#map-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#map-cv:active{cursor:grabbing}
+#map-ui{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .35s}
+#map-ui.on{opacity:1}
+#map-ui.on button,#map-ui.on .map-card{pointer-events:auto}
+.map-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 0}
+.map-zoom{position:absolute;right:14px;top:calc(72px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:8px}
+.map-zoom button{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(18,22,43,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;border:1px solid rgba(255,255,255,.14)}
+#map-card{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.map-hint{margin:0 auto;width:fit-content;max-width:100%;padding:10px 16px;border-radius:999px;background:rgba(18,22,43,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-size:13.5px;font-weight:600;text-align:center}
+.map-card{max-width:520px;margin:0 auto;padding:14px 16px 12px;border-radius:26px;background:rgba(18,22,43,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.12)}
+.mc-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
+.mc-h b{font-size:18px;font-weight:800}
+.mc-h{align-items:center}
+.mc-x{flex:none;width:34px;height:34px;margin:-4px -6px -4px 0;border-radius:50%;display:grid;place-items:center;color:#C5CBE6;background:rgba(255,255,255,.08)}
+.mc-list{max-height:min(38vh,280px);overflow-y:auto;scrollbar-width:none;margin:0 -4px;padding:0 4px}
+.mc-list::-webkit-scrollbar{display:none}
+.mc-list .row{border-bottom-color:rgba(255,255,255,.1);padding:9px 0;text-align:left}
+.mc-list .row .t{display:block;font-weight:700}
+.mc-list .row .s{font-size:12.5px;color:#AEB6D9}
+.mc-list .streak span{color:#fff !important}
+.mc-g{margin-top:10px;font-size:12.5px;font-weight:800;color:#AEB6D9}
+.mc-n{margin-top:8px;font-size:12px;color:#AEB6D9}
+
+
+/* ---- say it ---- */
+.say-fab{position:absolute;right:2px;top:-54px;height:44px;padding:0 16px 0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:var(--iron);color:#fff;font-weight:800;font-size:14px;pointer-events:auto;box-shadow:0 12px 26px -10px rgba(18,22,43,.7);transition:transform .12s}
+.say-fab:active{transform:scale(.95)}
+.side-say{margin-top:8px;min-height:48px}
+.say-in{margin-top:2px}
+.say-lead{font-size:15px;margin-bottom:14px}
+.say-live{display:flex;flex-direction:column;align-items:center;gap:12px;margin:10px 0 18px}
+.say-mic{position:relative;width:104px;height:104px;border-radius:50%;display:grid;place-items:center;background:var(--iron);color:#fff;transition:transform .12s,background .2s}
+.say-mic:active{transform:scale(.95)}
+.say-mic.on{background:var(--go)}
+.say-mic.on::before,.say-mic.on::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--go);animation:sayRing 1.6s ease-out infinite;pointer-events:none}
+.say-mic.on::after{animation-delay:.8s}
+.say-mic.wait{opacity:.6}
+@keyframes sayRing{from{transform:scale(1);opacity:.7}to{transform:scale(1.65);opacity:0}}
+#say-state{font-weight:700;font-size:15px}
+#say-text{min-height:112px}
+.say-part{min-height:20px;margin-top:6px;font-size:14px;color:var(--faint);font-style:italic}
+.say .btn-go{margin-top:4px}
+.say-kb{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px 16px;border-radius:18px;background:var(--mist);font-size:14px}
+.say-kb svg{flex:none;margin-top:1px}
+.say-kb b{display:block;font-weight:800;margin-bottom:2px}
+.say-ask{margin:2px 0 12px;padding:14px 16px;border-radius:18px;background:#FFF3D6;color:#6F5200}
+.say-ask p{font-weight:700;font-size:14.5px;margin-bottom:10px}
+.say-ask .btn{background:#fff}
+.cam-alt svg{vertical-align:-3px;margin-right:5px}
+@media (prefers-reduced-motion:reduce){.say-mic.on::before,.say-mic.on::after{animation:none;opacity:.5}}
 
 </style>
 </head>
@@ -943,6 +1005,7 @@ const ICONS = {
   target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
   send: '<path d="M20 4 3.5 10.5l6.5 2.5 2.5 6.5z"/><path d="m10 13 4-4"/>',
   pencil: '<path d="M4 20l1-4.5L15.5 5 19 8.5 8.5 19z"/>',
+  mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5M8.5 20.5h7"/>',
   more: '<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>',
   pin: '<path d="M12 21c4-4.5 6.5-7.6 6.5-11a6.5 6.5 0 0 0-13 0c0 3.4 2.5 6.5 6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
   sparkle: '<path d="M11 4l1.7 4.8L17.5 10.5l-4.8 1.7L11 17l-1.7-4.8L4.5 10.5l4.8-1.7z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
@@ -1755,7 +1818,7 @@ function render() {
   curTab = tab;
   if (tab === 'cam') { camAttach(); camStart(); } else camStop();
   renderTabs(); renderRail();
-  live();
+  live(); globeMini();
 }
 // The camera button: always in the middle, always the same. The ring around it is your clock.
 function snapInfo() {
@@ -1772,13 +1835,15 @@ function renderTabs() {
   $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + tabBtn(NAV[1]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[2]) + tabBtn(NAV[3]) + '</div>' +
     '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam" aria-label="Open the camera">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
-    '<span class="snap-core">' + ic('camera', 28) + '</span></button>';
+    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' +
+    (t === 'home' ? '<button class="say-fab" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' : '');
   // computer: the same places down the side, with words next to everything
   const sd = $('#side'); if (!sd) return;
   const m = S.me, days = pDays(m);
   sd.innerHTML = '<button class="side-logo" data-a="tab" data-tab="home" aria-label="Lock In home">' + wordmark() + '</button>' +
     '<div class="side-nav">' + NAV.map(it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 22) + '<span>' + it[2] + '</span></button>').join('') + '</div>' +
     '<button class="btn btn-go side-snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam">' + ic('camera', 22) + 'Snap a photo</button>' +
+    '<button class="btn btn-line side-say" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' +
     '<p class="side-clock"><span class="dot" style="background:' + si.color + '"></span>' + (si.alive ? '<span><b data-live="left">' + fmtLeft(si.left) + '</b> left on your clock</span>' : si.rep ? '<span>Snap a gym photo to save your streak</span>' : '<span>Snap a gym photo to start a streak</span>') + '</p>' +
     '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openActivity">' + ic('bell', 20) + '<span>Activity</span>' + (unread ? '<i class="ndot"></i>' : '') + '</button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
     '<div class="side-me">' + av(m, 38, { plain: true }) + '<span><b>' + esc(m.name) + '</b><small>' + flameTxt(days) + '</small></span></div></div>';
@@ -1965,7 +2030,7 @@ VIEWS.home = () => {
   h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All ' + fr.length + '</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') +
     '<button data-a="openFriends" data-seg="find"><span class="av plain" style="--s:60px;--c:#676D85"><i>' + ic('plus', 24) + '</i></span><span class="nm">Find</span><span class="streak" style="visibility:hidden">0</span></button></div>';
-  h += meetsSection();
+  h += globeCard() + meetsSection();
   const posts = feedPosts();
   h += '<h2 class="feed-h">Last 48 hours</h2>' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">Nobody has checked in yet. Be the first.</p>') + '<p class="feed-end">One photo per friend, their latest.<br>Friends and their posts are sample data.</p>';
   return h;
@@ -2358,8 +2423,9 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
-  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : 'Snap your gym or your food';
-  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const said = intent ? null : saidPending();
+  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
   const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
@@ -2367,18 +2433,19 @@ VIEWS.cam = () => {
   const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
   const right = intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
+  const sayAlt = intent === 'progress' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
     (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
     '<div class="cam-bot"><div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
-    '<p class="cam-note">' + how + '</p>' + gymOnly + '</div></div>';
+    '<p class="cam-note">' + how + '</p>' + gymOnly + sayAlt + '</div></div>';
 };
 
 let _prevTab = 'home';
 const _origTab = A.tab;
-A.tab = el => { D.camIntent = null; D.camOutside = false; _origTab(el); };
+A.tab = el => { D.camIntent = null; D.camOutside = false; D.said = null; _origTab(el); };
 function openCam(intent, e) {
   if (S.ui.tab !== 'cam') _prevTab = S.ui.tab;
   S.ui.tab = 'cam'; D.camIntent = intent || null; D.camOutside = false; if (intent) D.fromDetected = null;
@@ -2387,7 +2454,7 @@ function openCam(intent, e) {
   if (e && e.isTrusted && cam.live === false && isTouch() && intent !== 'progress') { const i = $('#cam-input'); i.value = ''; i.click(); }
 }
 A.goCam = (el, e) => { D.fromDetected = null; openCam(null, e); };
-A.camClose = () => { S.ui.tab = _prevTab || 'home'; D.camIntent = null; D.camOutside = false; render(); };
+A.camClose = () => { S.ui.tab = _prevTab || 'home'; D.camIntent = null; D.camOutside = false; D.said = null; render(); };
 A.camFlip = () => { cam.facing = cam.facing === 'user' ? 'environment' : 'user'; camStop(); camStart(); };
 A.camShoot = async () => {
   const v = $('#cam-video');
@@ -2502,6 +2569,7 @@ function startCheckin(ph, opts) {
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
     noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : out ? 'outside' : !ph ? 'sample' : seen ? 'ok' : 'checking', note: seen ? seen.note : '' };
+  const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
   openSheet(checkinSheet, { cls: 'full', onClose: () => { if (D.ci) D.snap = null; } });
   if (ph && !seen && !out) {
     const d = D.ci;
@@ -2527,6 +2595,7 @@ function aiRow(d) {
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
+    (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
     (d.screen ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen. Retake it if you can.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '');
 }
 function ciProof(d) { return d.noPhoto ? 'workout' : d.outside ? 'outside' : d.device ? 'both' : 'photo'; }
@@ -2548,6 +2617,7 @@ function checkinSheet() {
   return sheetHead('New check-in', { back: true }) + '<div class="sh-b">' + kindSwitch() +
     '<div class="prev"><img src="' + src + '" alt="' + (d.noPhoto ? 'Your recorded workout' : 'Your check-in photo') + '"><div class="tags"><span class="stick">' + flame(17, '#FF8A1E') + '<span style="color:#fff">Day <span class="num" style="font-size:19px">' + day + '</span></span></span><span class="stick">' + clock(now()) + ' at ' + esc(m.gym) + '</span></div></div>' +
     '<div class="proofs" id="ci-proof">' + aiRow(d) + '</div>' +
+    '<button class="btn btn-line btn-w say-in" data-a="openSay" data-k="workout">' + ic('mic', 20) + (d.said ? 'Say it again' : 'Say what you trained') + '</button>' +
     '<div class="field"><span class="lbl">What did you train?</span><div class="chips" id="ci-types">' + typeChips(d) + '</div></div>' +
     '<div class="field"><span class="lbl">How hard was it?</span><div class="effort">' + eff + '</div></div>' + more +
     '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="ciPost">Post check-in<span id="ci-pts" style="opacity:.85;font-weight:600">+' + ciPts(d) + ' points</span></button></div>' +
@@ -2778,20 +2848,6 @@ A.mealAgain = el => {
   S.ui.foodOff = 0; save(); refresh();
   toast(m.name + ' logged again: ' + fmtN(m.kcal) + ' kcal, ' + m.p + ' g protein', 'check');
 };
-A.openTypeMeal = () => {
-  D.tm = { text: '', busy: false };
-  openSheet(() => sheetHead('Type what you ate') + '<div class="sh-b"><div class="field"><label for="tm-text">Describe it the way you would to a friend</label><textarea class="input" id="tm-text" data-m="tm.text" placeholder="Two eggs, toast with peanut butter and a banana">' + esc(D.tm.text) + '</textarea></div>' +
-    '<button class="btn btn-go btn-w" data-a="typeMealGo"' + (D.tm.busy ? ' disabled' : '') + '>' + (D.tm.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Estimating' : 'Estimate it') + '</button></div>');
-  setTimeout(() => { const t = $('#tm-text'); if (t) t.focus(); }, 60);
-};
-A.typeMealGo = async () => {
-  const text = (D.tm.text || '').trim(); if (!text) { toast('Type what you ate first.'); return; }
-  D.tm.busy = true; drawSheets(false);
-  const r = await aiMealText(text), g = guessMeal(text);
-  closeSheet();
-  if (r.state === 'ai') startMeal(null, Object.assign({ state: 'ai', kind: g.kind, text: text }, r.meal));
-  else startMeal(null, Object.assign({ state: 'guess', text: text }, g));
-};
 
 /* Compete: where you stand among friends this week, the squads you share a streak with,
    how those squads rank in the league, and the rewards mock-up. */
@@ -2988,7 +3044,7 @@ function foodBody() {
   let h = '<div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + kc + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + !kc + '">Protein only</button></div>';
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
   if (off === 0) {
-    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="openTypeMeal">' + ic('pencil', 18) + 'Type it</button></div>';
+    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
     const rec = recentMeals();
     if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
@@ -3813,6 +3869,584 @@ function dataCard() {
       : '<button class="btn btn-ink btn-s" data-a="goReal">' + (SYNC.remote ? 'Open my own streak' : 'Start my own streak') + '</button>') + '</div></div>';
 }
 
+/* Map outlines, generated by tools/geodata.js. Do not edit by hand.
+   World land: Natural Earth 1:110m. Pacific Northwest: 1:50m. Seattle shoreline: 1:10m. State borders: US Census.
+   Each ring is whole numbers: the first point, then the step from the point before, at q units to a degree. */
+const GEO = {"land":{"q":100,"r":[[-5957,-8004,-59,-96,-209,14,-224,-6,-125,33,0,4,-55,29,225,-3,216,-10,74,41,53,35,104,-41],[-15921,-7950,-192,-13,-131,35,-59,35,-4,6,-64,27,60,38,187,-16,99,-31,77,-36,27,-45],[-4515,-7805,123,-43,43,-61,12,-43,4,-51,-155,-31,-163,-25,-188,-24,-209,-20,-237,6,-131,34,17,41,214,27,86,34,62,43,46,37,125,76,51,0,149,22,151,-22],[-12121,-7350,129,-16,120,18,-57,-35,-94,-26,-139,8,-100,35,21,34,120,-18],[-12556,-7348,153,-39,-188,13,-137,28,72,21,100,-23],[-9898,-7193,110,-14,109,12,59,-57,-78,8,-122,-4,-123,4,-135,-6,-102,19,-53,42,63,17,127,-14,145,-7],[-6845,-7096,12,-45,-18,-39,-27,-37,-118,-14,-112,-19,-131,2,49,39,-229,-28,-76,30,-6,41,110,39,68,12,116,-4,29,51,6,37,-2,80,57,47,92,16,53,-37,23,-37,43,-45,33,-43,28,-46],[-18000,-8471,6,-1,88,58,180,-31,118,35,14,0,156,-43,149,47,294,18,142,-36,151,-33,284,-26,225,-31,386,-23,288,27,425,-20,241,-31,542,57,22,47,-394,4,-323,23,-84,40,-269,21,18,45,75,79,-20,41,-167,27,-76,36,-155,31,243,-6,231,16,145,-34,178,30,165,37,80,33,-35,41,-276,57,-206,6,-180,14,-194,10,-65,37,-129,31,-78,35,-31,114,49,-10,90,-31,164,10,159,13,82,-43,159,10,133,22,125,27,114,33,150,10,-4,37,-34,38,29,35,129,18,59,-34,153,20,115,25,143,2,135,10,364,67,147,-14,149,14,134,-18,137,2,131,14,284,-20,139,4,294,-4,137,4,102,30,121,15,126,-21,119,17,108,35,64,-31,35,-35,65,-33,104,29,119,-37,135,-12,116,-27,141,5,128,18,150,-4,273,-31,52,43,-64,33,-49,36,-130,7,-56,38,-22,37,-35,74,76,-13,131,-6,130,6,117,-16,102,-30,43,-35,135,-6,130,14,137,20,123,11,102,-23,133,8,86,76,81,-45,115,-18,126,10,82,-39,131,-4,121,-12,120,-21,78,37,39,35,100,-39,138,10,101,-22,69,-33,133,10,104,21,102,26,389,39,98,22,59,31,23,43,-11,41,-67,79,-57,74,-5,39,9,40,47,37,39,41,16,39,-19,43,-12,39,49,45,119,67,69,31,80,30,39,43,55,27,63,26,96,6,63,31,70,20,82,11,73,26,56,31,79,12,59,-26,-38,-33,-101,-29,-44,-22,-74,16,-82,-10,-141,-49,-49,-29,-14,-39,6,-38,47,-33,-68,-24,-94,-7,-114,-65,-63,-43,-16,-37,36,-42,53,-31,82,-23,76,-32,41,-39,22,-37,29,-39,47,-34,30,-37,13,-92,30,-37,8,-39,31,-40,-14,-53,-55,-41,-58,-33,-133,-14,-45,-35,-61,-33,-151,-37,-133,-16,-261,-43,-80,-42,-161,-3,-176,3,-159,-7,-168,0,31,-40,153,-17,112,-28,63,-35,-112,-31,-173,10,-142,-26,-11,-80,118,-33,22,-38,127,-37,212,-16,180,-27,143,-31,182,-32,248,-15,246,-28,356,-63,98,-47,49,-37,121,35,339,61,208,26,178,27,249,2,244,-14,202,-23,65,43,139,29,253,2,385,43,429,32,155,25,-71,36,-42,35,0,37,-194,-4,-206,-16,-196,0,-28,38,14,74,45,22,312,47,243,58,90,40,340,39,155,4,147,13,124,20,121,24,249,54,88,34,94,29,29,39,-105,24,35,41,66,31,214,43,102,32,78,39,49,47,73,28,119,-6,49,-34,119,-4,4,38,51,39,108,-10,25,-37,120,-6,129,18,126,11,113,-6,43,-41,110,33,102,18,225,28,102,23,111,16,87,21,60,36,75,-26,103,14,130,-82,113,19,45,39,102,28,132,-6,39,-37,82,37,108,12,117,3,106,-1,111,-12,108,-6,47,-33,65,-30,109,18,118,4,225,2,206,25,88,28,94,17,102,10,76,28,55,54,57,34,104,-16,39,-35,86,-24,104,8,71,-35,74,-26,102,24,35,43,90,18,104,33,215,33,239,67,94,-12,155,63,94,-2,83,23,19,36,84,27,82,20,100,15,93,8,182,-16,80,-27,10,-43,88,-33,60,-28,120,-12,66,-27,83,-27,96,-6,80,19,86,41,94,-21,192,-24,98,-7,100,0,82,-104,-4,-26,-12,-45,-95,-25,-79,-37,14,-40,111,2,-13,-39,-51,-37,-47,-41,76,-32,116,-9,115,17,55,39,34,38,55,31,62,29,25,36,53,48,63,10,114,4,201,28,49,39,30,37,68,37,182,45,56,34,56,17,73,16,99,-10,188,22,110,-6,73,27,51,67,37,-27,47,-48,84,-19,96,-8,96,12,102,-8,94,-2,63,10,84,-6,76,-22,90,14,108,0,92,14,104,-14,67,34,50,33,69,27,125,75,65,-14,76,-28,67,-35,127,-61,190,-2,215,26,83,27,68,30,112,4,74,21,79,-19,51,-32,70,-31,110,4,68,-25,120,-26,125,-10,104,8,78,31,67,32,90,8,90,-14,104,-10,94,16,90,0,180,-20,90,18,108,15,102,4,114,0,182,18,27,49,4,41,63,-27,17,-45,34,-42,41,-33,84,-18,114,6,131,2,90,6,225,2,131,-4,112,-7,71,-32,-20,-37,65,-29,219,-50,264,-33,102,-15,114,-3,64,34,89,-28,76,-31,88,-23,237,-22,49,-39,114,-24,76,-35,112,-16,115,2,108,-6,119,2,120,-7,112,-14,207,-43,71,-30,-12,-39,-53,-35,-80,-80,-47,-42,-131,-15,-59,-36,-130,-21,-45,-39,-68,-38,-72,-31,-42,-41,-25,-37,-10,-45,2,-38,57,-39,22,-37,46,-35,186,-14,40,-43,-181,-16,-152,-21,-190,-4,-85,-57,-17,-47,-43,-37,-53,-38,133,-33,51,-41,86,-37,122,-33,289,-63,229,-32,52,-49,288,-21,93,-37,277,25,229,-31,-35828,-24],[-6775,-5385,130,-60,140,-25,-45,-50,-95,-5,-51,35,-33,-40,-86,-31,-108,11,-73,30,-105,15,-126,56,-101,53,-138,112,82,-21,141,-67,132,-35,52,45,32,69,92,41,72,-12,38,-46,50,-75],[-5855,-5110,80,-45,-30,-35,-135,-30,-45,35,-85,-45,-50,45,120,60,85,-25,60,40],[7028,-4971,-154,-6,-2,53,22,62,64,-32,95,-13,3,-18,-28,-46],[14540,-4079,96,-35,133,33,60,-6,7,-119,-34,-35,-11,-80,-35,27,-69,-70,-21,6,-61,3,-62,86,-13,66,-58,87,2,46,66,-9],[17302,-4092,23,-41,71,40,29,-42,0,-42,-103,-120,-51,-40,37,-48,-77,-2,-86,-37,-27,-66,-56,-101,-129,-73,-92,2,-65,33,-108,7,-17,37,54,74,125,99,65,18,72,38,85,53,61,52,44,74,38,26,15,55,70,47,22,-43],[17461,-3616,73,-105,2,68,45,-27,15,-76,80,-32,68,-8,57,38,51,-12,-24,-88,-31,-59,-76,2,-27,-30,9,-43,-102,-141,-77,-40,-17,26,-42,15,58,82,-33,55,-108,40,3,36,72,35,17,77,-4,65,-41,67,3,18,-48,41,-78,88,-43,71,38,8,54,-56,78,-26,28,-89],[16712,-2216,-38,-24,-55,27,-72,45,-64,53,-66,70,-14,34,43,-1,56,-34,158,-124,52,-46],[17837,-1734,35,-29,-17,-52,-62,-14,-55,13,-9,44,38,34,45,-13,25,17],[-18000,-1656,35936,-24,-63,-21,-13,37,50,21,31,5,-35941,31,21,5,-13,-48,-8,-6],[16785,-1647,-33,-13,-34,44,4,27,63,-58],[16711,-1493,16,-81,-27,13,-21,-6,-14,28,-2,76,48,-30],[5006,-1356,16,-120,26,-47,-10,-48,-18,-29,-34,59,-19,-30,19,-74,-8,-42,-28,-24,-7,-84,-88,-255,-62,-189,-38,-139,-45,-116,-82,-24,-87,-42,-137,61,-28,53,-6,89,-35,79,-10,72,18,72,46,18,1,33,48,76,9,63,-24,48,-19,63,-8,92,35,56,14,63,49,4,56,21,37,18,44,1,57,57,83,62,29,50,-13,43,42,-12,55,69,3,60,33,45,34,-43,27,-43,25,-66],[14356,-1376,36,-79,64,38,34,-42,47,-40,-10,-44,22,-86,15,-49,25,-13,27,-85,-10,-52,33,-68,108,-52,138,-91,-13,-24,57,-63,39,-108,40,22,40,-44,25,16,17,-106,117,-100,79,-81,28,-80,2,-57,-7,-62,48,-85,-6,-88,-17,-47,-27,-89,2,-57,-20,-72,-44,-91,-74,-49,-37,-78,-33,-49,-30,-86,-38,-50,-25,-75,-13,-69,5,-32,-58,-34,-111,-4,-93,-41,-46,-39,-60,-43,-83,45,-61,17,15,52,-54,-19,-88,-72,-143,43,-57,7,-97,29,-65,62,-18,76,-23,50,-50,41,-96,12,33,48,-24,74,-49,-69,-89,-18,52,55,16,58,38,49,-8,74,-81,-85,-63,-34,-38,-80,-78,41,3,53,-63,73,-52,37,18,23,-128,61,-70,3,-96,48,-180,-9,-243,-69,-95,6,-106,-51,-87,-23,-19,-52,-37,-41,-85,-2,-63,-9,-88,18,-72,-11,-69,-5,-59,-53,-29,5,-51,-29,-47,-31,-141,3,-106,64,-53,19,2,58,49,13,17,23,-3,36,12,69,-11,60,-53,101,-16,57,4,57,-40,65,-2,29,-45,40,-12,79,-57,79,-14,42,44,-43,-34,93,50,-29,29,-39,-1,51,-50,79,-9,32,-24,30,11,57,21,25,13,50,-10,59,41,71,7,-76,43,69,81,34,49,42,76,37,45,8,28,-13,79,38,61,11,15,22,26,9,55,-3,106,30,54,44,25,53,59,51,7,94,70,85,42,-86,43,20,-36,47,32,49,44,-22,12,76,55,49,24,40,50,17,2,28,44,-12,1,25,93,28,73,-46,56,-59,62,-1,64,-9,-21,55,48,80,45,26,-16,25,44,57,60,36,51,-12,85,19,-2,51,-74,33,54,14,66,-25,53,-41,84,-25,29,10,62,-31,58,29,38,-9,23,19,46,-49,-27,-54,-37,-40,-35,-3,12,-40,-30,-50,-35,-50,7,-28,80,-55,77,-32,51,-35,72,-59,29,0,52,-25,15,-31,96,-34,65,34,40,98,13,55,30,80,-14,48,7,29,-11,57,13,76,19,20,-15,33,24,53,19,55,2,29,38,37,28,-49,7,-62,25,-12,4,-43,36,-50,8,-57,-4,-36],[16212,-1048,28,-35,-70,1,-38,61,60,-24,20,-3],[12071,-1024,-42,-2,-132,70,93,20,53,-31,35,-30,-7,-27],[16085,-987,-39,-3,-61,11,-21,15,6,40,66,-16,33,-21,16,-26],[16168,-960,-15,-18,-74,86,-21,60,34,0,36,-80,40,-48],[12444,-1014,-86,-22,-12,12,9,34,43,61,99,40,12,23,86,23,69,3,32,13,38,-13,-37,-27,-104,-44,-84,-28,-65,-75],[11790,-809,36,-27,62,8,25,-43,-185,-33,-54,1,34,57,55,1,27,36],[12290,-809,-14,-56,-151,-28,-133,12,0,36,79,21,63,-30,67,8,89,37],[15988,-834,4,-20,-79,43,-54,36,-38,33,15,10,46,-24,82,-46,24,-32],[15754,-735,-20,-5,-44,22,-41,41,5,17,60,-42,40,-33],[10862,-678,192,-10,22,42,185,-49,37,-64,150,-19,123,-59,-114,-38,-111,40,-90,-3,-104,8,-93,18,-116,38,-74,10,-41,-13,-183,41,-17,43,-92,8,69,95,121,-6,81,-39,42,-7,13,-36],[13473,-621,-52,-68,-10,75,39,70,23,-30,0,-47],[15588,-682,-28,-10,-43,38,-44,64,-21,76,13,10,11,-30,30,-23,49,-63,47,-34,-14,-28],[15198,-548,-52,-8,-16,-28,-106,-48,-53,0,-82,29,-57,28,8,31,90,-14,55,7,15,48,14,3,10,-53,57,7,28,35,56,35,-11,59,60,2,20,-16,-2,-56,-34,-61],[12725,-346,-38,-33,-69,18,-19,43,101,5,25,-33],[13047,-309,36,-77,-84,41,-83,9,-57,-7,-69,4,23,55,124,4,110,-29],[15314,-450,-31,-27,-19,59,-23,39,-103,75,-72,30,28,24,54,-28,76,-46,40,-42,38,-32,12,-52],[13414,-115,28,-162,104,-60,83,106,115,61,89,0,86,-35,74,-36,107,-19,174,-69,184,-57,69,-51,56,-51,15,-59,167,-61,24,-53,-92,-11,22,-67,90,-65,64,-107,58,4,-4,-44,77,-17,-30,-19,106,-42,-11,-29,-66,-7,-25,26,-187,26,-77,64,-57,55,-52,87,-131,44,-84,-29,-61,-33,12,-73,-78,-35,-56,17,-104,4,-89,82,-101,20,-25,-28,-127,-3,43,81,63,28,-26,109,-48,84,-194,84,-82,9,-151,92,-29,-48,-39,-9,-22,36,-1,44,-76,49,108,36,71,-2,-8,27,-147,0,-39,59,-90,19,-42,49,135,24,51,33,160,-41,16,-37],[12524,142,-80,-99,-76,-19,-96,19,-166,-5,-88,-14,-14,-76,89,-89,54,45,187,34,-8,-46,-44,15,-43,-59,-88,-39,94,-128,-18,-34,90,-115,-1,-66,-53,-29,-39,35,48,82,-98,-39,-25,28,13,38,-72,59,7,97,-67,-30,9,-117,4,-143,-63,-14,-43,29,28,92,-15,97,-42,0,-31,69,41,65,14,80,51,150,20,42,86,74,78,-30,126,-13,115,4,99,72,17,-22],[12869,113,-6,-87,-51,10,-15,-61,41,-53,-28,-12,-40,63,-30,128,20,80,33,36,7,-54,60,-9,9,-41],[10582,-585,-111,-2,-84,83,-129,82,-42,61,-76,81,-50,75,-76,140,-88,83,-29,86,-37,78,-90,63,-52,86,-75,56,-105,110,-9,51,65,-4,154,-19,89,-98,77,-68,55,-42,95,-107,102,-2,84,-68,58,-84,76,-46,-40,-81,57,-35,36,-2,17,-70,35,-56,73,-9,49,-63,-25,-125,-4,-154],[11787,183,113,-93,-119,-12,-33,-68,4,-90,-96,-69,-3,-99,-38,-153,-15,35,-114,-45,-39,61,-71,6,-50,32,-119,-36,-37,48,-65,-5,-83,12,-15,134,-50,28,-48,85,-14,88,12,92,59,67,74,-35,77,19,20,85,43,19,120,21,71,79,50,64,39,37,85,55,77,69,51,78,40,1,51,-51,5,-43,66,-28,83,-30,-7,-39,-67,-5,18,-49,-74,-34,-57,-90,74,-95,-18,-46],[12638,841,16,-122,-34,-92,-37,102,-47,-50,32,-74,-28,-47,-118,58,-28,73,30,47,-63,47,-31,-41,-48,4,-73,-56,-17,29,39,85,63,28,55,37,35,-45,76,27,16,45,71,3,-6,77,81,-47,16,-88],[8122,620,-87,-23,-48,79,-17,144,45,162,69,-55,47,-71,48,-104,-15,-104,-42,-28],[-6094,1011,-83,-11,-18,9,29,28,-2,39,57,13,21,-4,-4,-74],[12398,1028,-36,-33,-31,-63,-31,-30,-62,69,46,55,11,62,55,6,-16,-67,74,96,-10,-95],[11850,932,-132,-95,49,70,72,61,60,70,52,99,18,-82,-66,-55,-53,-68],[12188,1189,60,-31,64,0,-2,-41,-46,-43,-64,-30,-3,47,7,51,-16,47],[12550,1216,28,-111,-77,26,2,-33,25,-62,-48,-23,-4,71,-30,5,-16,60,59,-7,-1,37,-61,77,96,-2,27,-38],[12153,1307,-27,-86,-43,49,-51,77,86,-4,35,-36],[12132,1850,62,-28,30,26,10,-26,-17,-41,34,-72,-26,-83,-59,-33,-15,-80,22,-80,53,-11,44,12,125,-56,-10,-54,33,-24,-10,-46,-78,49,-37,52,-26,-36,-63,59,-91,-14,-50,22,5,41,31,26,-30,23,-13,-36,-49,57,-15,44,-4,95,41,-33,10,157,32,91,61,-1],[-6559,1823,-26,-25,-75,0,-59,-3,-5,42,14,15,82,0,51,-9,18,-20],[-7690,1787,-30,-17,-57,16,-57,37,12,22,42,7,91,-12,52,-24,17,-27,-70,-2],[-7258,1987,87,-16,12,17,78,0,60,-26,26,3,18,-36,55,2,-4,-30,45,-3,49,-37,-37,-40,-48,21,-45,-4,-33,5,-18,-18,-39,-7,-15,25,-33,-15,-40,-68,-26,16,-5,28,-66,17,-47,-7,-61,8,-47,-19,-54,31,9,32,168,-21,36,22,-46,43,1,38,-63,16,22,28,61,-5],[11034,1868,-86,-48,-83,31,-2,86,49,45,109,28,58,-2,22,-38,-44,-44,-23,-58],[-15554,1908,-15,-16,-25,14,3,28,-16,36,5,11,17,17,-7,19,6,10,64,-28,16,-13,25,-35,-2,-6,-71,-37],[-15608,2064,-34,-7,-17,21,-11,8,-1,7,10,8,35,-9,27,-16,-9,-12],[-15676,2118,-3,-11,-54,3,8,12,49,-4],[-15765,2132,-6,-6,-42,5,-16,27,26,14,38,-40],[-15935,2198,-12,-10,-33,18,5,8,16,10,23,-2,1,-24],[-7968,2277,40,-37,93,11,183,-130,33,1,59,-20,-7,-29,74,-4,75,-41,-12,-23,-66,-13,-67,-5,-69,8,-144,-9,67,55,-40,26,-65,7,-34,29,-24,57,-57,-4,-93,27,-30,21,-130,15,-35,20,38,25,-99,5,-71,-52,-42,-2,-14,-24,-50,-11,-42,10,52,31,22,36,45,22,51,19,76,10,24,11,86,-7,79,-1,94,-34],[-7754,2376,-24,-5,-25,58,-38,28,22,64,30,-4,35,-83,0,-58],[12118,2279,-43,-82,-53,84,-11,75,58,98,81,76,45,-30,-17,-61,-60,-160],[-7782,2658,-109,-16,-7,37,47,8,66,-3,3,-26],[-7700,2659,-17,-71,-19,13,2,52,-45,40,0,11,79,-45],[13464,3415,13,-34,-57,-61,-41,32,-51,-23,-26,-59,-66,29,1,47,56,60,56,-12,42,42,73,-21],[3458,3567,-68,-42,10,-27,-102,-41,-49,13,-23,40,54,4,15,25,72,-2,91,30],[2370,3571,55,-34,78,6,74,-8,-2,-17,54,12,-13,-30,-144,-8,1,17,-122,19,19,43],[1552,3823,-36,-79,15,-31,-21,-51,-77,38,-50,10,-140,51,14,52,117,-9,178,19],[921,4121,60,-71,-14,-132,-46,6,-40,-33,-38,26,-4,121,-23,57,55,-5,50,31],[14098,3714,-38,-80,17,-50,-52,-70,-128,-47,-175,-6,-143,-115,-67,39,-4,75,-174,-22,-118,-48,-117,-1,101,-74,-67,-170,-64,-42,-49,39,25,90,-63,29,-41,69,95,30,52,63,101,52,73,68,199,30,107,-20,104,177,67,-47,204,139,62,122,-17,112,43,64,106,18,55,-139,-4,-81,-92,-101,2,-103],[956,4215,-33,-77,-45,20,-24,68,21,37,64,38,17,-86],[14391,4417,70,-21,71,42,22,-112,-148,-27,-88,-100,-157,69,-54,-109,-111,-2,-14,99,49,77,107,6,29,138,30,78,117,-104,77,-34],[-6366,4655,72,-13,93,2,-50,-41,-36,-6,-127,42,-25,34,38,31,35,-49],[-6181,4911,-48,-2,-130,31,-93,47,35,9,131,-25,102,-42,3,-18],[-12351,4851,-50,-14,-164,46,-31,35,-89,35,-18,28,-103,19,-38,54,8,23,167,-37,94,-11,83,-81,100,-42,41,-55],[-5613,5069,-67,-88,66,34,67,-21,-35,-35,89,-28,46,25,99,-31,-31,-73,70,17,13,-53,31,-62,-42,-88,-45,-4,-66,19,22,82,-28,12,-116,-87,-60,4,71,47,-96,24,-108,-6,-194,3,-15,30,62,35,-43,27,84,61,103,159,62,57,87,34,46,-4,-72,-90],[-13271,5404,96,8,-30,-114,87,-80,-40,0,-60,46,-37,46,-51,31,-18,44,6,32,47,-13],[14365,5075,100,-177,-147,33,-62,-145,98,-102,-3,-70,-76,60,-66,-77,-18,84,11,97,-12,108,23,75,5,134,-59,99,9,136,93,46,-40,47,44,14,61,-163,-2,-98,41,-101],[-679,5226,-177,-59,-142,15,81,104,-52,102,212,125,84,4,107,-61,-54,-69,17,-72,-76,-89],[1269,5561,-60,-81,-105,56,-14,42,147,33,32,-50],[-15301,5712,-99,-38,-52,25,-15,47,91,36,53,15,67,-7,42,-31,-87,-47],[-300,5863,-107,-108,102,14,109,-1,-26,-81,-90,-90,103,-6,98,-129,68,-16,62,-114,28,-39,121,-19,-12,-64,-51,-29,40,-52,-90,-52,-134,1,-170,-28,-47,20,-66,-47,-92,11,-70,-38,-54,20,147,105,90,22,-157,16,-29,40,105,31,-55,54,19,66,149,-10,14,58,-68,63,-121,18,-24,27,36,45,-33,27,-54,-47,-6,96,-50,51,36,104,78,81,80,-8,121,8],[-16558,5991,-61,-16,-66,19,-60,27,98,17,79,-9,10,-38],[-7927,6216,-39,-53,-44,9,-26,30,4,7,39,29,41,-2,25,-20],[-8190,6271,-117,-55,-70,2,-22,27,74,46,137,-1,-2,-19],[-17173,6378,61,-19,63,10,81,-26,99,-13,-8,-11,-76,-21,-76,21,-38,19,-88,-6,-24,9,6,37],[-8516,6566,18,-44,52,15,58,-26,109,-34,115,-32,9,-47,73,8,72,-33,-89,-32,-156,24,-56,45,-99,-53,-142,-52,-35,59,-135,-10,87,50,12,78,35,92,72,-8],[-1451,6646,-23,-65,113,-68,-130,-77,-375,-86,-410,46,98,44,-218,49,177,19,-4,30,-210,23,68,65,152,15,155,-68,152,55,126,-29,163,54,166,-7],[-7587,6715,-112,-5,-25,49,43,56,92,14,78,-28,1,-43,-12,-14,-65,-29],[-18000,6896,245,-76,262,-99,-8,-63,67,-24,-23,72,271,-15,196,-93,-99,-44,-164,-10,-3,-98,-39,-21,-94,3,-76,35,-133,29,-23,44,-101,16,-114,-13,-54,35,21,37,-119,-24,45,-47,-57,-42,35999,-1,-128,-44,-130,8,90,-53,60,-83,46,-27,12,-41,-26,-27,-187,22,-279,-75,-89,-12,-153,-70,-145,-61,-37,-46,-143,69,-261,-78,-45,37,-96,-43,-134,14,-32,-66,-120,-97,3,-40,114,-22,-13,-146,-93,-4,-43,-83,42,-44,-175,-50,-35,-115,-149,-24,-30,-102,-144,-93,-37,69,-43,146,-56,222,49,139,84,59,5,47,155,23,179,125,172,103,180,80,80,141,-121,-8,-60,-83,-254,-109,-82,122,-258,-34,-250,-167,82,-61,-223,-27,-155,-10,8,72,-156,16,-123,-50,-306,18,-329,-30,-707,-431,157,-13,49,-62,97,-23,64,51,110,-7,145,-110,3,-85,-78,-100,-9,-119,-45,-160,-150,-145,-34,-69,-271,-232,-64,-59,-133,-59,-63,-1,-63,48,-134,-73,-16,-33,-38,6,-43,-34,-30,-34,3,-72,-51,-22,-56,-47,-66,-16,-44,-27,-3,-44,-11,-11,40,-16,56,-44,86,-118,25,-65,1,-115,-38,-55,-91,-19,-79,-41,-90,-9,-12,54,19,75,-44,105,74,16,-68,86,-49,19,-12,-19,-29,-8,-4,19,-26,9,-27,16,28,44,23,12,-9,18,26,54,-7,16,-58,11,-48,27,-139,-29,-74,-47,-108,-27,54,46,-21,39,79,67,-53,53,-87,-36,-113,-69,-62,-65,-98,-5,-51,-46,53,-68,82,-16,3,-45,79,-29,112,71,89,-39,65,-2,16,-53,-142,-28,-46,-54,-98,-50,-51,-70,108,-55,39,-98,61,-92,68,-77,-2,-74,-62,-27,23,-54,59,-31,-15,-81,-26,-79,-55,-9,-74,-109,-81,-131,-92,-119,-138,-92,-139,-85,-113,-11,-61,-45,-34,33,-57,-50,-140,-50,-105,-15,-35,-106,-55,-6,-26,73,23,38,-134,33,-47,-17,-134,-85,-83,-95,-22,-69,170,-236,91,-62,61,-80,45,-185,-13,-176,-83,-66,-115,-65,-82,-83,-124,-93,-36,64,28,68,-75,57,-83,14,-41,52,-51,104,-89,46,-86,-2,15,78,-88,0,-8,-110,-87,-235,7,-72,65,-3,41,-91,18,-87,56,-57,60,-12,52,-52,23,-9,59,-60,42,-68,6,-67,-11,-45,10,-35,7,-59,36,-27,39,-89,-2,-34,-71,-6,-95,74,-118,79,-12,51,-58,67,-13,83,-36,54,11,73,-22,42,-40,39,-17,49,-102,104,-16,-59,-19,56,11,62,29,96,-9,75,31,76,-34,59,8,109,-41,52,-32,120,-18,126,-44,83,-66,-50,-113,-72,-56,9,-62,24,35,124,-21,93,-79,116,12,36,-58,13,-71,81,-29,52,-5,51,-19,48,-42,59,-92,3,9,-41,-32,-55,-42,20,-15,-18,-28,11,-39,9,-14,-37,-68,1,-123,-20,5,-76,-53,-59,-144,-67,-112,-118,-75,-63,-100,-65,0,-46,-50,-25,-90,-36,-46,-5,-31,-76,21,-130,6,-83,-43,-95,0,-170,-52,-5,-45,-76,30,-33,-91,-29,-34,-68,-40,-28,-95,93,-46,140,-38,101,-35,47,-54,96,-24,125,-18,63,-91,137,-71,322,0,121,-19,94,-146,-60,-70,12,-130,121,47,36,-29,39,-117,85,-74,26,-29,71,-78,76,-184,-18,-162,-2,-141,-14,-189,30,-108,23,-113,13,-43,123,-48,17,-77,-18,-100,-48,-123,33,-101,77,-96,29,-67,94,-74,134,-53,-16,-64,33,-37,-39,-59,5,20,-45,-9,-22,72,-162,49,-23,17,-35,68,-42,6,-41,-10,-34,13,-33,29,-28,13,-33,15,-25,-7,73,27,53,28,11,30,-32,2,-58,-22,-59,19,-39,18,5,4,-27,78,16,143,-6,68,68,75,64,63,62,29,34,13,-9,-10,-41,-13,-19,14,-78,45,-69,55,-36,74,-13,59,-18,72,-91,36,-13,0,-22,-53,-88,-42,-32,-37,-68,-46,5,-20,-24,-16,-50,12,-67,-9,-12,-46,0,-63,-38,-10,-48,-23,-21,-62,0,-39,-25,0,-40,-48,-28,-55,9,-67,-33,-46,-6,-72,-27,-20,-44,-2,-34,-100,-42,-160,-47,-89,-71,-44,-5,-30,6,-59,-42,-63,-19,-84,-5,-25,-6,-22,-26,-27,-8,-15,-25,-50,2,-32,-13,-69,5,-26,58,3,55,-16,29,-20,74,-29,41,21,5,-11,46,12,19,-4,44,-13,43,-30,30,-8,39,-51,36,-54,84,-28,82,-69,68,-45,17,-66,95,-12,70,5,59,-58,111,-46,39,-54,21,-34,57,6,22,-28,52,-29,23,-39,74,-112,149,-50,0,16,55,4,35,12,40,-3,14,-28,-40,-21,-76,-27,-52,-24,-17,-78,77,-72,143,-10,-9,41,-106,62,-100,75,-156,37,-54,33,-57,89,-110,-20,-18,4,-65,116,-89,18,-21,32,-98,-22,-18,14,-103,37,-120,93,-61,58,-116,28,-92,54,-48,137,-95,141,-149,49,-30,24,-31,-3,-41,-57,-24,75,-46,20,-41,45,-42,49,-1,95,26,108,12,89,31,49,6,36,19,89,5,46,15,53,10,47,34,38,0,2,-27,-9,-58,1,-53,-22,-36,-28,-108,-48,-112,-62,-128,-85,-146,-86,-112,-118,-136,-100,-81,-149,-100,-93,-76,-110,-121,-23,-53,-22,-23,-71,-40,-24,-42,-38,-7,-14,-71,-32,-40,-19,-67,-41,-33,-46,-123,6,-57,64,-36,3,-26,-27,-60,5,-31,-6,-48,35,-62,41,-99,37,-22,16,-45,-4,-99,12,-88,4,-156,18,-49,-30,-72,-39,-69,-64,-62,-204,-87,-113,-107,-38,-18,-70,-71,-41,-23,-9,-72,48,-75,19,-59,2,-30,17,5,-3,-98,-16,-46,24,-18,-15,-41,-42,-36,-203,-88,-44,-37,9,-42,26,-7,-9,-52,-25,-73,-12,-83,-26,-45,-87,-65,-43,-51,-28,-51,-57,-72,-183,-163,-75,-46,-105,-39,-51,-5,-13,-28,-61,15,-49,-19,-109,20,-60,-13,-42,6,-103,-40,-85,-16,-62,-38,-46,-2,-42,36,-33,2,-44,44,-4,-14,-14,27,1,59,-32,67,32,18,-3,77,-65,93,-122,215,-75,76,-39,73,-22,97,-25,73,-33,154,-3,119,-12,55,-39,41,-52,83,-52,120,-22,62,-81,98,-7,77,-9,63,14,88,34,91,6,43,32,90,24,41,57,66,33,44,10,74,-5,57,-30,36,-51,120,5,21,31,40,-51,163,-50,64,9,19,-14,31,-27,75,-82,106,-102,101,-66,83,-61,103,3,33,22,32,24,73,20,74,-19,15,35,112,14,79,-38,66,-46,17,-20,45,-26,15,1,27,-104,-36,-38,6,-38,-23,-80,2,-54,63,-33,72,-70,66,-164,-1,-82,-12,-81,-21,-157,-59,-55,-34,-90,-29,-90,29,-45,-2,-70,20,-64,-1,-118,-18,-169,-65,-46,2,-103,47,-90,76,-86,55,-67,65,-27,7,-72,40,-52,54,-17,36,-13,74,-44,59,-38,40,-26,13,-25,20,-11,44,-15,22,-29,16,-54,42,-42,7,-22,28,0,15,-30,21,-23,98,13,45,-42,77,-49,36,44,19,48,70,24,52,-9,53,28,50,12,94,-11,99,-12,49,10,50,-26,48,-52,43,9,89,38,27,33,52,-7,34,35,70,56,64,33,16,27,58,2,54,36,61,66,37,64,102,52,40,93,11,79,68,50,27,84,83,-26,125,39,86,13,53,64,67,100,46,75,41,67,104,31,61,74,0,60,-43,95,7,104,-22,43,-1,96,55,108,17,63,41,97,31,169,17,166,8,50,-14,94,39,107,1,41,-23,68,6,109,40,70,-12,-3,-51,85,37,7,-19,-50,-49,-1,-46,35,-25,-13,-87,-66,-50,19,-54,52,-2,25,-48,38,-15,117,-35,42,9,84,-17,132,-44,47,-89,90,-20,141,-42,107,-49,49,26,47,46,-23,76,31,49,72,47,69,13,135,-20,35,-45,37,0,32,-17,99,-12,25,-33,132,2,97,-27,145,-45,77,32,41,28,89,9,71,-13,27,-50,23,33,80,-24,78,-5,50,25,28,33,-6,6,26,46,20,76,18,26,35,82,52,74,-10,76,25,41,-37,46,38,37,-61,-9,-84,24,-68,-58,-152,-11,-81,53,-108,4,-23,-42,-69,-12,-97,54,-109,-2,-59,99,-73,56,48,78,-63,47,111,96,154,4,42,76,191,-13,120,65,116,28,166,2,174,-70,144,-39,116,15,86,-9,118,53,15,42,-25,68,-57,37,-56,12,-37,31,-127,84,-114,38,-86,58,72,17,83,83,-56,40,148,41,-3,21,-90,-16,-80,-8,-66,-32,-94,-5,-86,-38,6,-62,49,-24,102,6,-20,-36,-109,-17,-136,-58,-55,21,22,46,-110,30,18,19,96,33,-29,23,-156,25,-7,38,-92,-13,-37,-55,-78,-74,3,-25,-49,-22,-30,9,-28,-120,-52,-42,-36,-71,32,-57,11,-39,88,-32,-18,-24,-119,-6,-126,-85,-32,47,2,20,-61,3,-53,10,-120,-26,69,-57,-51,-16,-56,0,-52,52,-19,-22,22,-60,50,-47,-38,-22,56,-46,49,-29,2,-57,-93,27,30,-51,-63,-11,37,-88,-66,-1,-82,44,-37,79,-18,67,-90,103,-7,29,-17,6,-2,22,-55,34,-9,48,8,68,14,31,-17,16,-21,8,-28,32,-137,57,-58,36,-92,30,-83,73,20,8,-46,42,-2,34,-64,15,-31,-43,-29,34,2,34,26,11,-80,15,-81,-36,5,-49,-12,-29,33,-51,94,-50,50,-83,111,-80,78,0,25,-22,-28,-20,163,-66,86,-52,10,-19,-19,-36,-55,47,-87,16,-42,-64,72,-37,-12,-53,-42,-6,-53,-85,-42,-8,1,31,20,53,22,21,-70,109,-41,12,-30,44,-64,18,-43,40,-74,6,-78,46,-92,65,-68,57,-31,99,-50,12,-81,33,-46,-14,-58,-46,-41,-8,-91,-56,-197,27,-146,-33,-11,-60,5,-58,-95,-66,-128,-22,-9,-33,-61,-56,-39,-81,39,-57,-58,-45,-21,-65,-76,-20,-71,-77,-222,1,-63,-36,-38,-37,-49,8,-37,34,-28,57,-93,16,-41,-26,-52,14,-52,-11,15,78,-9,62,-45,9,-24,38,8,65,40,37,7,40,21,60,-2,42,-20,36,-4,34,5,71,-41,44,141,72,122,-18,135,0,106,-17,83,6,162,-4,52,60,19,199,-104,105,-73,51,-153,39,-10,72,129,22,168,-26,-32,114,95,-43,233,78,30,82,167,40,52,27,88,147,137,42,83,-3,19,21,84,6,18,-22,68,49,-23,38,-4,56,-41,56,-3,102,17,27,28,30,88,6,36,28,80,28,-3,-51,-30,-33,12,-28,54,-15,-24,-38,-30,11,-72,-72,27,-49,2,-38,101,-24,-1,-35,102,19,56,27,113,-39,47,-32,68,29,282,80,100,-17,8,-24,96,-1,23,44,138,32,-22,84,4,75,49,63,94,34,80,-74,80,2,31,135,-37,-12,-63,35,-9,58,126,28,126,14,109,-16,103,3,114,55,-105,47,-181,-8,-176,-36,-163,-21,-58,54,-97,33,22,98,-48,91,48,58,90,63,229,108,67,21,-10,42,-140,48,-172,-29,-97,-69,16,-62,-159,-80,-193,-86,-73,-141,71,-70,96,-56,-92,-113,-104,-23,-38,-168,-57,-94,-121,10,-57,-79,-116,-5,-32,95,-83,113,-76,142,-67,61,-198,-116,-133,-23,-139,51,-35,107,-32,231,92,65,264,83,198,104,183,139,240,193,442,201,220,44,164,-6,153,83,182,-4,179,20,313,-74,-129,-26,110,-63,103,35,164,-61,274,-24,378,-113,77,-47,7,-67,-111,-52,-164,-27,-446,76,-74,-13,163,-73,13,-149,129,-30,78,-26,13,48,-62,45,66,36,241,-62,85,24,-68,74,233,98,93,-6,93,-35,58,69,-83,59,49,60,-74,62,280,-32,57,-56,-126,-12,0,-56,79,-34,154,21,25,64,209,48,349,86,75,-5,-98,-61,124,-10,71,34,188,3,148,41,114,-60,114,66,-105,58,52,33,295,-30,139,-32,362,-114,67,53,-102,52,-2,22,-121,9,33,48,-54,78,-2,32,184,90,65,91,75,20,265,-26,20,-56,-94,-81,62,-32,32,-70,-23,-137,111,-61,-43,-67,-196,-142,114,-15,40,36,110,26,27,49,86,48,-58,57,47,66,-110,8,-24,56,80,100,-130,82,179,67,-23,71,50,3,52,-56,-39,-96,107,-19,-46,72,168,40,207,5,185,-57,-89,83,-10,107,174,20,241,-4,216,13,-81,52,116,66,114,2,195,50,264,13,34,28,262,9,82,-22,224,53,184,-2,28,43,95,43,236,41,172,-33,-136,-24,226,-16,27,-49,91,24,293,-1,225,-49,80,-37,-24,-52,-111,-30,-263,-55,-75,-30,124,-14,148,-25,90,19,51,-64,44,25,160,16,321,-16,24,-47,418,-15,6,77,212,-18,160,1,161,-53,46,-64,-59,-42,125,-79,158,-40,96,105,161,-45,170,27,194,-31,73,28,164,-14,-72,93,132,43,903,-65,85,-59,262,-77,404,19,199,-16,83,-42,-12,-73,123,-28,134,20,177,3,189,-20,190,11,174,-89,124,32,-81,64,44,45,319,-28,208,6,288,-48,-35860,-44],[4911,4128,51,-71,47,-4,30,-27,-82,-8,-18,-78,-16,-35,-37,-23,2,-50,32,-74,95,-21,69,-50,142,-17,157,26,9,24,-18,71,14,104,-78,34,26,69,-66,5,22,85,94,-25,88,32,-73,60,-29,57,-80,-25,-11,-74,-31,65,-5,25,24,41,-19,35,-116,34,-45,90,-55,25,-3,33,97,-10,4,74,85,16,87,-15,18,97,-18,62,-100,-5,-85,25,-115,-44,-94,-21,-45,-59,-97,-17,-100,-103,91,-95,-10,-67,162,-171],[-9565,6911,-62,-35,-135,30,-81,-11,-137,45,88,31,70,43,166,-46,91,-57],[-18000,7152,36000,-69,-110,-5,-17,32,-35873,42],[-18000,7152,13,4,85,0,144,-29,-8,-14,-103,-24,-131,-6,0,69],[-9055,6950,0,-103,134,79,119,-64,-30,-75,97,-67,104,72,73,86,6,110,142,-7,148,-15,134,-50,6,-49,-74,-54,70,-53,-13,-49,-196,-70,-139,-15,-103,30,-30,-50,-96,-85,-29,-43,-116,-68,-143,-7,-79,-42,-7,-65,-116,-12,-123,-82,-108,-112,-39,-79,-5,-116,147,-17,45,-93,46,-76,140,20,186,-44,100,-38,72,-47,125,-28,106,-42,165,-5,109,-10,-17,-87,31,-100,73,-112,149,-95,77,32,54,103,-52,158,-71,53,160,47,113,70,56,69,-8,67,-68,85,-122,76,118,104,-43,91,-34,156,70,23,171,-27,103,-10,83,26,93,-33,123,-58,31,-39,178,-8,-3,-84,33,-126,92,-16,72,-59,145,56,95,110,67,47,77,-90,131,-127,110,-120,-40,-63,133,-56,90,-58,159,-25,65,-32,39,-85,78,-13,40,-38,8,-112,-145,-73,-165,-35,-125,-83,-169,-16,-214,21,-150,1,-104,-7,-84,-72,-127,-44,-144,-133,-116,-92,85,17,161,131,210,83,150,10,88,-49,-95,-67,32,-108,33,-75,130,-50,165,14,100,113,7,-73,65,-36,-124,-66,-221,-59,-100,-40,-111,-72,-76,7,-4,85,174,82,-161,-3,-111,-12,17,-33,-106,-48,-103,-35,-106,-30,-57,-65,-12,-17,-2,-53,34,-52,41,-3,-10,37,29,-23,-7,-28,-68,-16,-48,2,-74,-18,-102,-10,-83,-29,147,19,30,-19,-141,-30,-63,0,3,12,-31,-28,30,-4,-22,-72,-73,-77,-7,26,-22,5,-33,25,21,-54,24,-18,2,-38,-32,-38,-56,-80,-9,4,31,68,-51,38,-12,83,-19,-43,21,-64,-63,15,66,-31,4,-95,29,-7,10,-35,14,-100,-63,-74,-104,-30,-65,-58,-50,-7,-51,-37,-14,-33,-110,-65,-57,-48,-47,-59,-15,-71,18,-69,33,-86,45,-71,0,-43,47,-116,-7,-106,-25,-61,-30,-13,-49,12,-16,44,-38,23,-100,162,-15,40,21,66,-28,55,-78,84,-39,15,-101,-45,-18,5,-48,46,-63,25,-113,-13,-89,12,-76,-7,-43,-14,20,-29,-2,-40,21,-20,-19,-13,-37,15,-37,-19,-73,3,-75,53,-87,-13,-72,23,-63,-7,-84,-23,-91,-74,-99,-43,-55,-48,-23,-45,-1,-69,5,-48,19,-34,-39,-88,-17,-72,-8,-134,-9,-49,17,-54,31,-49,20,-77,66,-75,24,-57,39,-49,106,-27,41,-42,88,28,76,11,75,18,63,17,64,40,24,59,8,84,17,29,68,26,106,23,88,-3,61,8,24,-21,-4,-48,-53,-59,-24,-61,18,-18,-40,-121,-25,26,-21,-2,0,-15,19,0,-1,-27,-17,-44,9,-15,-10,-36,6,-9,-11,-51,-20,-26,-18,-4,-20,-34,32,-18,9,14,40,-16,22,17,28,2,10,-8,15,5,47,-9,46,2,32,11,12,12,55,-12,27,2,20,9,61,-17,31,-18,29,-23,36,-15,26,-27,-8,-10,-6,-22,11,-37,-23,-34,-11,-40,-3,-44,5,-26,3,-45,-16,-10,-9,-43,7,-26,-20,-26,4,-27,15,-16,26,-54,121,-119,-2,-21,40,-5,9,8,28,-24,49,7,43,25,60,20,35,30,55,-6,-4,-9,56,-4,45,-17,32,-30,38,-28,51,-3,76,70,41,10,1,33,18,85,57,46,63,2,8,21,79,-8,117,73,49,48,35,-6,26,-27,-19,-33,-3,-24,-59,-12,33,-45,-1,-52,-44,-58,37,-80,44,7,22,72,-31,35,-5,76,124,41,-13,47,35,31,36,-70,70,-2,65,-55,4,-33,89,-1,107,10,57,-45,77,-12,56,31,1,25,124,6,120,2,-85,-30,34,-47,80,-8,76,-49,16,-80,52,2,105,-60,62,-65,2,-52,38,-2,93,-84,120,-20,11,18,81,8,107,-27,108,-35,106,-84,16,-41,34,4,25,-55,56,-175,54,-16,2,-69,-75,-83,31,-30,177,-15,4,-101,76,66,125,-36,166,-61,49,-59,-16,-55,116,31,195,-53,149,4,148,-83,128,-112,77,-29,85,-4,36,-31,51,-188,-40,-166,-51,-65,-141,-139,-63,-113,-74,-87,-25,-2,-28,-73,7,-188,-39,-220,-31,-39,-18,-134,-102,-130,-17,-104,-81,-43,-23,-60,-109,0,-157,-38,-70,-45,-112,-29,-118,-80,-84,-99,-15,-74,16,-56,-18,-101,-23,-48,-70,-55,-111,-177,-88,-79,-68,-47,-45,-95,-66,-57,-44,-63,-112,-55,-74,20,-55,-11,-92,43,-68,-3,-61,55,-7,-52,128,-86,-14,-69,62,-43,-5,-49,-96,-128,-148,-54,-201,-21,-110,10,22,-59,-21,-75,18,-51,-60,-35,-102,-14,-96,37,-39,-26,14,-100,68,-30,55,32,29,-52,-92,-31,-80,-62,-15,-101,-24,-54,-94,0,-78,-51,-29,-75,98,-73,96,-21,-35,-89,-118,-57,-65,-117,-91,-40,-41,-46,32,-104,67,-58,-42,5,-89,1,-48,-25,-90,-36,-17,-93,-42,-3,-113,33,-114,70,-125,57,-31,63,28,59,-50,66,-13,171,43,96,105,77,-152,29,96,89,34,166,111,-35,52,207,-67,26,-31,-125,-63,14,31,143,34,186,46,68,-28,98,-9,112,42,4,62,161,69,160,42,149,-23,150,30,82,-12,124,59,122,18,193,63,432,-7,163,-21,141,-101,58,-8,41,-199,100,-179,109,-77,62,-41,83,16,29,-85,131,-98,184,-95,199,-41,46,-31,74,-78,65,-71,40,32,45,-48,95,31,70,80,64,53,74,-22,44,-38,-47,-60,44,20,29,-16,90,34,15,19,63,38,64,-7,41,55,21,68,40,-13,31,37,8,-4,50,23,36,50,7,80,115,-37,24,19,58,-22,91,21,26,-16,85,-40,53,-34,29,-21,54,25,27,-26,7,-18,33,-50,28,-44,-7,-20,-34,-40,-26,-22,-3,-10,-21,47,-54,-27,-13,-14,-15,-47,-5,-17,60,-13,-17,-33,6,-20,40,-41,7,-26,11,-43,0,-3,-22,-11,15,-55,23,-20,21,12,17,-4,22,-28,24,-39,20,-35,13,-6,29,-27,18,7,-29,-20,-24,-23,27,-32,10,-14,21,1,30,13,32,-28,14,23,19,-82,72,-21,33,-43,32,-50,45,11,16,17,-16,7,7,-17,32,-30,9,-11,-24,-58,1,-36,10,-42,20,-55,6,-29,22,-51,17,-62,2,-46,20,-54,41,-113,108,-52,32,-81,26,-56,-7,-80,-38,-51,-10,-70,27,-75,19,-94,46,-75,14,-113,46,-84,48,-25,27,-56,6,-102,31,-42,46,-107,57,-50,63,-24,48,33,10,-10,29,23,26,0,34,-33,45,-9,40,-34,50,-88,100,-101,78,-48,62,-86,41,-18,25,15,61,-51,24,-59,48,-25,70,-54,8,-58,53,-47,49,-4,31,-54,75,-36,77,2,38,-72,40,-34,-5,-57,28,-16,-41,17,-48,10,-75,34,-41,74,-69,17,-23,15,-7,13,-35,18,2,20,-65,30,-25,22,-36,62,-51,33,-93,58,-90,5,-53,49,-3,76,-91,-2,-17,-42,-37,-18,0,-27,61,-65,57,-72,49,-51,25,3,73,-15,54,-116,76,-14,-13,-25,26,-61,24,-60,58,8,8,41,-6,37,38,4,45,-77,71,-59,28,-120,208,-41,89,-16,52,-65,57,-47,12,-11,29,-56,5,-36,27,-93,10,-25,16,-12,55,-98,100,-83,139,4,23,-44,33,-78,84,-13,82,-54,54,22,83,-3,86,-32,77,39,94,24,181,-18,134,-32,86,-29,46,12,20,145,-34,53,-94,25,26,-16,82,-34,82,-14,0,-193,99,-72,43,-181,41,-55,89,14,61,-128,43,-17,80,-121,73,-3,51,-55,38,-88,32,-28,87,-129,81,-54,94,-96,7,-159,2,-117,29,-207,104,-270,54,-139,-8,-197,46,-118,43,-112,-22,21,-69,-55,-7,-116,-20,-88,-34,-110,-21,-15,58,45,99,106,30,-27,25,-127,-55,-69,-67,-144,-71,73,-49,-94,-71,-108,-42,-100,-31,-25,-44,-156,-52,-31,-47,-117,-42,-69,7,-195,-62,-83,-33,-172,-29,-15,17,109,47,98,31,106,55,125,11,49,41,139,60,22,20,74,35,17,76,51,59,-115,-30,-33,17,-54,-37,-65,51,-27,-36,-37,50,-101,-40,-61,0,-8,60,18,36,-65,36,-130,-19,-84,47,-69,24,0,56,-77,43,39,58,81,55,36,52,81,7,68,-16,81,48,72,-8,77,31,-19,45,-56,18,74,39,-61,-1,-106,-22,-31,-22,-79,22,-141,-11,-146,24,-43,40,-126,58,140,42,224,49,82,0,-14,-50,211,4,-81,61,-123,39,-71,50,-96,42,-137,32,56,52,177,3,126,46,24,49,102,47,98,12,189,44,92,-7,154,54,151,-21,73,-45,44,19,169,-6,-6,-23,153,-17,102,10,211,-32,192,-9,77,-13,133,16,152,-30,295,-38,158,-48,104,-9,87,42,121,31,149,-12,150,43,164,25,68,-41,75,23,22,47,69,-10,170,-90,132,68,14,-76,123,16,38,30,121,-6,153,-42,234,-37,137,-17,98,7,135,-51,-140,-50,180,-21,270,12,85,17,107,-60,109,51,-102,42,64,34,122,5,80,10,81,-24,100,-54,112,8,177,-45,155,16,146,-3,-12,62,89,18,155,-34,-1,-95,64,80,80,-3,46,101,-108,61,-116,41,8,110,118,73,132,-16,101,-44,136,-113,-89,-49,186,-20],[-11417,7312,-50,-47,223,30,139,-50,113,51,91,-33,82,-98,50,41,-71,103,88,15,100,-16,112,-41,63,-97,31,-71,167,-49,181,-47,-11,-44,-164,-9,64,-38,-34,-37,-181,16,-172,27,-116,-6,-188,-34,-431,-24,-55,47,-136,27,-89,-11,-123,79,66,11,155,17,141,-5,130,18,-193,23,-214,-8,-142,2,-52,37,232,40,-154,-2,-175,27,84,75,69,40,268,60,102,-19],[-10450,7342,-88,-66,-156,70,34,14,134,4,76,-22],[-7634,7310,9,-27,-214,5,-110,-14,-28,6,-111,53,5,36,48,7,229,-11,172,-55],[-8656,7316,79,-63,92,81,253,41,172,-103,-15,-66,198,29,95,40,221,-51,138,-47,13,-44,186,23,104,-64,241,-40,87,-40,95,-93,-184,-47,236,-65,159,-22,144,-92,157,-7,-31,-70,-176,-116,-123,43,-157,96,-129,-13,-13,-57,105,-58,136,-46,41,-27,65,-99,-34,-72,-126,28,-251,80,245,-147,16,-35,-271,40,-214,58,-122,49,35,28,-295,100,2,-29,-289,-16,-84,34,65,74,188,2,206,13,-33,35,34,50,130,97,-28,45,-38,34,-153,48,-203,34,64,26,-106,62,-88,6,-79,34,-53,-30,-182,-13,-363,23,-212,29,-162,15,-83,35,104,46,-142,0,-31,102,76,89,103,41,258,26,-73,-64],[-10036,7384,120,-21,178,13,26,-29,-93,-48,151,-43,-18,-90,-164,-39,-96,9,-69,38,-249,77,2,32,204,-12,-110,65,118,48],[14360,7321,-151,0,-205,11,-18,5,95,40,125,9,142,-39,12,-26],[-9320,7277,-107,-75,-114,4,-62,88,1,50,52,42,100,27,208,-3,191,-24,-149,-89,-120,-20],[-12046,7140,-263,-50,-53,44,-231,53,112,115,87,66,-98,61,338,16,143,-21,255,-5,97,-29,108,-43,-126,-25,-245,-70,-124,-70,0,-42],[15073,7508,-115,-39,-160,9,-186,39,24,33,186,-15,251,-27],[-9361,7498,-55,-39,-145,8,-121,26,53,45,144,27,87,-35,37,-32],[14509,7556,-79,-74,-368,3,-166,-24,-198,65,53,69,132,19,264,-5,362,-53],[-9850,7672,76,-46,4,-52,-46,-74,-165,-10,-107,16,2,58,-164,-8,-7,78,108,-3,151,34,140,-6,8,13],[-10821,7620,39,-35,89,16,105,-4,17,-49,-60,-48,-339,-15,-252,-43,-152,-3,-13,33,208,44,-452,-12,-140,18,136,98,95,28,281,-34,178,-59,174,-8,-143,96,92,36,103,-11,34,-48],[5753,7072,-59,-9,-326,13,-27,45,-181,26,-14,55,102,21,-4,55,199,85,-92,12,239,88,-27,45,224,53,330,64,333,19,171,37,195,13,69,-40,-67,-31,-354,-49,-306,-48,-310,-95,-149,-98,-157,-96,20,-83,191,-82],[-9468,7710,111,-32,197,0,86,-33,-23,-38,115,-22,63,-24,281,-13,159,22,204,8,162,-7,107,-37,23,-42,-63,-26,-149,-22,-128,12,-287,-15,-205,-2,-162,13,-265,32,-35,55,-12,49,-100,44,-207,12,-116,31,37,41,207,-6],[-11620,7765,-14,-77,-77,-35,-93,-5,-186,-43,-160,-15,-136,22,170,74,205,65,154,-1,137,15],[-9384,7752,-45,-3,-188,7,-27,27,202,-1,70,-19,-12,-11],[-11019,7770,-186,-29,-148,32,80,32,147,10,141,-15,-34,-30],[2472,7785,-223,-40,-176,23,68,25,-60,32,207,21,40,-38,144,-23],[-10966,7860,-122,-19,-166,0,2,14,102,30,54,-5,130,-20],[-9583,7806,-148,-21,-81,23,-43,38,-8,41,129,-4,59,-6,119,-35,-27,-36],[-10006,7833,39,-42,-163,11,-165,32,-223,4,97,30,-121,24,-7,38,196,-14,271,-36,76,-47],[10508,7831,-564,-39,182,131,83,12,75,-7,253,-57,-29,-40],[1825,7970,329,-74,-251,-40,-56,-73,-87,-19,-48,-83,-121,-4,-215,61,91,36,-150,28,-195,85,-77,78,272,36,55,-35,142,1,38,35,147,3,126,-35],[2545,8041,196,-35,-148,-54,-291,-12,-294,17,-18,27,-144,2,-109,46,309,28,145,-24,101,30,253,-25],[5114,8055,-225,-21,-14,-16,-116,-17,-109,24,57,31,-222,3,195,18,152,1,20,-27,58,24,94,17,148,-22,-38,-15],[9994,7888,-218,-12,-279,28,-166,39,-77,71,-136,20,260,69,216,22,194,-50,231,-97,-25,-90],[-8702,7966,120,-32,-137,-30,-184,-75,-178,-7,-207,12,-107,41,1,36,79,27,-182,-1,-111,33,-63,46,70,44,69,31,102,7,-44,23,233,5,128,-54,332,-40,79,-66],[-6850,8311,267,-8,215,-13,183,-27,-4,-27,-244,-43,-242,-20,-91,-23,218,1,-236,-61,-163,-28,-171,-82,-206,-17,-64,-20,-303,-11,138,-12,-69,-18,83,-49,-95,-35,-155,-28,-47,-39,-140,-30,14,-23,171,4,2,-24,-267,-60,-261,27,-294,-15,-149,12,-189,5,-13,48,185,23,-49,72,61,7,267,-43,-136,64,-162,19,81,39,177,24,28,35,-141,39,-42,51,273,-4,79,-11,156,36,-225,12,-350,-6,-177,34,-83,40,-117,29,-22,35,149,18,117,4,196,16,147,37,124,-5,108,-28,76,54,132,16,179,11,306,4,53,-11,289,17,433,-12],[-2710,8352,625,-79,-184,-39,-921,-14,50,-18,354,11,301,-34,195,30,83,-36,-110,-58,255,37,485,39,300,-19,56,-43,-407,-71,-57,-23,-320,-17,232,-5,-117,-73,-80,-65,3,-111,120,-66,-157,-4,-164,-31,185,-53,23,-85,-107,-9,130,-86,-222,-8,115,-40,-32,-36,-141,-15,-140,0,126,-68,1,-45,-198,42,-51,-27,135,-25,131,-61,38,-81,-179,-19,-200,96,34,-68,-116,-52,263,-5,138,-5,-268,-87,-272,-79,-292,-35,-111,0,-103,-38,-139,-106,-215,-70,-69,-4,-277,-48,-86,-62,-1,-70,-51,-66,-163,-80,40,-78,-96,-180,-141,-6,-147,81,-200,1,-97,55,-67,97,-173,125,-51,65,-14,90,-138,92,36,74,-67,35,99,117,150,37,40,42,21,78,-169,-50,-90,-15,-122,33,-7,68,39,53,93,2,204,-27,-262,98,-99,-14,-83,25,111,93,-61,37,-200,175,-127,39,1,42,-268,58,-212,8,-511,-12,-117,32,-173,63,262,31,202,6,-428,26,-226,40,14,39,745,97,39,36,-270,36,87,40,346,69,145,11,-41,45,237,26,307,16,307,1,110,-31,265,55,239,-38,140,-7,208,-33,-238,54,14,43,335,60,351,-5,128,37,353,10,799,-13]]},"mid":{"q":200,"box":[-130,39,-108,52],"r":[[-25440,10128,100,-25,217,-31,27,-9,49,-61,60,-56,6,-9,-6,-3,1,-5,20,-23,38,-20,91,-26,38,-15,28,-21,20,-34,26,-25,26,-48,5,3,5,18,6,2,5,-6,21,-43,-5,-9,-27,3,-26,-21,-108,23,-151,44,-50,21,-4,9,1,3,57,42,10,22,-2,15,-12,-27,-11,-13,-49,-5,-38,2,-26,-13,-34,19,-34,12,26,10,11,9,-17,3,-21,15,-24,-5,-6,8,10,22,-17,-7,-16,11,-14,-1,-15,5,-12,-12,-22,14,-6,0,-11,-10,-10,4,-3,25,4,9,21,6,56,6,5,5,-43,-3,-23,12,-12,0,-14,9,-18,22,-44,14,-15,-12,-27,-1,-16,14,-3,8,6,17,-14,13,-8,-14,-12,-4,-24,23,-41,0,-19,-9,-19,2,-1,4,8,12,-2,17,-2,4,-19,2,-3,4,11,20,15,5,38,2,12,-3,19,-12,-9,26,13,10,-58,4,5,-14,-27,-7,-39,0,-15,4,-26,18,-17,17,1,10,9,10,12,6,28,7,36,0,41,-8,103,-36],[-24571,9441,-5,-4,-5,8,-1,6,5,4,6,-14],[-25219,9871,6,-18,-33,6,4,17,23,-5],[-24479,9479,-1,-4,-7,-4,-4,1,-3,6,-8,-6,5,26,3,0,15,-19],[-24499,9519,-2,-4,-14,9,5,17,9,-4,2,-18],[-24556,9735,2,-5,-14,-5,-13,8,2,-14,-18,6,-4,5,22,12,23,-7],[-24564,9686,-14,1,-6,5,-2,5,4,11,9,2,1,-10,9,-10,-1,-4],[-24602,9700,5,-6,-31,8,-5,19,10,2,18,-15,3,-8],[-24514,9631,9,-26,4,11,28,-19,-3,-12,-6,-1,-17,12,-13,2,-9,13,0,15,-4,4,-13,5,-12,13,24,29,19,-13,-2,-5,-31,-13,21,-6,5,-9],[-24831,9906,3,-4,-44,16,-58,34,5,3,40,-9,24,-12,30,-28],[-24674,9777,-3,-2,-31,14,-30,30,41,-28,21,-9,2,-5],[-24687,9751,-8,-5,-9,4,-13,35,23,-12,-3,-4,13,-10,3,-8,-6,0],[-24995,10006,-5,-2,-5,23,6,8,1,9,15,-18,1,-9,-13,-11],[-25328,9921,-21,2,-39,21,-2,3,11,9,-6,12,20,7,18,-6,17,-20,4,-14,-2,-14],[-25037,10019,-2,-10,-33,53,12,21,8,1,13,-6,11,-10,13,-24,-22,-25],[-25585,10295,-11,-3,-13,3,-9,7,-12,23,5,9,18,8,8,-1,16,-24,-2,-22],[-24742,7800,-2,22,-20,52,8,29,0,21,-10,31,-11,17,-45,47,-43,31,-7,24,-2,24,18,44,5,6,1,-7,6,-2,6,15,-6,1,1,3,16,36,-1,37,14,46,-1,15,-8,32,-10,20,-16,14,7,20,0,19,-29,28,-13,51,3,41,-27,45,17,40,22,66,30,17,-7,2,-12,-5,21,48,7,8,10,129,10,18,-3,19,4,26,-3,25,23,125,-3,15,6,21,-6,53,3,59,-9,16,6,1,10,-9,47,0,30,9,12,-3,12,-11,37,0,-16,3,-33,20,-37,0,-8,6,-41,-6,-13,6,-23,-4,6,19,0,46,6,-17,14,-18,11,46,-14,10,-23,7,-8,23,54,21,-28,4,-11,9,-15,1,-5,-16,-12,51,-22,39,-13,51,-17,25,-32,24,-9,14,-8,35,5,27,-6,19,16,-1,131,-41,136,-10,34,6,20,-14,10,-1,23,3,17,10,7,-25,17,-27,-24,-28,-6,-1,-3,12,-46,-49,-16,-23,-1,-16,21,1,22,9,-29,-1,4,16,12,16,46,28,8,12,26,19,0,15,10,-2,5,-21,-3,-9,-21,-16,4,-15,-13,-1,18,-16,5,-13,-4,-34,-5,-4,-9,1,-12,7,-11,-19,-4,1,-9,22,-18,-9,-13,-23,-8,-7,42,1,23,-7,15,7,16,26,25,7,13,12,-2,47,-9,9,6,21,-5,6,17,30,16,15,-35,35,6,-19,-22,8,-5,6,0,14,23,8,-1,5,-27,23,-23,7,0,9,23,-1,10,4,-4,10,1,23,-7,18,-7,4,-14,-3,-7,6,-21,39,-8,8,-26,9,-8,-3,-9,-14,-6,-2,-8,15,7,15,-14,-2,-9,5,1,15,-8,8,32,6,25,1,13,21,-17,-14,-10,-2,-32,6,-21,-1,-2,3,5,6,8,40,7,18,-27,-21,-2,-23,-20,-2,-19,-11,-73,20,-27,22,-5,11,12,15,15,-3,20,-27,16,2,31,17,-36,-4,-22,15,-6,12,0,37,4,7,12,6,8,9,-8,11,-11,6,-13,2,16,-16,0,-7,-22,-20,-2,-19,-15,-4,-16,-12,-28,-5,-26,2,-15,6,-60,42,0,10,-30,38,0,8,-10,11,-11,2,-3,11,39,44,-3,37,3,9,-15,-12,-3,-9,4,-9,-2,-11,-9,-15,-15,-15,-30,-8,-59,7,-7,28,-9,-15,-5,-18,-7,-4,-10,0,-16,9,-38,-5,-88,9,-9,4,1,8,6,3,103,16,-1,4,-15,1,-78,-9,-29,3,-1,9,29,23,-23,0,-6,5,7,19,-7,19,-9,-18,-14,-10,-65,-4,-20,-6,-59,16,-71,41,-1,24,5,15,11,17,43,36,28,9,118,10,-130,0,-21,-5,-40,-40,-5,0,-9,2,-20,23,-11,34,1,9,7,12,21,23,-49,1,-26,-42,-19,42,4039,0,0,-2600,-3142,0]]},"hi":{"q":2000,"box":[-123.4,46.9,-121.6,48.4],"r":[[-246800,93800,0,2437,86,0,72,-7,65,7,86,-7,43,13,144,112,87,13,-43,-20,-65,-44,36,0,65,-7,43,-40,57,-20,44,-68,-8,-51,29,-27,43,-13,22,0,-14,81,7,23,86,14,36,0,22,-7,14,-17,7,-30,15,-10,21,0,29,-7,29,-27,29,-40,7,-38,-43,-17,0,-16,43,3,22,20,36,61,-29,30,-79,58,-8,23,8,31,21,27,22,10,65,14,57,20,51,0,43,-51,-72,-27,-15,-13,0,-27,15,-21,21,-13,22,-44,79,-101,22,-14,36,-13,14,-14,7,-57,15,-17,101,-91,14,-27,-22,-7,-79,-7,-14,-17,-15,-37,-14,-20,-94,-78,-64,-111,-22,-92,-14,-16,-22,-11,-29,-3,-29,10,0,24,22,37,36,128,0,58,-14,74,-22,-27,0,-37,-7,-37,-36,-21,0,41,-15,37,-21,10,-22,-34,0,-30,58,-94,-43,-27,-51,-92,-36,-30,-14,-44,-15,-10,-50,-20,-158,-139,-87,-145,-29,-30,-43,-27,-36,-31,-29,-74,-50,-81,-7,-31,65,-33,115,10,338,101,65,27,65,47,-58,7,-79,-24,-137,-67,-151,-47,-79,0,-43,47,0,30,100,102,80,131,144,149,151,71,151,40,50,17,22,17,14,27,44,122,201,192,22,14,21,7,29,-7,7,-14,-7,-17,7,-16,44,-7,14,30,-43,139,-51,64,0,20,116,-51,50,-30,22,-47,0,-31,14,-67,14,-20,22,-17,7,-21,-29,-30,36,-14,22,-13,14,-14,0,-23,-28,-41,-22,-3,-94,17,-36,-7,8,-24,-22,-30,-29,-30,-36,-11,-108,82,-21,-7,7,-24,14,-13,22,-11,14,-13,7,-14,72,-192,-14,-14,14,-13,-43,-17,-57,44,-72,111,-29,-37,-7,-20,14,-54,22,-14,64,-27,15,0,-15,-27,-57,-50,-7,-20,100,33,87,51,65,27,21,-34,7,-50,15,-27,50,-14,-7,-34,-79,-179,-15,-44,44,-44,-15,-27,-21,-20,-29,-13,-36,-7,50,-71,7,-34,-21,-40,-29,0,-158,47,-51,27,7,20,29,17,29,61,36,27,22,34,-15,47,-14,-37,-29,-17,-65,-24,-43,-40,-22,-4,-14,-6,0,-17,-14,-37,-29,-34,-7,-31,7,-27,50,-57,0,-10,-14,-10,-15,-17,0,10,-21,-17,0,-10,14,-27,0,-14,-65,-37,-50,64,-29,92,0,47,36,13,15,31,7,37,0,71,-15,30,-28,24,-8,13,8,27,-29,-27,-29,-97,-22,-38,-79,-50,-21,-7,-36,-3,-15,-17,-57,-149,-29,-44,-51,-34,-108,-20,-50,-17,-22,-30,29,13,51,14,36,0,7,-27,-22,-17,-79,-20,-22,-31,44,14,165,84,15,4,50,60,29,-6,-15,-31,-86,-115,-29,-20,-36,-17,51,-3,43,17,36,34,21,47,15,-20,0,-41,-15,-20,22,-24,14,-44,22,-17,29,0,0,21,-29,50,22,21,-8,74,15,24,79,43,14,-16,-14,-38,-14,-13,28,3,51,21,-7,37,14,10,36,-17,50,-61,51,-13,29,-17,14,-24,7,-20,72,30,72,47,159,163,43,64,29,74,0,74,28,-20,72,-30,72,-44,36,-7,29,7,36,23,-57,31,0,17,14,23,22,17,36,17,43,14,65,13,21,20,7,31,0,37,-21,27,-51,51,-14,27,0,84,-7,24,-36,47,-43,108,36,37,28,7,22,-20,22,-31,21,-17,15,71,-15,27,-29,24,-86,27,-22,10,-21,17,-7,20,7,7,21,7,15,30,43,54,7,21,-14,64,-22,23,-14,27,7,41,7,34,15,27,21,23,58,34,29,34,0,44,7,30,21,27,0,20,8,17,57,31,29,20,72,10,14,10,44,17,7,27,0,27,36,27,-36,20,-29,4,-29,-24,-144,78,-65,47,-43,68,-7,71,0,64,-14,44,-87,27,-36,17,-14,-4,-15,-20,8,-41,-44,-20,0,-30,8,-37,14,-31,14,-20,36,-24,94,-40,29,-31,43,-64,-36,0,-22,14,-36,40,-187,98,-43,34,-29,47,-14,51,0,108,173,24,36,-7,21,-14,15,-20,21,-13,22,10,-7,20,0,20,36,41,-22,47,-79,54,-58,24,-50,33,-58,17,-29,0,-21,14,-40,50,1905,0,0,-3000,-3600,0],[-244720,95953,22,-31,7,-20,-7,-10,-14,-7,-51,-71,-7,-3,-14,0,-8,10,0,14,-7,3,-43,-14,-29,-3,-14,10,0,44,-15,44,-21,37,-29,17,-29,-3,-36,-27,-21,-10,-44,10,-14,17,-29,13,-36,37,-29,41,0,34,-28,37,-15,27,29,111,-14,47,-29,21,-43,-4,-51,-23,-57,67,-80,31,-14,13,-22,47,8,41,194,270,50,0,29,10,28,20,12,0,18,-20,7,-20,7,-7,0,-40,130,-68,-7,-57,-29,-21,-29,-3,-29,7,-29,23,-36,21,-28,-17,-36,-64,-29,44,-15,-17,0,-34,-7,-27,-29,-17,-115,-17,29,-23,29,-4,57,14,29,-4,43,-20,29,-3,43,-14,29,-34,43,-135,8,-111,14,-98,22,-24,28,14,22,47,-22,44,-7,44,22,23,43,-23,29,-27,36,-24,158,-77,29,-31,14,-47],[-245461,96193,21,13,22,0,14,-10,29,-51,22,-47,7,-51,-14,-33,-44,3,-57,68,-15,27,-7,37,7,17,15,0,14,-14,7,-44,8,-10,28,0,0,30,-21,41,-36,24],[-245411,94366,43,-4,15,-10,7,-24,-7,-50,-29,-21,-22,-10,-7,0,-36,17,-36,24,-7,20,29,17,21,37,29,4],[-244871,94852,29,-34,29,-17,79,-34,-14,0,-87,-27,-101,-67,-14,27,0,27,14,20,29,7,22,10,7,20,-14,17,-36,-7,14,-13,-58,-20,-7,-14,0,-40,-14,-34,-15,-10,-14,0,-36,30,-7,20,7,21,14,13,8,14,14,152,14,23,29,31,36,23,29,10,-7,-27,7,-13,14,-10,15,-17,7,-20,0,-41,7,-20],[-244993,95213,0,-10,14,-24,22,-6,-22,-10,-21,-21,-44,7,-43,41,-29,6,-28,-3,-15,10,22,34,0,24,-15,16,-7,21,0,40,36,34,7,20,0,34,22,7,22,-4,21,-10,29,-27,7,-64,15,-30,21,-14,-14,-17,-29,-13,22,-14,0,-17,7,-10],[-245735,94538,0,-27,-7,-24,29,-23,14,-24,0,-54,-21,-31,-29,-20,-29,51,0,13,-14,17,-51,41,0,17,22,64,14,20,29,0,14,10,36,10,36,17,-14,-23,-29,-14,0,-20]]},"borders":{"q":200,"l":[[-21810,8200,174,0,-174,-100,0,100,-400,0,-1,800,557,0],[-24843,8400,214,2,629,-3,-1,-554],[-22210,8895,-15,4,-4,8,-17,10,1,8,-20,20,-12,6,-6,-9,-14,0,3,-6,-11,-17,11,-11,-23,5,-7,-3,-17,2,-2,-3,-22,-7,-9,11,-16,-2,-9,-4,-7,2,-15,-5,-6,4,-10,-1,-9,6,-11,1,-7,-6,-6,0,-2,-11,-5,-7,-18,6,-5,-3,-8,4,-24,0,-12,4,-12,-4,-11,-12,4,-10,-6,-3,-8,7,-24,11,-4,9,4,6,-16,14,7,8,-17,28,-23,10,-18,-8,-3,7,-20,9,-8,17,10,2,1,9,-2,11,-14,7,1,4,-12,3,-5,12,-17,13,-1,6,-10,9,2,12,-6,3,-5,10,5,5,-1,8,-14,0,5,16,-10,5,-9,-1,1,5,-7,7,-10,5,-7,-2,2,-7,-11,-6,-14,-14,-14,-5,-9,2,-2,-10,-17,-7,-4,6,-10,4,-9,10,-18,0,3,9,-6,6,13,7,1,8,-14,13,13,15,18,0,5,8,-9,9,4,9,-14,4,-3,9,7,10,-12,6,1,9,14,1,-1,13,-4,5,9,5,1,19,9,12,-5,12,9,0,7,21,-2,10,-6,2,-19,-4,-3,-4,-29,2,-6,7,4,6,-5,6,-10,1,-2,-5,-11,-4,-5,3,5,10,-25,10,-11,10,3,12,-15,10,-9,0,-4,10,-14,15,-12,9,-9,2,-3,6,-8,2,1,6,-6,7,-17,2,-23,8,-5,9,-34,15,-8,0,9,6,15,1,2,4,-11,1,-4,10,-7,1,1,6,9,5,-8,10,1,10,-9,4,-5,9,-6,-2,-6,16,-11,3,-28,26,0,205],[-24710,9252,15,2,10,-8,-1,-10,12,-7,18,0,23,9,10,-1,42,-20,5,-11,13,-14,1,-10,5,-8,-2,-12,7,-15,-3,-7,2,-9,24,-9,41,-9,12,2,10,-5,12,-1,17,6,16,2,39,14,9,8,11,2,15,-2,41,6,25,-6,13,2,25,-7,6,-13,10,1,14,9,24,0,10,-2,8,5,33,9,11,6,15,-1,15,-9,16,1,39,5,8,7,41,13,59,6,10,10,10,4,17,-4,46,7,26,-1,20,7,8,6,414,-1,11,-18,20,-18,13,1,7,-8,13,0,12,-9,0,-9,14,-17,-17,-19,-1,-9,-7,-4,-17,-26,1,-6,-7,-9,-5,-20,-24,-24,-2,-8,5,-10,-6,-12,-13,-13,0,-4,-23,-8,-23,-44,-13,-8,2,-12,-6,-6,11,-12,-6,-9,10,-6,13,4,12,-10,14,2,2,-9,13,-3,0,-5,-7,-11,-8,-3,0,-7,8,-6,-1,-7,-8,-14,0,-9,-8,-2,-1,-10,0,-362,-595,-1],[-22810,8021,2,378,598,1],[-23406,9800,-2,-519,-5,-8,15,-13,5,-9,0,-11,9,-7,-12,-16,5,-2,8,-16],[-22808,8399,-597,1]]}};
+
+/* The globe, and the map it opens into.
+   Home shows a small turning globe with a dot wherever friends trained in the last
+   48 hours. Tapping it grows the globe to the full screen and unrolls it into a flat
+   map you can pan, pinch and tap deeper into: region, city, then the gym itself and
+   who checked in there.
+
+   What it shows is deliberately narrow. A friend appears at the gym they checked in
+   at, after they posted, and only if you follow them. It never shows where anyone is
+   right now, and other campuses appear as totals, never as people.
+
+   Everything is drawn on a canvas from the outlines in 18-geodata.js, so it works
+   with no map service. The two Seattle lakes are sketched by hand. */
+const RAD = Math.PI / 180;
+const mercX = lon => (lon + 180) / 360;
+const mercY = lat => { const p = clamp(lat, -85, 85) * RAD; return (1 - Math.log(Math.tan(Math.PI / 4 + p / 2)) / Math.PI) / 2; };
+// Where the sample gyms and campuses are: [lat, lon, city]
+const GYMS = { 'IMA': [47.6536, -122.3012, 'Seattle'], 'Northlake Strength': [47.6512, -122.3352, 'Seattle'], 'Chinook Rec': [46.7365, -117.164, 'Pullman'], 'Rec Center': [44.0437, -123.0735, 'Eugene'] };
+const CAMPUS_AT = { UW: [47.6553, -122.3035, 'Seattle'], WSU: [46.7319, -117.1542, 'Pullman'], Oregon: [44.0448, -123.0726, 'Eugene'] };
+// Other campuses, as totals for the last 48 hours. Sample numbers, and places only.
+const ELSEWHERE = [['Los Angeles', 34.07, -118.44, 412], ['Berkeley', 37.87, -122.26, 288], ['Austin', 30.28, -97.74, 301], ['Ann Arbor', 42.28, -83.74, 266], ['Boston', 42.36, -71.09, 354], ['New York', 40.73, -73.99, 520], ['Toronto', 43.66, -79.4, 233], ['Vancouver', 49.26, -123.25, 160], ['Mexico City', 19.33, -99.18, 118], ['São Paulo', -23.56, -46.73, 95], ['London', 51.52, -0.13, 298], ['Paris', 48.85, 2.34, 141], ['Berlin', 52.51, 13.33, 102], ['Lagos', 6.52, 3.39, 61], ['Delhi', 28.55, 77.19, 187], ['Singapore', 1.3, 103.77, 140], ['Seoul', 37.46, 126.95, 173], ['Tokyo', 35.71, 139.76, 156], ['Sydney', -33.89, 151.19, 122]];
+// Names drawn on the map, each from the zoom level where it helps: [name, lat, lon, from zoom, up to zoom, size]
+const MAP_LABELS = [['Washington', 47.35, -120.2, 4.9, 8.2, 13], ['Oregon', 43.9, -120.6, 4.9, 8.2, 13], ['Idaho', 44.3, -114.7, 4.9, 8.2, 13], ['British Columbia', 50.6, -123.2, 4.9, 8.2, 13], ['Montana', 46.9, -110.6, 4.9, 8.2, 13], ['California', 40.3, -122.3, 4.9, 8.2, 13],
+  ['Portland', 45.52, -122.68, 6.4, 11, 12], ['Spokane', 47.66, -117.43, 6.4, 11, 12], ['Tacoma', 47.25, -122.44, 8, 12, 12], ['Bellevue', 47.61, -122.165, 9.2, 13, 12], ['Everett', 47.98, -122.2, 8, 12, 12],
+  ['Lake Washington', 47.615, -122.252, 10.4, 15, 11], ['Lake Union', 47.639, -122.334, 11.6, 15, 11], ['Puget Sound', 47.62, -122.44, 9.2, 13, 11], ['University District', 47.664, -122.314, 11.8, 15, 12], ['Capitol Hill', 47.623, -122.316, 11.8, 15, 12], ['Downtown', 47.607, -122.336, 11.2, 15, 12], ['Fremont', 47.653, -122.352, 12.2, 15, 12]];
+// Hand-sketched water, so the city level reads as Seattle. Approximate shorelines, [lon, lat].
+const LAKES = [
+  [[-122.262, 47.757], [-122.245, 47.757], [-122.225, 47.735], [-122.213, 47.705], [-122.207, 47.676], [-122.203, 47.65], [-122.224, 47.64], [-122.24, 47.632], [-122.228, 47.612], [-122.205, 47.607], [-122.198, 47.585], [-122.19, 47.56], [-122.195, 47.53], [-122.205, 47.505], [-122.218, 47.498], [-122.24, 47.512], [-122.262, 47.522], [-122.258, 47.545], [-122.248, 47.562], [-122.262, 47.556], [-122.285, 47.572], [-122.287, 47.6], [-122.28, 47.622], [-122.276, 47.64], [-122.288, 47.644], [-122.3, 47.647], [-122.297, 47.655], [-122.285, 47.658], [-122.279, 47.655], [-122.277, 47.649], [-122.268, 47.66], [-122.262, 47.672], [-122.25, 47.683], [-122.268, 47.697], [-122.278, 47.718], [-122.28, 47.745]],
+  [[-122.34, 47.652], [-122.33, 47.65], [-122.325, 47.645], [-122.327, 47.633], [-122.335, 47.627], [-122.341, 47.63], [-122.342, 47.64], [-122.346, 47.647]],
+  [[-122.325, 47.652], [-122.317, 47.653], [-122.315, 47.647], [-122.321, 47.643], [-122.326, 47.646]]
+];
+const ISLANDS = [[[-122.243, 47.593], [-122.222, 47.597], [-122.205, 47.585], [-122.203, 47.56], [-122.208, 47.535], [-122.225, 47.527], [-122.243, 47.54], [-122.25, 47.565], [-122.25, 47.582]]];
+const MAP_C = { sky: '#080B1C', ocean: '#0F1535', land: '#27305F', line: 'rgba(160,172,230,.28)', label: 'rgba(190,198,235,.8)', dot: '#FF5A1F', me: '#3DDC97' };
+
+/* ---- outlines, decoded once ---- */
+let _geo = null;
+function geo() {
+  if (_geo) return _geo;
+  const wrap = d => d > 180 ? d - 360 : d < -180 ? d + 360 : d;
+  // Longitude is unrolled along each outline, so a shape that crosses the date line stays in one piece on
+  // the flat map (x0 and x1 say how far it reaches). An outline that circles a pole is closed along that pole.
+  const ring = (pts, closed) => {
+    const u = [pts[0][0]]; for (let i = 1; i < pts.length; i++) u.push(u[i - 1] + wrap(pts[i][0] - pts[i - 1][0]));
+    let q = pts.map((p, i) => [u[i], p[1]]);
+    const turn = closed ? u[u.length - 1] + wrap(pts[0][0] - pts[pts.length - 1][0]) - u[0] : 0;
+    if (Math.abs(turn) > 180) { const pole = pts[0][1] < 0 ? -90 : 90; q = q.concat([[u[0] + turn, pts[0][1]], [u[0] + turn, pole], [u[0], pole]]); }
+    const n = q.length, o = { n: n, mx: new Float32Array(n), my: new Float32Array(n), lr: new Float32Array(n), sl: new Float32Array(n), cl: new Float32Array(n), x0: 9, x1: -9 };
+    q.forEach((p, i) => { o.mx[i] = mercX(p[0]); o.my[i] = mercY(p[1]); o.lr[i] = p[0] * RAD; o.sl[i] = Math.sin(p[1] * RAD); o.cl[i] = Math.cos(p[1] * RAD); o.x0 = Math.min(o.x0, o.mx[i]); o.x1 = Math.max(o.x1, o.mx[i]); });
+    return o;
+  };
+  const unpack = (list, q, closed) => list.map(r => { const pts = []; let x = 0, y = 0; for (let i = 0; i < r.length; i += 2) { x += r[i]; y += r[i + 1]; pts.push([x / q, y / q]); } return ring(pts, closed); });
+  // round the corners of the hand-sketched water (each pass cuts every corner once)
+  const soft = pts => { for (let n = 0; n < 3; n++) { const o = []; pts.forEach((a, i) => { const b = pts[(i + 1) % pts.length]; o.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); }); pts = o; } return pts; };
+  // lines of latitude and longitude, every 20 degrees: they show the globe turning and the map unrolling
+  const grat = [];
+  for (let lon = -180; lon <= 180; lon += 20) { const pts = []; for (let lat = -80; lat <= 80; lat += 4) pts.push([lon, lat]); grat.push(ring(pts, false)); }
+  for (let lat = -80; lat <= 80; lat += 20) { const pts = []; for (let lon = -180; lon <= 180; lon += 4) pts.push([lon, lat]); grat.push(ring(pts, false)); }
+  const land = unpack(GEO.land.r, GEO.land.q, true);
+  _geo = { land: land, east: land.filter(r => r.x1 > 1), west: land.filter(r => r.x0 < 0), mid: unpack(GEO.mid.r, GEO.mid.q, true), hi: unpack(GEO.hi.r, GEO.hi.q, true), borders: unpack(GEO.borders.l, GEO.borders.q, false), lakes: LAKES.map(l => ring(soft(l), true)), islands: ISLANDS.map(l => ring(soft(l), true)), grat: grat };
+  return _geo;
+}
+
+/* ---- who trained where ---- */
+// One entry per gym: the friends you follow (and you) whose latest check-in there is under 48 hours old.
+function mapPlaces() {
+  const by = {}, add = (p, mine) => {
+    if (!p.lastCheckin || now() - p.lastCheckin > WINDOW) return;
+    const at = GYMS[p.gym] || CAMPUS_AT[p.campus]; if (!at) return;
+    const k = GYMS[p.gym] ? p.gym : p.campus, o = by[k] || (by[k] = { name: GYMS[p.gym] ? p.gym : p.gym || p.campus, city: at[2], lat: at[0], lon: at[1], people: [], me: false });
+    o.people.push(p.id); if (mine) o.me = true;
+  };
+  following().forEach(f => add(f, false)); add(S.me, true);
+  return Object.keys(by).map(k => by[k]).sort((a, b) => b.people.length - a.people.length);
+}
+function globeCard() {
+  const pl = mapPlaces(), n = pl.reduce((a, p) => a + p.people.filter(id => id !== 'me').length, 0);
+  const line = n ? plural(n, 'friend') + ' at ' + plural(pl.length, 'gym') + ' in the last 48 hours' : pl.length ? 'Your last check-in is on the map. Friends you follow show up here too.' : 'Nobody you follow has checked in in the last 48 hours';
+  return '<div class="pad" style="margin-top:14px"><button class="gcard" data-a="openMap"><span class="gc-t"><b>Where friends trained</b><span>' + line + '</span><em>' + ic('pin', 15) + 'Open the map</em></span><canvas id="mini-globe" aria-hidden="true"></canvas></button></div>';
+}
+
+/* ---- drawing ----
+   One painter does the globe, the flat map and every frame in between. P.t runs from
+   0 (globe) to 1 (flat), and each point is drawn part-way between its place on the
+   globe and its place on the map. Points on the far side of the globe sit on its rim. */
+function mapPaint(ctx, P) {
+  const G = geo(), e = P.t, ge = 1 - e, Wz = 256 * Math.pow(2, P.z), ox = P.w / 2 - P.mx * Wz, oy = P.h / 2 - P.my * Wz;
+  const l0 = P.glon * RAD, sp0 = Math.sin(P.glat * RAD), cp0 = Math.cos(P.glat * RAD);
+  // a point of a ring, by index (k shifts it a whole world sideways on the flat map). Returns whether it is on the near side.
+  const px = (r, i, out, k) => {
+    if (e >= 1) { out[0] = ox + (r.mx[i] + k) * Wz; out[1] = oy + r.my[i] * Wz; return true; }
+    const dl = r.lr[i] - l0, cdl = Math.cos(dl), cl = r.cl[i], sl = r.sl[i], near = sp0 * sl + cp0 * cl * cdl >= 0;
+    let x = cl * Math.sin(dl), y = cp0 * sl - sp0 * cl * cdl;
+    if (!near) { const d = Math.hypot(x, y) || 1e-9; x /= d; y /= d; }
+    out[0] = (P.gx + P.R * x) * ge + (ox + r.mx[i] * Wz) * e; out[1] = (P.gy - P.R * y) * ge + (oy + r.my[i] * Wz) * e;
+    return near;
+  };
+  const tmp = [0, 0], trace = (rings, close, k) => { ctx.beginPath(); for (const r of rings) { px(r, 0, tmp, k || 0); ctx.moveTo(tmp[0], tmp[1]); for (let i = 1; i < r.n; i++) { px(r, i, tmp, k || 0); ctx.lineTo(tmp[0], tmp[1]); } if (close) ctx.closePath(); } };
+  // thin lines: the near side first, then the far side, which only shows as the globe unrolls
+  const lines = (rings, alpha) => {
+    ctx.lineWidth = 1;
+    for (let far = 0; far < 2; far++) {
+      const a = far ? alpha * e : alpha; if (a < .004 || (far && e >= 1)) continue;
+      ctx.strokeStyle = 'rgba(170,186,255,' + a.toFixed(3) + ')'; ctx.beginPath();
+      for (const r of rings) { let pn = px(r, 0, tmp, 0), x0 = tmp[0], y0 = tmp[1]; for (let i = 1; i < r.n; i++) { const n = px(r, i, tmp, 0); if ((pn || n) !== !!far) { ctx.moveTo(x0, y0); ctx.lineTo(tmp[0], tmp[1]); } x0 = tmp[0]; y0 = tmp[1]; pn = n; } }
+      ctx.stroke();
+    }
+  };
+  // any place, by latitude and longitude: [x, y, on the near side]
+  const at = (lat, lon) => {
+    const fx = ox + mercX(lon) * Wz, fy = oy + mercY(lat) * Wz; if (e >= 1) return [fx, fy, true];
+    const dl = lon * RAD - l0, sl = Math.sin(lat * RAD), cl = Math.cos(lat * RAD), cdl = Math.cos(dl), near = sp0 * sl + cp0 * cl * cdl > 0.05;
+    return [(P.gx + P.R * cl * Math.sin(dl)) * ge + fx * e, (P.gy - P.R * (cp0 * sl - sp0 * cl * cdl)) * ge + fy * e, near || e > .6];
+  };
+  ctx.clearRect(0, 0, P.w, P.h);
+  if (P.bg > 0) { ctx.globalAlpha = P.bg; ctx.fillStyle = MAP_C.sky; ctx.fillRect(0, 0, P.w, P.h); ctx.globalAlpha = 1; }
+  if (e > 0) { ctx.globalAlpha = e * (P.bg || 1); ctx.fillStyle = MAP_C.ocean; ctx.fillRect(0, 0, P.w, P.h); ctx.globalAlpha = 1; }
+  if (e < 1) {   // the sphere: a soft glow around it, then the lit ocean
+    const R = P.R * (1 + e * 1.6), glow = ctx.createRadialGradient(P.gx, P.gy, R * .86, P.gx, P.gy, R * 1.22);
+    glow.addColorStop(0, 'rgba(88,120,255,.42)'); glow.addColorStop(1, 'rgba(88,120,255,0)');
+    ctx.globalAlpha = ge; ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(P.gx, P.gy, R * 1.22, 0, 7); ctx.fill();
+    const sea = ctx.createRadialGradient(P.gx - R * .35, P.gy - R * .4, R * .1, P.gx, P.gy, R);
+    sea.addColorStop(0, '#22308A'); sea.addColorStop(1, '#0D1338');
+    ctx.fillStyle = sea; ctx.beginPath(); ctx.arc(P.gx, P.gy, R, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  // land is brighter on the lit globe and settles to the map's tone as it flattens
+  ctx.fillStyle = e >= 1 ? MAP_C.land : 'rgb(' + Math.round(mix(64, 39, e)) + ',' + Math.round(mix(80, 48, e)) + ',' + Math.round(mix(158, 95, e)) + ')';
+  trace(G.land, true); ctx.fill('evenodd');
+  if (e >= 1) { trace(G.east, true, -1); ctx.fill(); trace(G.west, true, 1); ctx.fill(); }   // the parts that reach past the date line
+  const ga = P.mini ? .13 : e >= 1 ? .075 * clamp(4.4 - P.z, 0, 1) : mix(.17, .075, e);
+  if (ga > 0) lines(G.grat, ga);
+  if (e >= 1) {
+    const box = (b, rings) => { const x0 = ox + mercX(b[0]) * Wz, x1 = ox + mercX(b[2]) * Wz, y0 = oy + mercY(b[3]) * Wz, y1 = oy + mercY(b[1]) * Wz; ctx.fillStyle = MAP_C.ocean; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); ctx.fillStyle = MAP_C.land; trace(rings, true); ctx.fill('evenodd'); };
+    if (P.z >= 4.4) box(GEO.mid.box, G.mid);       // finer coastline for the Pacific Northwest
+    if (P.z >= 7.6) box(GEO.hi.box, G.hi);         // and finer again around Seattle
+    if (P.z >= 8.6) { ctx.fillStyle = MAP_C.ocean; trace(G.lakes, true); ctx.fill(); ctx.fillStyle = MAP_C.land; trace(G.islands, true); ctx.fill(); }
+    if (P.z >= 4.4) { ctx.strokeStyle = MAP_C.line; ctx.lineWidth = 1; trace(G.borders, false); ctx.stroke(); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = MAP_C.label;
+    MAP_LABELS.forEach(L => { if (P.z < L[3] || P.z >= L[4]) return; const p = at(L[1], L[2]); if (p[0] < -60 || p[0] > P.w + 60 || p[1] < (P.top || 0) || p[1] > (P.bot || P.h) - 10) return; ctx.font = '600 ' + L[5] + 'px Figtree,system-ui,sans-serif'; ctx.fillText(L[0], p[0], p[1]); });
+  }
+  // other campuses: small pale dots, named once there is room
+  P.hits = [];
+  ELSEWHERE.forEach(c => {
+    const p = at(c[1], c[2]); if (!p[2]) return;
+    ctx.fillStyle = 'rgba(214,222,255,' + (P.mini ? .55 : .7) + ')'; ctx.beginPath(); ctx.arc(p[0], p[1], P.mini ? 1.6 : 3.2, 0, 7); ctx.fill();
+    if (e >= 1) { P.hits.push({ x: p[0], y: p[1], r: 18, else: c }); if (P.z >= 3.1 && p[1] > (P.top || 0) && p[1] < (P.bot || P.h) - 22) { ctx.font = '600 11px Figtree,system-ui,sans-serif'; ctx.fillStyle = 'rgba(190,198,235,.7)'; ctx.textAlign = 'center'; ctx.fillText(c[0], p[0], p[1] + 12); } }
+  });
+  // friends: gyms that sit close together on screen are drawn as one dot until you go deeper
+  const groups = [];
+  (P.places || []).forEach(pl => { const p = at(pl.lat, pl.lon); if (!p[2]) return; const g = groups.find(q => Math.hypot(q.x - p[0], q.y - p[1]) < (P.mini ? 10 : 44)); if (g) { g.places.push(pl); g.n += pl.people.length; g.x = (g.x * (g.places.length - 1) + p[0]) / g.places.length; g.y = (g.y * (g.places.length - 1) + p[1]) / g.places.length; } else groups.push({ x: p[0], y: p[1], places: [pl], n: pl.people.length }); });
+  groups.forEach(g => {
+    const r = P.mini ? 3.4 : 12 + Math.min(7, g.n * .9), pulse = P.mini || e < 1 ? 1 + .35 * Math.sin((P.time || 0) / 420) : 1;
+    const halo = ctx.createRadialGradient(g.x, g.y, r * .4, g.x, g.y, r * 2.6 * pulse); halo.addColorStop(0, 'rgba(255,110,40,.55)'); halo.addColorStop(1, 'rgba(255,110,40,0)');
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(g.x, g.y, r * 2.6 * pulse, 0, 7); ctx.fill();
+    ctx.fillStyle = MAP_C.dot; ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, 7); ctx.fill();
+    if (P.mini) return;
+    if (g.places.some(p => p.me)) { ctx.strokeStyle = MAP_C.me; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(g.x, g.y, r + 3.5, 0, 7); ctx.stroke(); }
+    if (P.sel && g.places.some(p => P.sel.includes(p.name))) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(g.x, g.y, r + 8, 0, 7); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 ' + (r > 15 ? 15 : 13) + 'px Figtree,system-ui,sans-serif'; ctx.fillText(g.n, g.x, g.y + .5);
+    if (e >= 1) {
+      const cities = g.places.map(p => p.city).filter((c, i, a) => a.indexOf(c) === i), name = g.places.length === 1 ? g.places[0].name : cities.length === 1 ? cities[0] : plural(g.places.length, 'gym');
+      ctx.font = '700 12.5px Figtree,system-ui,sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(8,11,28,.85)'; ctx.strokeText(name, g.x, g.y + r + 13); ctx.fillStyle = '#fff'; ctx.fillText(name, g.x, g.y + r + 13);
+      P.hits.push({ x: g.x, y: g.y, r: r + 14, group: g, name: name });
+    }
+  });
+}
+function mapCanvas(cv) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 3), w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [ctx, w, h];
+}
+const noMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+
+/* ---- the small globe on Home ---- */
+const MINI = { cx: .6, cy: .78, r: .74, raf: 0, last: 0 };   // centre and radius as fractions of the canvas, so the globe runs off the card's edge
+function miniView(t) { return { glon: -112 + 15 * Math.sin(t / 5200), glat: 36 + 4 * Math.sin(t / 7900) }; }
+function miniDraw(t) {
+  const cv = $('#mini-globe'); if (!cv || !cv.clientWidth) return false;
+  const [ctx, w, h] = mapCanvas(cv), v = miniView(noMotion() ? 0 : t);
+  mapPaint(ctx, { w: w, h: h, t: 0, z: 1, mx: .5, my: .5, gx: w * MINI.cx, gy: h * MINI.cy, R: h * MINI.r, glon: v.glon, glat: v.glat, places: mapPlaces(), mini: true, time: t, bg: 0 });
+  return true;
+}
+// Called after every render: draw at once (so a redraw never flashes), then keep it turning while Home is in view.
+function globeMini() {
+  if (!miniDraw(performance.now()) || MINI.raf || noMotion()) return;
+  const loop = t => {
+    MINI.raf = 0;
+    if (!$('#mini-globe')) return;                       // left Home: stop until the next render
+    if (!sheets.length && !document.hidden && t - MINI.last > 32) { MINI.last = t; miniDraw(t); }
+    MINI.raf = requestAnimationFrame(loop);
+  };
+  MINI.raf = requestAnimationFrame(loop);
+}
+
+/* ---- the full-screen map ---- */
+const M = { t: 0, mx: .5, my: .5, z: 2, anim: null, sel: null, card: null, from: null, ptrs: {}, moved: 0, hits: [], raf: 0, hint: true };
+const easeIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, easeOut = x => 1 - Math.pow(1 - x, 3), mix = (a, b, k) => a + (b - a) * k;
+// The flat map stops at 78 north and 58 south, so the stretched polar ends never fill the screen.
+const MAP_N = mercY(78), MAP_S = mercY(-58);
+function mapZoomMin(w, h) { return Math.log2(Math.max(w, h / (MAP_S - MAP_N)) / 256); }
+function mapClamp(w, h) {
+  M.z = clamp(M.z, mapZoomMin(w, h), 14.5);
+  const Wz = 256 * Math.pow(2, M.z), hx = w / 2 / Wz, hy = h / 2 / Wz;
+  M.mx = hx >= .5 ? .5 : clamp(M.mx, hx, 1 - hx); M.my = 2 * hy >= MAP_S - MAP_N ? (MAP_N + MAP_S) / 2 : clamp(M.my, MAP_N + hy, MAP_S - hy);
+}
+// How much of the screen the card at the bottom covers, so dots and names can keep clear of it.
+function mapCardH() { const c = $('#map-card'); return c && M.card ? c.offsetHeight + 14 : 0; }
+// The zoom that fits a set of places, with room around them.
+function mapFit(places, w, h, cap) {
+  const xs = places.map(p => mercX(p.lon)), ys = places.map(p => mercY(p.lat)), dx = Math.max(...xs) - Math.min(...xs), dy = Math.max(...ys) - Math.min(...ys);
+  const z = Math.min(dx ? Math.log2(Math.max(120, w - 150) / 256 / dx) : 99, dy ? Math.log2(Math.max(120, h - 190 - mapCardH()) / 256 / dy) : 99);
+  return { mx: (Math.max(...xs) + Math.min(...xs)) / 2, my: (Math.max(...ys) + Math.min(...ys)) / 2, z: Math.min(z, cap) };
+}
+function mapFrame(t) {
+  M.raf = 0;
+  const cv = $('#map-cv'); if (!cv) { M.anim = null; return; }
+  const [ctx, w, h] = mapCanvas(cv), a = M.anim, big = { x: w / 2, y: h * .43, r: Math.min(w, h) * .4 }, from = M.from || big;
+  let g = 1, view = miniView(0), done = !a;
+  if (a) {
+    const k = clamp((t - a.t0) / a.dur, 0, 1); done = k >= 1;
+    if (a.kind === 'open') { g = easeOut(Math.min(1, k / .46)); M.t = easeIO(clamp((k - .3) / .7, 0, 1)); view = { glon: mix(a.v.glon, -118, g), glat: mix(a.v.glat, 42, g) }; }
+    else if (a.kind === 'close') { g = 1 - easeIO(clamp((k - .5) / .5, 0, 1)); M.t = 1 - easeIO(Math.min(1, k / .62)); view = { glon: mix(a.v.glon, -118, g), glat: mix(a.v.glat, 42, g) }; }
+    else { const q = easeIO(k); M.mx = mix(a.a.mx, a.b.mx, q); M.my = mix(a.a.my, a.b.my, q); M.z = mix(a.a.z, a.b.z, q) - (a.hop || 0) * Math.sin(Math.PI * q); }
+  }
+  mapClamp(w, h);
+  const P = { w: w, h: h, t: M.t, z: M.z, mx: M.mx, my: M.my, gx: mix(from.x, big.x, g), gy: mix(from.y, big.y, g), R: mix(from.r, big.r, g), glon: view.glon, glat: view.glat, places: mapPlaces(), sel: M.sel, time: t, bg: Math.min(1, g * 1.8), top: 66, bot: h - mapCardH() };
+  mapPaint(ctx, P); M.hits = P.hits;
+  if (done) {
+    M.anim = null;
+    if (a && a.kind === 'close') { M.t = 0; closeSheet(); return; }
+    if (a && a.kind === 'open') { const ui = $('#map-ui'); if (ui) ui.classList.add('on'); }
+    if (a && a.then) a.then();
+    return;
+  }
+  M.raf = requestAnimationFrame(mapFrame);
+}
+function mapKick() { if (!M.raf) M.raf = requestAnimationFrame(mapFrame); }
+function mapFly(to, then) {
+  const a = { mx: M.mx, my: M.my, z: M.z }, far = Math.hypot(to.mx - a.mx, to.my - a.my) * 256 * Math.pow(2, Math.min(a.z, to.z));
+  if (noMotion()) { M.mx = to.mx; M.my = to.my; M.z = to.z; M.anim = null; mapKick(); if (then) then(); return; }
+  M.anim = { kind: 'fly', a: a, b: to, t0: performance.now(), dur: 620 + Math.min(500, far * .5), hop: far > 500 ? .7 : 0, then: then }; mapKick();
+}
+function mapCardHTML() {
+  const c = M.card; if (!c) return M.hint ? '<p class="map-hint">' + (mapPlaces().length ? 'Tap a dot to go deeper. Pinch or scroll to zoom.' : 'No check-ins to show yet. Pinch or scroll to look around.') + '</p>' : '';
+  if (c.else) return '<div class="map-card"><div class="mc-h"><b>' + esc(c.else[0]) + '</b><button class="mc-x" data-a="mapClear" aria-label="Hide this card">' + ic('x', 18) + '</button></div><p><span class="num" style="font-size:34px">' + fmtN(c.else[3]) + '</span> check-ins in the last 48 hours.</p><p class="mc-n">A sample total for squads on campuses there. Other campuses show as totals. People are never shown.</p></div>';
+  const places = mapPlaces().filter(p => c.names.includes(p.name));
+  const rows = places.map(pl => (places.length > 1 ? '<div class="mc-g">' + esc(pl.name) + '</div>' : '') + pl.people.map(id => {
+    const u = person(id), post = S.posts.find(p => p.uid === id); if (!u) return '';
+    return '<button class="row" data-a="openProfile" data-id="' + id + '">' + av(u, 40, { nowarn: true, dark: true }) + '<span class="grow"><span class="t">' + esc(id === 'me' ? 'You' : u.name) + '</span><span class="s">' + (post ? esc(TYPE[post.type].v) + ', ' : '') + ago(u.lastCheckin) + '</span></span>' + streakChip(pDays(u)) + '</button>';
+  }).join('')).join('');
+  return '<div class="map-card"><div class="mc-h"><b>' + esc(c.title) + '</b><button class="mc-x" data-a="mapClear" aria-label="Hide this card">' + ic('x', 18) + '</button></div><div class="mc-list">' + rows + '</div><p class="mc-n">The gym each friend checked in at, after they posted. Never where anyone is right now.' + (S.mode === 'real' ? ' Friends are still samples.' : '') + '</p></div>';
+}
+function mapSheet() {
+  return '<div class="mapw"><canvas id="map-cv" aria-label="Map of where your friends trained in the last 48 hours"></canvas><div id="map-ui" class="' + (M.t >= 1 ? 'on' : '') + '">' +
+    '<div class="map-top"><button class="cam-txt" data-a="mapClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + ic('clock', 15) + '<span>Last 48 hours</span></span></div>' +
+    '<div class="map-zoom"><button data-a="mapZoom" data-d="1" aria-label="Zoom in">' + ic('plus', 20) + '</button><button data-a="mapZoom" data-d="-1" aria-label="Zoom out">' + ic('minus', 20) + '</button><button data-a="mapWorld" aria-label="Show the whole world">' + ic('target', 20) + '</button></div>' +
+    '<div id="map-card">' + mapCardHTML() + '</div></div></div>';
+}
+A.openMap = () => {
+  if (S.ui.tab !== 'home') { S.ui.tab = 'home'; render(); }
+  const mini = $('#mini-globe'), ph = $('#phone').getBoundingClientRect(), now0 = performance.now(), v = miniView(noMotion() ? 0 : now0);
+  if (mini && mini.clientWidth) { const r = mini.getBoundingClientRect(); M.from = { x: r.left - ph.left + r.width * MINI.cx, y: r.top - ph.top + r.height * MINI.cy, r: r.height * MINI.r }; } else M.from = null;
+  const pl = mapPlaces(), fit = pl.length ? mapFit(pl, ph.width, ph.height, 5.3) : { mx: mercX(-98), my: mercY(40), z: 3 };
+  M.mx = fit.mx; M.my = fit.my; M.z = Math.max(fit.z, 2.6); M.sel = null; M.card = null; M.t = noMotion() ? 1 : 0; M.ptrs = {};
+  M.anim = noMotion() ? null : { kind: 'open', t0: now0, dur: 1450, v: v };
+  openSheet(mapSheet, { cls: 'full dark map', after: () => mapKick(), onClose: () => { M.anim = null; M.t = 0; } });
+};
+// Close the way it opened: the map rolls back into a globe and settles into its card.
+A.mapClose = () => { if (noMotion() || M.t < 1) { closeSheet(); return; } const ui = $('#map-ui'); if (ui) ui.classList.remove('on'); M.card = null; M.sel = null; M.anim = { kind: 'close', t0: performance.now(), dur: 1000, v: miniView(performance.now()) }; mapKick(); };
+A.mapZoom = el => { const cv = $('#map-cv'); if (!cv) return; mapFly({ mx: M.mx, my: M.my, z: clamp(M.z + (+el.dataset.d) * 1.4, mapZoomMin(cv.clientWidth, cv.clientHeight), 14.5) }); };
+A.mapWorld = () => { const cv = $('#map-cv'); if (!cv) return; M.card = null; M.sel = null; mapCardShow(); mapFly({ mx: M.mx, my: (MAP_N + MAP_S) / 2, z: mapZoomMin(cv.clientWidth, cv.clientHeight) }); };
+A.mapClear = () => { M.card = null; M.sel = null; mapCardShow(); mapKick(); };
+function mapCardShow() { const c = $('#map-card'); if (c) c.innerHTML = mapCardHTML(); }
+// A tap on a dot goes one level deeper: region, then city, then the gym and who was there.
+function mapTap(x, y) {
+  const hit = M.hits.filter(h => Math.hypot(h.x - x, h.y - y) <= h.r).sort((a, b) => (a.else ? 1 : 0) - (b.else ? 1 : 0) || Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
+  const cv = $('#map-cv'), w = cv.clientWidth, h = cv.clientHeight; M.hint = false;
+  if (!hit) { if (M.card) A.mapClear(); return; }
+  const lift = () => Math.max(0, (mapCardH() - 60) / 2);   // how far above the middle of the screen the dot should sit
+  if (hit.else) { M.sel = null; M.card = { else: hit.else }; mapCardShow(); mapFly({ mx: mercX(hit.else[2]), my: mercY(hit.else[1]) + lift() / (256 * Math.pow(2, Math.max(M.z, 4.6))), z: Math.max(M.z, 4.6) }); return; }
+  const g = hit.group, single = g.places.length === 1;
+  M.sel = g.places.map(p => p.name); M.card = { title: hit.name + (single ? ', ' + g.places[0].city : ''), names: M.sel }; mapCardShow();
+  const fit = mapFit(g.places, w, h, 13.4);
+  // several gyms under one dot: zoom until they separate. One gym: go in close.
+  const z = single ? Math.max(M.z, Math.min(13.4, M.z + 3.2)) : Math.max(M.z + 1.2, Math.min(fit.z, M.z + 4.5));
+  mapFly({ mx: fit.mx, my: fit.my + lift() / (256 * Math.pow(2, z)), z: z });
+}
+// Dragging pans, two fingers pinch, the wheel zooms about the pointer.
+document.addEventListener('pointerdown', e => {
+  if (e.target.id !== 'map-cv' || M.t < 1) return;
+  try { e.target.setPointerCapture(e.pointerId); } catch (err) { }
+  M.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; M.moved = 0; M.anim = null;
+});
+document.addEventListener('pointermove', e => {
+  const p = M.ptrs[e.pointerId], cv = $('#map-cv'); if (!p || !cv) return;
+  const ids = Object.keys(M.ptrs), Wz = 256 * Math.pow(2, M.z), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+  if (ids.length === 1) { M.mx -= (e.clientX - p.x) / Wz; M.my -= (e.clientY - p.y) / Wz; M.moved += Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y); }
+  else if (ids.length === 2) {
+    const o = M.ptrs[ids.find(i => +i !== e.pointerId)], d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y), cx = (e.clientX + o.x) / 2 - r.left, cy = (e.clientY + o.y) / 2 - r.top;
+    if (d0 > 0 && d1 > 0) { const ux = M.mx + (cx - w / 2) / Wz, uy = M.my + (cy - h / 2) / Wz; M.z = clamp(M.z + Math.log2(d1 / d0), mapZoomMin(w, h), 14.5); const W2 = 256 * Math.pow(2, M.z); M.mx = ux - (cx - w / 2) / W2; M.my = uy - (cy - h / 2) / W2; }
+    M.moved += 10;
+  }
+  p.x = e.clientX; p.y = e.clientY; mapKick();
+});
+const mapUp = e => {
+  const p = M.ptrs[e.pointerId]; if (!p) return;
+  const single = Object.keys(M.ptrs).length === 1; delete M.ptrs[e.pointerId];
+  const cv = $('#map-cv'); if (!cv || e.type === 'pointercancel') return;
+  if (single && M.moved < 8) { const r = cv.getBoundingClientRect(); mapTap(e.clientX - r.left, e.clientY - r.top); }
+};
+document.addEventListener('pointerup', mapUp); document.addEventListener('pointercancel', mapUp);
+document.addEventListener('wheel', e => {
+  if (!e.target || e.target.id !== 'map-cv' || M.t < 1) return;
+  e.preventDefault();
+  const cv = e.target, r = cv.getBoundingClientRect(), w = r.width, h = r.height, cx = e.clientX - r.left, cy = e.clientY - r.top, Wz = 256 * Math.pow(2, M.z), ux = M.mx + (cx - w / 2) / Wz, uy = M.my + (cy - h / 2) / Wz;
+  M.anim = null; M.z = clamp(M.z - e.deltaY * .0035, mapZoomMin(w, h), 14.5);
+  const W2 = 256 * Math.pow(2, M.z); M.mx = ux - (cx - w / 2) / W2; M.my = uy - (cy - h / 2) / W2; mapKick();
+}, { passive: false });
+window.addEventListener('resize', () => { if ($('#map-cv')) mapKick(); });
+
+/* Say it. One microphone for the two things people would otherwise type: what they
+   trained and what they ate. You describe it out loud, Lock In works out which it is,
+   fills in the form, and you confirm before anything counts.
+
+   Where the words come from depends on where the page is open:
+   - inside Claude on a computer, Claude's own dictation listens and the words appear as you talk;
+   - opened on its own in a browser that can listen, the browser does it;
+   - everywhere else (the Claude app on a phone), the box opens the keyboard and the
+     microphone key on it does the listening.
+   The page never records or keeps sound. It only ever receives words.
+
+   Claude turns the words into a workout or a meal when the page is allowed to ask it.
+   Without it, the plain rules at the bottom of this file do a rougher job. */
+const VOICE = { d: undefined, sr: null, rec: null, state: 'idle', off: false };
+function initVoice() {
+  try { const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (SR && window.top === window) VOICE.sr = SR; } catch (e) { }
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      window.claude.use('dictation').then(d => {
+        VOICE.d = d || null; if (!d) return;
+        d.onPartial(e => { if (D.say) { D.say.partial = (e && e.text) || ''; sayPaint(); } });
+        d.onFinal(e => sayHeard((e && e.text) || ''));
+        d.onState(e => voiceState(e.state, e.reason));
+        if (D.say) drawSheets(false);
+      }).catch(() => { VOICE.d = null; });
+    } else VOICE.d = null;
+  } catch (e) { VOICE.d = null; }
+}
+// 'claude': Claude's dictation. 'web': the browser's own. 'kb': the microphone on the keyboard.
+function voiceKind() { return VOICE.off ? 'kb' : VOICE.d ? 'claude' : VOICE.sr ? 'web' : 'kb'; }
+function voiceStop() {
+  try { if (VOICE.d && VOICE.state !== 'idle') VOICE.d.stop().catch(() => { }); } catch (e) { }
+  try { if (VOICE.rec) VOICE.rec.stop(); } catch (e) { }
+}
+// The microphone cannot be used here: fall back to the keyboard for the rest of the visit, and say so once.
+function voiceOff() { if (VOICE.off) return; VOICE.off = true; if (D.say) { drawSheets(false); toast('The microphone is off for this page. Use the microphone on your keyboard, or type it.'); } }
+function sayHeard(text) {
+  const s = D.say; if (!s || !text) return;
+  s.text = ((s.text || '') + text).replace(/^\s+/, ''); s.partial = ''; s.heard = true;
+  const ta = $('#say-text'); if (ta) ta.value = s.text;
+  sayPaint();
+}
+function voiceState(state, reason) {
+  VOICE.state = state || 'idle';
+  const s = D.say; if (!s) return;
+  if (VOICE.state === 'idle') {
+    s.partial = '';
+    if (reason === 'not_granted' || reason === 'unavailable') { voiceOff(); return; }
+    if (reason === 'rate_limited' || reason === 'upstream_error') toast('The microphone had a problem. Try again, or type it.');
+    // Said it and stopped: work it out without another tap.
+    else if ((reason === 'stopped' || reason === 'viewer_stopped') && s.heard && (s.text || '').trim() && !s.busy) { sayPaint(); A.sayGo(); return; }
+  }
+  sayPaint();
+}
+// Redraws only the parts that change while listening, so the box keeps its cursor.
+function sayPaint() {
+  const s = D.say; if (!s) return;
+  const b = $('#say-mic'), st = $('#say-state'), p = $('#say-part'), go = $('#say-go'), on = VOICE.state === 'listening';
+  if (b) { b.classList.toggle('on', on); b.classList.toggle('wait', VOICE.state === 'starting' || VOICE.state === 'finishing'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  if (st) st.textContent = on ? 'Listening. Tap when you are done.' : VOICE.state === 'starting' ? 'Starting the microphone' : VOICE.state === 'finishing' ? 'Catching the last words' : (s.text || '').trim() ? 'Tap to add more' : 'Tap and talk';
+  if (p) p.textContent = s.partial || '';
+  if (go) go.disabled = !!s.busy || !(s.text || '').trim();
+}
+A.sayPaint = sayPaint;
+function sayFocus() { const t = $('#say-text'); if (t) { try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); } } }
+
+const SAY_COPY = {
+  auto: ['Say it', 'Describe a workout or a meal. Lock In works out which it is and fills in the rest.', 'Leg day, 50 minutes, squat 225 for 5. Or: two eggs, toast and a banana.'],
+  workout: ['Say what you trained', 'Describe the session the way you would to a friend. Lock In fills in the type, the time, how hard it was and your lifts.', 'Leg day, about 50 minutes. Squat 225 for 5, three sets. It felt hard.'],
+  meal: ['Say what you ate', 'Describe it the way you would to a friend. Lock In estimates the calories and protein.', 'Two eggs, toast with peanut butter and a banana']
+};
+function saySheet() {
+  const s = D.say; if (!s) return '';
+  const k = voiceKind(), c = SAY_COPY[s.mode] || SAY_COPY.auto, has = (s.text || '').trim();
+  const live = '<div class="say-live"><button id="say-mic" class="say-mic" data-a="sayMic" aria-pressed="false" aria-label="Start or stop the microphone">' + ic('mic', 36) + '</button><p id="say-state" aria-live="polite">Tap and talk</p></div>';
+  const box = '<div class="field"><label for="say-text">' + (k === 'kb' ? 'What you said' : 'What it heard. Fix anything it got wrong.') + '</label><textarea class="input" id="say-text" data-m="say.text" data-on="sayPaint" placeholder="' + esc(c[2]) + '" autocapitalize="sentences">' + esc(s.text) + '</textarea><p id="say-part" class="say-part" aria-live="polite"></p></div>';
+  const ask = s.ask ? '<div class="say-ask"><p>Could not tell which that was. Was it a workout or a meal?</p><div class="two"><button class="btn btn-line" data-a="sayAs" data-k="workout">' + ic('dumbbell', 18) + 'A workout</button><button class="btn btn-line" data-a="sayAs" data-k="food">' + ic('bowl', 18) + 'A meal</button></div></div>' : '';
+  const go = '<button class="btn btn-go btn-w" id="say-go" data-a="sayGo"' + (s.busy || !has ? ' disabled' : '') + '>' + (s.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Working it out' : 'Work it out') + '</button>';
+  const kb = '<div class="say-kb">' + ic('mic', 22) + '<span><b>Tap the box, then the microphone on your keyboard.</b>Talk, and your words land in the box. You can type instead.</span></div>';
+  return sheetHead(c[0]) + '<div class="sh-b say"><p class="mute say-lead">' + c[1] + '</p>' + (k === 'kb' ? box + ask + go + kb : live + box + ask + go) + '</div>';
+}
+A.openSay = el => {
+  const k = el && el.dataset && SAY_COPY[el.dataset.k] ? el.dataset.k : 'auto';
+  D.say = { mode: k, text: '', partial: '', busy: false, ask: false, force: '', heard: false };
+  openSheet(saySheet, { cls: 'full', after: sayPaint, onClose: () => { voiceStop(); D.say = null; } });
+  if (voiceKind() === 'kb') sayFocus();   // straight from the tap, so a phone opens its keyboard
+};
+// Called straight from the tap: a microphone only opens on the person's own press.
+A.sayMic = () => {
+  const s = D.say, k = voiceKind(); if (!s || s.busy) return;
+  if (k === 'claude') {
+    if (VOICE.state !== 'idle') { VOICE.d.stop().catch(() => { }); return; }
+    VOICE.d.start().catch(err => {
+      const c = err && err.code;
+      if (c === 'not_granted' || c === 'unavailable') voiceOff();
+      else if (c !== 'stopped' && c !== 'dismissed') toast('The microphone did not start. Try again, or type it.');
+    });
+  } else if (k === 'web') {
+    if (VOICE.rec) { try { VOICE.rec.stop(); } catch (e) { } return; }
+    let rec; try { rec = new VOICE.sr(); } catch (e) { voiceOff(); return; }
+    const base = (s.text || '').trim() ? s.text.replace(/\s*$/, ' ') : ''; let blocked = false;
+    rec.continuous = true; rec.interimResults = true; try { rec.lang = navigator.language || 'en-US'; } catch (e) { }
+    rec.onstart = () => voiceState('listening');
+    rec.onresult = ev => {
+      if (D.say !== s) return; let fin = '', part = '';
+      for (let i = 0; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) fin += r[0].transcript; else part += r[0].transcript; }
+      s.text = (base + fin).replace(/^\s+/, ''); s.partial = part; if (fin || part) s.heard = true;
+      const ta = $('#say-text'); if (ta) ta.value = s.text; sayPaint();
+    };
+    rec.onerror = ev => { if (['not-allowed', 'service-not-allowed', 'audio-capture', 'language-not-supported'].includes(ev.error)) blocked = true; };
+    rec.onend = () => { VOICE.rec = null; voiceState('idle', blocked ? 'not_granted' : 'stopped'); };
+    VOICE.rec = rec; voiceState('starting');
+    try { rec.start(); } catch (e) { VOICE.rec = null; voiceState('idle', 'not_granted'); }
+  } else sayFocus();
+};
+A.sayAs = el => { if (!D.say) return; D.say.force = el.dataset.k; A.sayGo(); };
+A.sayGo = async () => {
+  const s = D.say; if (!s || s.busy) return;
+  const text = (s.text || '').trim(); if (!text) { toast('Say or type it first.'); return; }
+  voiceStop();
+  const force = s.force || (s.mode === 'workout' ? 'workout' : s.mode === 'meal' ? 'food' : '');
+  s.busy = true; s.ask = false; drawSheets(false);
+  let r = await aiSay(text, force);
+  if (D.say !== s) return;                       // closed while it was working
+  if (r.state !== 'ok') r = guessSay(text, force);
+  s.busy = false;
+  if (r.kind === 'food') {
+    const g = guessMeal(text);
+    closeSheet();
+    startMeal(null, r.guess ? Object.assign({ state: 'guess', text: text }, g) : Object.assign({ state: 'ai', kind: g.kind, text: text }, r.meal));
+  } else if (r.kind === 'workout') {
+    const w = r.workout, line = sayLine(w);
+    closeSheet();
+    if (D.ci && sheets.some(x => x.render === checkinSheet)) { sayApply(D.ci, w); drawSheets(false); toast(line ? 'Filled in: ' + line : 'Nothing specific came through. Fill it in below.', line ? 'check' : undefined); }
+    else { D.said = w; openCam(null); }          // a check-in still needs its photo
+  } else { s.ask = true; drawSheets(false); }
+};
+A.saidClear = () => { D.said = null; render(); };
+// "Leg day, 50 min, hard, Squat 225 x 5"
+function sayLine(w) {
+  if (!w) return '';
+  const lf = l => l.name + (l.w ? ' ' + l.w : '') + (l.reps ? ' x ' + l.reps : '');
+  return [w.type ? TYPE[w.type].v : '', w.mins ? w.mins + ' min' : '', w.effort ? EFFORT[w.effort].toLowerCase() : '', w.lifts.length > 2 ? plural(w.lifts.length, 'lift') : w.lifts.map(lf).join(', '), w.tag ? w.tag.toLowerCase() : ''].filter(Boolean).join(', ');
+}
+// Put what was said into the check-in form. Only what was actually said changes.
+function sayApply(d, w) {
+  if (w.type && TYPE[w.type]) { d.type = w.type; d.touched = true; if (d.noPhoto) d.scene.stat.type = d.type; else if (!d.photo && d.scene) d.scene = sceneFor(d.type, d.scene.seed); }
+  if (w.mins) d.mins = w.mins;
+  if (w.effort) d.effort = w.effort;
+  if (w.lifts.length) d.lifts = d.lifts.filter(l => l.name).concat(w.lifts.map(l => ({ name: l.name, w: l.w == null ? '' : l.w, reps: l.reps == null ? '' : l.reps, sets: l.sets == null ? '' : l.sets }))).slice(0, 12);
+  if (w.tag) d.tag = w.tag;
+  d.more = true; d.said = sayLine(w);
+}
+// What was said before the photo waits here, for half an hour at most.
+function saidPending() { const w = D.said; if (w && Date.now() - w.at > 30 * 60000) D.said = null; return D.said || null; }
+
+/* ---- Claude works it out ---- */
+function liftName(n) {
+  n = String(n || '').trim().replace(/\s+/g, ' ').slice(0, 40); if (!n) return '';
+  const known = LIFT_NAMES.find(x => x.toLowerCase() === n.toLowerCase() || x.toLowerCase() + 's' === n.toLowerCase());
+  return known || n.charAt(0).toUpperCase() + n.slice(1);
+}
+function shapeWorkout(res) {
+  const n = (v, lo, hi) => v == null || v === '' || !isFinite(+v) || +v <= 0 ? null : clamp(Math.round(+v * 10) / 10, lo, hi), whole = v => v == null ? null : Math.round(v);
+  const lifts = Array.isArray(res.lifts) ? res.lifts.slice(0, 8).map(l => ({ name: liftName(l && l.name), w: n(l && l.weight, 1, 2000), reps: whole(n(l && l.reps, 1, 200)), sets: whole(n(l && l.sets, 1, 30)) })).filter(l => l.name) : [];
+  const mins = whole(n(res.minutes, 1, 600)), eff = whole(n(res.effort, 1, 4));
+  return { type: TYPE[res.workout] ? res.workout : null, mins: mins == null ? null : clamp(mins, 10, 180), effort: eff, lifts: lifts, tag: TAGS.includes(res.tag) ? res.tag : '', at: Date.now() };
+}
+async function aiSay(text, force) {
+  const s = await getAI(); if (!s) return { state: 'off' };
+  try {
+    const res = await s.json(
+      'Someone said this out loud into a fitness app, so it is a rough transcript and a word or a number may have been heard wrong: "' + quoted(text, 600) + '". ' +
+      (force === 'workout' ? 'They are describing a workout they did. ' : force === 'food' ? 'They are describing something they ate or drank. ' : 'Work out whether they are describing a workout they did or something they ate or drank. ') +
+      'Reply with only a JSON object, in one of these shapes. ' +
+      (force === 'food' ? '' : 'A workout: {"kind": "workout", "workout": "legs", "minutes": 50, "effort": 3, "lifts": [{"name": "Squat", "weight": 225, "reps": 5, "sets": 3}], "tag": ""}. "workout" is the best fit from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "minutes" is how long it lasted. "effort" is 1 easy, 2 steady, 3 hard or 4 all out. ' +
+        '"lifts" lists each strength exercise they named, with a plain name such as Bench press, the weight in ' + (S.settings.units === 'kg' ? 'kilograms' : 'pounds') + ', the reps in one set and the number of sets. "tag" is one of Easy day, Sick, Exam week or Travelling when they said so, otherwise "". Use null for anything they did not say, and never invent a number. ') +
+      (force === 'workout' ? '' : 'Food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. Use whole numbers, assume ordinary portions unless they say otherwise, and list up to 6 parts in "items" whose calories add up to the total. It is about ' + clock(now()) + '. ') +
+      (force ? '' : 'If it is neither, or you cannot tell: {"kind": "other"}.'), { modelTier: 'quick' });
+    const kind = force || (res && ['workout', 'food'].includes(res.kind) ? res.kind : 'other');
+    if (kind === 'food') { const m = shapeMeal(Object.assign({}, res, { food: true })); return m ? { state: 'ok', kind: 'food', meal: m } : { state: 'ok', kind: 'food', guess: true }; }
+    if (kind === 'workout') return { state: 'ok', kind: 'workout', workout: shapeWorkout(res || {}) };
+    return { state: 'ok', kind: 'other' };
+  } catch (e) { aiFail(e); return { state: 'off' }; }
+}
+
+/* ---- the plain rules, for when Claude cannot be asked ---- */
+const SAY_NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20, thirty: 30, forty: 40, 'forty-five': 45, fifty: 50, sixty: 60, ninety: 90 };
+const SAY_LIFTS = [[/\bincline (?:dumbbell |db )?(?:bench|press)(?: press)?\b/g, 'Incline dumbbell press'], [/\b(?:romanian deadlifts?|rdls?)\b/g, 'Romanian deadlift'], [/\bleg press(?:es)?\b/g, 'Leg press'], [/\blat pull[- ]?downs?\b/g, 'Lat pulldown'],
+  [/\b(?:overhead|shoulder|military) press(?:es)?\b|\bohp\b/g, 'Overhead press'], [/\bbench(?: press)?(?:es)?\b/g, 'Bench press'], [/\b(?:back |front )?squats?\b/g, 'Squat'], [/\bdeadlifts?\b/g, 'Deadlift'],
+  [/\b(?:barbell |bent[- ]over |cable )?rows?\b/g, 'Barbell row'], [/\b(?:pull|chin)[- ]?ups?\b/g, 'Pull-up'], [/\b(?:dumbbell |bicep |biceps |hammer )?curls?\b/g, 'Dumbbell curl'], [/\bhip thrusts?\b/g, 'Hip thrust'], [/\blunges?\b/g, 'Lunge'], [/\bdips?\b/g, 'Dip']];
+const SAY_TYPE = { 'Bench press': 'push', 'Overhead press': 'push', 'Incline dumbbell press': 'push', 'Dip': 'push', 'Barbell row': 'pull', 'Pull-up': 'pull', 'Lat pulldown': 'pull', 'Dumbbell curl': 'pull', 'Deadlift': 'pull', 'Squat': 'legs', 'Romanian deadlift': 'legs', 'Leg press': 'legs', 'Hip thrust': 'legs', 'Lunge': 'legs' };
+const SAY_DAY = [[/\bleg(?:s)? day\b|\blegs\b|\blower body\b/, 'legs'], [/\bpush day\b|\bchest day\b|\bshoulder day\b|\bchest and tri/, 'push'], [/\bpull day\b|\bback day\b|\bback and bi/, 'pull'], [/\bupper(?: body)?\b|\barm day\b|\barms\b/, 'upper'], [/\bfull body\b|\bwhole body\b/, 'full'],
+  [/\bcardio\b|\bran\b|\brun(?:ning)?\b|\bjog(?:ged|ging)?\b|\btreadmill\b|\bbiked?\b|\bcycl(?:ed|ing)\b|\bsw[ai]m\b|\bswimming\b|\belliptical\b|\bstair ?master\b|\bmiles?\b|\bhiit\b/, 'cardio'], [/\bcore\b|\babs\b|\bplanks?\b|\bcrunches\b/, 'core'],
+  [/\bbasketball\b|\bsoccer\b|\btennis\b|\bfootball\b|\bvolleyball\b|\bclimb(?:ed|ing)\b|\bbouldering\b|\bbadminton\b|\bpickleball\b|\bboxing\b/, 'sport'], [/\byoga\b|\bstretch(?:ed|ing)?\b|\bmobility\b|\bpilates\b/, 'mobility']];
+const SAY_FOOD = /\b(ate|eat|eaten|eating|drank|drink|breakfast|lunch|dinner|snack|bowl|plate|slices?|cups?|glass|sandwich|burrito|rice|eggs?|toast|chicken|paneer|dal|roti|naan|salad|pasta|pizza|shake|smoothie|oats|oatmeal|yogurt|bananas?|apples?|coffee|tea|milk|cheese|beans|tofu|noodles|curry|wrap|burger|fries|cereal|bar|soup|bread|butter|peanut)\b/g;
+const SAY_GYM = /\b(gym|workout|worked out|trained|training|lifted|lifting|sets?|reps?|treadmill|minutes?|mins?|hours?|sweat|session|warm[- ]?up)\b/g;
+// Spoken numbers as digits ("three sets of eight" becomes "3 sets of 8").
+function sayDigits(t) { return t.replace(/\b(for|of|by|x|times|at)\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b/g, (m, a, b) => a + ' ' + SAY_NUM[b]).replace(/\b(an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty-five|forty|fifty|sixty|ninety)\b(?=\s+(?:sets?|reps?|minutes?|mins?|hours?|times|plates?|x|by|for|pounds?|lbs?|kilos?|kgs?)\b)/g, m => SAY_NUM[m]); }
+// The numbers in one stretch of words: weight, reps in a set, sets.
+function sayNums(seg) {
+  const l = { w: null, reps: null, sets: null }; let m;
+  if ((m = /(\d+)\s*sets?(?:\s*(?:of|x|by)\s*(\d+))?/.exec(seg))) { l.sets = +m[1]; if (m[2]) l.reps = +m[2]; }
+  if ((m = /(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?|kgs?|kilos?)/.exec(seg)) || (m = /(?:at|with|@)\s*(\d+(?:\.\d+)?)/.exec(seg))) l.w = +m[1];
+  if ((m = /(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?|kgs?|kilos?)?\s*(?:for|x|×|times|by)\s*(\d+)/.exec(seg))) {
+    const a = +m[1], b = +m[2];
+    if (a > 12 || /lbs?|pounds?|kgs?|kilos?/.test(m[0])) { if (l.w == null) l.w = a; if (l.reps == null) l.reps = b; }   // 225 for 5
+    else if (l.sets == null) { l.sets = a; if (l.reps == null) l.reps = b; }                                             // 3 by 10
+  }
+  if (l.reps == null && (m = /(\d+)\s*reps?/.exec(seg))) l.reps = +m[1];
+  return l;
+}
+// Each exercise takes the numbers said in the same breath, before or after its name.
+function sayLifts(t) {
+  const found = [], taken = [];
+  SAY_LIFTS.forEach(L => { L[0].lastIndex = 0; let m; while ((m = L[0].exec(t))) { const a = m.index, b = a + m[0].length; if (!taken.some(x => a < x[1] && b > x[0])) { taken.push([a, b]); found.push({ name: L[1], a: a, b: b, w: null, reps: null, sets: null }); } } });
+  found.sort((x, y) => x.a - y.a);
+  const fill = (l, n) => { ['w', 'reps', 'sets'].forEach(k => { if (l[k] == null && n[k] != null) l[k] = n[k]; }); };
+  const cut = /[,.;\n]|\bthen\b|\bfollowed by\b/g; let from = 0, m, last = null; const parts = [];
+  while ((m = cut.exec(t))) { parts.push([from, m.index]); from = m.index + m[0].length; } parts.push([from, t.length]);
+  parts.forEach(pt => {
+    const here = found.filter(f => f.a >= pt[0] && f.a < pt[1]), seg = t.slice(pt[0], pt[1]);
+    if (here.length === 1) fill(here[0], sayNums(seg.replace(t.slice(here[0].a, here[0].b), ' ')));
+    else if (here.length > 1) here.forEach((f, i) => fill(f, sayNums(t.slice(f.b, here[i + 1] ? here[i + 1].a : pt[1]))));
+    else if (last && /\bsets?\b|\breps?\b|\d\s*(?:for|x|by)\s*\d|lbs?\b|pounds?\b|kgs?\b|kilos?\b/.test(seg)) fill(last, sayNums(seg));
+    if (here.length) last = here[here.length - 1];
+  });
+  return found.filter((l, i, a) => a.findIndex(x => x.name === l.name) === i).slice(0, 8).map(l => ({ name: l.name, w: l.w, reps: l.reps, sets: l.sets }));
+}
+function guessWorkout(text) {
+  const t = sayDigits(String(text || '').toLowerCase()), lifts = sayLifts(t);
+  let type = (SAY_DAY.find(d => d[0].test(t)) || [])[1] || null;
+  if (!type && lifts.length) { const ks = lifts.map(l => SAY_TYPE[l.name]), has = k => ks.includes(k); type = has('legs') && (has('push') || has('pull')) ? 'full' : has('push') && has('pull') ? 'upper' : ks[0] || null; }
+  let mins = 0, m;
+  if ((m = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/.exec(t))) mins += Math.round(+m[1] * 60);
+  if (/\bhalf an hour\b/.test(t)) mins += 30; else if (/\band a half\b/.test(t) && mins) mins += 30;
+  if ((m = /(\d+)\s*(?:minutes?|mins?)\b/.exec(t))) mins += +m[1];
+  const effort = /\ball[- ]out\b|\bbrutal\b|\bdestroyed\b|\bkiller\b|\bmaxed\b|\bwrecked\b|\bexhaust/.test(t) ? 4 : /\bhard\b|\btough\b|\bheavy\b|\bintense\b|\bstruggl|\bdifficult\b/.test(t) ? 3 : /\beasy\b|\blight\b|\bchill\b|\brecovery\b|\bdeload\b/.test(t) ? 1 : /\bsteady\b|\bmoderate\b|\bdecent\b|\bsolid\b|\bnormal\b|\bokay\b|\bfine\b/.test(t) ? 2 : null;
+  const tag = /\bexams?\b|\bfinals\b|\bmidterms?\b/.test(t) ? 'Exam week' : /\bsick\b|\bill\b|\ba cold\b/.test(t) ? 'Sick' : /\btravell?ing\b|\bhotel gym\b|\bon the road\b/.test(t) ? 'Travelling' : /\beasy day\b/.test(t) ? 'Easy day' : '';
+  return { type: type, mins: mins ? clamp(mins, 10, 180) : null, effort: effort, lifts: lifts, tag: tag, at: Date.now() };
+}
+function sayKind(text) {
+  const t = String(text || '').toLowerCase(), n = re => (t.match(re) || []).length;
+  const w = n(SAY_GYM) + 2 * sayLifts(t).length + (SAY_DAY.some(d => d[0].test(t)) ? 2 : 0);
+  const f = n(SAY_FOOD) + FOOD_DB.reduce((a, x) => a + x.keys.filter(k => t.includes(k)).length, 0);
+  return w > f ? 'workout' : f > w ? 'food' : 'other';
+}
+function guessSay(text, force) {
+  const kind = force || sayKind(text);
+  if (kind === 'food') return { state: 'ok', kind: 'food', guess: true };
+  if (kind === 'workout') return { state: 'ok', kind: 'workout', workout: guessWorkout(text) };
+  return { state: 'ok', kind: 'other' };
+}
+
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */
 function renderRail() {
@@ -3833,7 +4467,7 @@ function renderRail() {
 }
 
 function boot() {
-  loadState(); initAI(); initMCP(); initSync(); camProbe();
+  loadState(); initAI(); initVoice(); initMCP(); initSync(); camProbe();
   document.addEventListener('touchstart', () => { }, { passive: true });   // lets iPhone show pressed states
   if (S.ui.tab === 'cam') S.ui.tab = 'home';   // never reopen on the camera
   $('#cam-input').addEventListener('change', onCamFile);
