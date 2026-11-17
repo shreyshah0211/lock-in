@@ -1,5 +1,14 @@
 # Build log
 
+## v7 (16 Nov 2026)
+An Xcode project, so the app can be installed on the owner's iPhone with its own icon.
+
+- **`ios/LockIn.xcodeproj`.** One target, two Swift files. `LockInApp.swift` starts the app; `WebScreen.swift` shows `dist/index.html` in a full-screen web view, lets the page use the camera and microphone after iOS has asked once, and sends outside links to Safari. The project points at `../dist/index.html`, so rebuilding the web app updates the iPhone app on the next Run.
+- **Settings chosen.** iPhone only, portrait, iOS 17 or later, bundle identifier `com.shreyshah.lockin`, automatic signing with no team set, Swift 5 language mode. `Info.plist` carries the camera, microphone and speech recognition explanations iOS requires. The icon is the clock ring from the wordmark.
+- **What does not carry over.** Inside this app there is no Claude: photo recognition, calorie estimates from photos, Claude's reading of speech, and saving to the Claude account are all off, and the web app falls back to asking and to its built-in rules. Connecting those needs a Claude API key or a small server, which is the next step.
+
+Checked: the project file parses, every object it points at exists, and every file it names is on disk. Not checked: opening it in Xcode, compiling the Swift, or running it on a phone. None of that was possible here.
+
 ## v6 (16 Nov 2026)
 Two additions asked for by the owner: a globe that opens into a map, and logging by voice.
 
