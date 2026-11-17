@@ -18,13 +18,17 @@ function initVoice() {
     if (window.claude && typeof window.claude.use === 'function') {
       window.claude.use('dictation').then(d => {
         VOICE.d = d || null; if (!d) return;
-        d.onPartial(e => { if (D.say) { D.say.partial = (e && e.text) || ''; sayPaint(); } });
-        d.onFinal(e => sayHeard((e && e.text) || ''));
-        d.onState(e => voiceState(e.state, e.reason));
+        bindDictation(d);
         if (D.say) drawSheets(false);
       }).catch(() => { VOICE.d = null; });
-    } else VOICE.d = null;
+    } else { VOICE.d = typeof nativeDictation === 'function' ? nativeDictation() : null; if (VOICE.d) bindDictation(VOICE.d); }
   } catch (e) { VOICE.d = null; }
+}
+// One microphone, two places that listen: the Say it sheet, and the correction box on a meal.
+function bindDictation(d) {
+  d.onPartial(e => { const t = (e && e.text) || ''; if (VOICE.target === 'meal') mealVoice('partial', t); else if (D.say) { D.say.partial = t; sayPaint(); } });
+  d.onFinal(e => { const t = (e && e.text) || ''; if (VOICE.target === 'meal') mealVoice('final', t); else sayHeard(t); });
+  d.onState(e => { if (VOICE.target === 'meal') { VOICE.state = e.state || 'idle'; mealVoice('state', '', e.state, e.reason); } else voiceState(e.state, e.reason); });
 }
 // 'claude': Claude's dictation. 'web': the browser's own. 'kb': the microphone on the keyboard.
 function voiceKind() { return VOICE.off ? 'kb' : VOICE.d ? 'claude' : VOICE.sr ? 'web' : 'kb'; }
@@ -88,6 +92,7 @@ A.openSay = el => {
 // Called straight from the tap: a microphone only opens on the person's own press.
 A.sayMic = () => {
   const s = D.say, k = voiceKind(); if (!s || s.busy) return;
+  VOICE.target = 'say';
   if (k === 'claude') {
     if (VOICE.state !== 'idle') { VOICE.d.stop().catch(() => { }); return; }
     VOICE.d.start().catch(err => {

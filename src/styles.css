@@ -955,3 +955,18 @@ body{overscroll-behavior:none}
 .coach-empty b{color:var(--iron);font-size:17px}
 .coach-q{gap:8px}
 .coach-q .chip{text-align:left;min-height:38px;font-size:13.5px}
+
+/* Meal rows: kcal unit, swipe to edit or delete */
+.meal .k i{font-style:normal;font-family:var(--body);font-size:12px;font-weight:700;color:var(--mute);margin-left:3px}
+.mswipe{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.mswipe .meal{position:relative;background:var(--bg,#fff);border-bottom:0;touch-action:pan-y;z-index:1}
+.mswipe-acts{position:absolute;inset:0 0 0 auto;width:152px;display:grid;grid-template-columns:1fr 1fr}
+.mswipe-acts button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12.5px;font-weight:700;color:#fff}
+.sw-edit{background:var(--iron)}
+.sw-del{background:#D8311B}
+.sw-tip{display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px}
+/* Say what to change */
+.fix-mic{background:#FFF1EA;color:var(--go);min-height:56px;font-size:16px;font-weight:800;gap:10px}
+.fix-mic.on{background:var(--go);color:#fff;animation:fixpulse 1.4s ease-in-out infinite}
+@keyframes fixpulse{50%{box-shadow:0 0 0 8px rgba(255,90,31,.18)}}
+@media (prefers-reduced-motion:reduce){.fix-mic.on{animation:none}}

@@ -23,3 +23,16 @@ function remindSync() {
 }
 setTimeout(remindSync, 1500);
 setInterval(remindSync, 60000);
+
+// Speech to text in the iPhone app, shaped like Claude's dictation so the Say it sheet uses it as is.
+function nativeDictation() {
+  const h = appNative(); if (!h) return null;
+  const L = { partial: [], final: [], state: [] };
+  window.__speech = e => { if (e && L[e.type]) L[e.type].forEach(f => f(e)); };
+  const fail = c => { L.state.forEach(f => f({ state: 'idle', reason: c })); const x = new Error(c); x.code = c; return x; };
+  return {
+    onPartial: f => L.partial.push(f), onFinal: f => L.final.push(f), onState: f => L.state.push(f),
+    start: () => { L.state.forEach(f => f({ state: 'starting' })); return h.postMessage({ op: 'listen' }).then(ok => { if (!ok) throw fail('unavailable'); }, err => { throw fail((err && err.message) || 'unavailable'); }); },
+    stop: () => h.postMessage({ op: 'listenStop' })
+  };
+}

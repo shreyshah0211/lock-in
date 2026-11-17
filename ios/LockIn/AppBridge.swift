@@ -1,5 +1,7 @@
+import AVFoundation
 import Foundation
 import MapKit
+import Speech
 import SwiftUI
 import UIKit
 import UserNotifications
@@ -8,6 +10,7 @@ import WebKit
 // Native pieces the page asks for through the "app" message handler (see src/js/22-native.js):
 //   {op: "map", places: [{name, city, lat, lon, count}], focus: "name"} -> shows the gyms in Apple Maps
 //   {op: "remind", on: true, deadline: <ms since 1970>, days: 23}   -> schedules streak reminders
+//   {op: "listen"} / {op: "listenStop"}                               -> speech to text; words arrive through window.__speech
 final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "app"
 
@@ -35,6 +38,10 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             let deadline = (body["deadline"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
             let days = body["days"] as? Int ?? 0
             Reminders.schedule(on: on, deadline: deadline, days: days) { granted in replyHandler(granted, nil) }
+        case "listen":
+            SpeechInput.shared.start(web: message.webView) { err in replyHandler(err == nil, err) }
+        case "listenStop":
+            SpeechInput.shared.finish(); replyHandler(true, nil)
         default:
             replyHandler(nil, "bad_request")
         }
@@ -46,6 +53,104 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
         var top = scene?.windows.first { $0.isKeyWindow }?.rootViewController ?? scene?.windows.first?.rootViewController
         while let next = top?.presentedViewController { top = next }
         return top
+    }
+}
+
+// MARK: Speech to text
+// The page has no microphone of its own inside the app, so the app listens and sends the words
+// to window.__speech({type: "partial"|"final"|"state", text, state, reason}). It stops by itself
+// after a short pause, or when the page asks.
+final class SpeechInput: NSObject {
+    static let shared = SpeechInput()
+    private let recognizer = SFSpeechRecognizer(locale: Locale.current) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private let engine = AVAudioEngine()
+    private var request: SFSpeechAudioBufferRecognitionRequest?
+    private var task: SFSpeechRecognitionTask?
+    private weak var web: WKWebView?
+    private var lastText = ""
+    private var quiet: Timer?
+    private var active = false
+
+    func start(web: WKWebView?, done: @escaping (String?) -> Void) {
+        self.web = web
+        SFSpeechRecognizer.requestAuthorization { status in
+            guard status == .authorized else { DispatchQueue.main.async { done("not_granted") }; return }
+            AVAudioApplication.requestRecordPermission { ok in
+                DispatchQueue.main.async {
+                    guard ok else { done("not_granted"); return }
+                    guard let r = self.recognizer, r.isAvailable else { done("unavailable"); return }
+                    do { try self.begin(r); done(nil) } catch { self.cleanup(); done("unavailable") }
+                }
+            }
+        }
+    }
+
+    private func begin(_ r: SFSpeechRecognizer) throws {
+        cleanup()
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try session.setActive(true, options: .notifyOthersOnDeactivation)
+        let req = SFSpeechAudioBufferRecognitionRequest()
+        req.shouldReportPartialResults = true
+        req.addsPunctuation = true
+        request = req
+        let input = engine.inputNode
+        input.installTap(onBus: 0, bufferSize: 1024, format: input.outputFormat(forBus: 0)) { buf, _ in req.append(buf) }
+        engine.prepare()
+        try engine.start()
+        active = true; lastText = ""
+        emit(["type": "state", "state": "listening"])
+        task = r.recognitionTask(with: req) { [weak self] result, error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let result {
+                    let text = result.bestTranscription.formattedString
+                    if result.isFinal {
+                        self.emit(["type": "final", "text": text]); self.stopped("stopped"); return
+                    }
+                    if text != self.lastText { self.lastText = text; self.emit(["type": "partial", "text": text]); self.armQuiet() }
+                }
+                if error != nil {
+                    // Ended without a final result: hand over what was heard so far.
+                    if !self.lastText.isEmpty { self.emit(["type": "final", "text": self.lastText]) }
+                    self.stopped(self.lastText.isEmpty ? "no_speech" : "stopped")
+                }
+            }
+        }
+        armQuiet(first: true)
+    }
+
+    // Stop listening after a pause: 2 seconds once words have come, 6 if nothing has been said yet.
+    private func armQuiet(first: Bool = false) {
+        quiet?.invalidate()
+        quiet = Timer.scheduledTimer(withTimeInterval: first ? 6 : 2, repeats: false) { [weak self] _ in self?.finish() }
+    }
+
+    func finish() {
+        guard active else { return }
+        quiet?.invalidate()
+        emit(["type": "state", "state": "finishing"])
+        engine.stop(); engine.inputNode.removeTap(onBus: 0)
+        request?.endAudio()
+    }
+
+    private func stopped(_ reason: String) {
+        guard active else { return }
+        cleanup()
+        emit(["type": "state", "state": "idle", "reason": reason])
+    }
+
+    private func cleanup() {
+        quiet?.invalidate(); quiet = nil
+        if engine.isRunning { engine.stop() }
+        engine.inputNode.removeTap(onBus: 0)
+        task?.cancel(); task = nil; request = nil; active = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    private func emit(_ payload: [String: Any]) {
+        guard let web, let data = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: data, encoding: .utf8) else { return }
+        web.evaluateJavaScript("window.__speech && window.__speech(\(json))")
     }
 }
 

@@ -43,7 +43,8 @@ function foodBody() {
   }
   const viaHealth = conn().health || conn().hconnect;
   h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2><button class="link" data-a="openGoals">Change goals</button></div>' +
-    (t.meals.length ? '<div>' + t.meals.map(m => '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? m.kcal : m.p) + '<small>' + (kc ? m.p + ' g protein' : 'g protein') + '</small></span></button>').join('') + '</div>'
+    (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
+      '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? fmtN(m.kcal) + '<i>kcal</i>' : m.p + '<i>g</i>') + '<small>' + (kc ? m.p + ' g protein' : 'protein') + '</small></span></button></div>').join('') + '</div>' + (off === 0 && t.meals.length && !S.ui.swipeSeen ? '<p class="mute sw-tip">' + ic('info', 14) + 'Swipe a meal left to edit or delete it.</p>' : '')
       : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Snap your first meal.' : 'on this day.') + '</p>') + '</div>';
   h += '<div><div class="sec-h"><h2 class="h2">Last 7 days</h2></div>' + foodWeekCard(fd) + '</div>';
   h += '<div class="menu" style="margin:0"><button data-a="openNutrients"><span class="mi">' + ic('drop', 20) + '</span><span class="g"><b>Fibre and sodium</b><span>' + (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates</span></span><span class="chev">' + ic('chevR', 18) + '</span></button></div>';
@@ -68,7 +69,7 @@ A.openMeal = el => {
     return sheetHead(m.name) + '<div class="sh-b"><div class="prev sq"><img src="' + mealImg(m) + '" alt=""></div>' +
       '<div class="stats" style="margin:0"><div><b>' + m.kcal + '</b><span>kcal</span></div><div><b>' + m.p + '</b><span>g protein</span></div><div><b>' + m.c + '</b><span>g carbs</span></div><div><b>' + m.f + '</b><span>g fat</span></div></div>' +
       '<p class="mute" style="font-size:13.5px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + dateLong(m.ts) + ' at ' + clock(m.ts) + (m.est ? '. A rough estimate from a photo or description.' : '.') + (x ? ' About ' + x[0] + ' g fibre and ' + fmtN(x[1]) + ' mg sodium.' : '') + '</p>' +
-      '<button class="btn btn-line btn-w" data-a="delMeal" data-id="' + id + '">' + ic('trash', 18) + 'Remove this meal</button></div>';
+      '<div class="two"><button class="btn btn-ink" data-a="mealEdit" data-id="' + id + '">' + ic('pencil', 18) + 'Edit</button><button class="btn btn-line" data-a="delMeal" data-id="' + id + '">' + ic('trash', 18) + 'Remove</button></div></div>';
   });
 };
 A.delMeal = el => { S.meals = S.meals.filter(m => m.id !== el.dataset.id); (S.gone || (S.gone = {}))[el.dataset.id] = now(); save(); closeSheet(); refresh(); toast('Meal removed'); };

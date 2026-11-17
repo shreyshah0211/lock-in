@@ -970,6 +970,21 @@ body{overscroll-behavior:none}
 .coach-q{gap:8px}
 .coach-q .chip{text-align:left;min-height:38px;font-size:13.5px}
 
+/* Meal rows: kcal unit, swipe to edit or delete */
+.meal .k i{font-style:normal;font-family:var(--body);font-size:12px;font-weight:700;color:var(--mute);margin-left:3px}
+.mswipe{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.mswipe .meal{position:relative;background:var(--bg,#fff);border-bottom:0;touch-action:pan-y;z-index:1}
+.mswipe-acts{position:absolute;inset:0 0 0 auto;width:152px;display:grid;grid-template-columns:1fr 1fr}
+.mswipe-acts button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12.5px;font-weight:700;color:#fff}
+.sw-edit{background:var(--iron)}
+.sw-del{background:#D8311B}
+.sw-tip{display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px}
+/* Say what to change */
+.fix-mic{background:#FFF1EA;color:var(--go);min-height:56px;font-size:16px;font-weight:800;gap:10px}
+.fix-mic.on{background:var(--go);color:#fff;animation:fixpulse 1.4s ease-in-out infinite}
+@keyframes fixpulse{50%{box-shadow:0 0 0 8px rgba(255,90,31,.18)}}
+@media (prefers-reduced-motion:reduce){.fix-mic.on{animation:none}}
+
 </style>
 </head>
 <body>
@@ -2905,11 +2920,12 @@ function mealHead(d) {
 }
 function mealSheet() {
   const d = D.meal; if (!d) return '';
-  const src = d.photo ? PHOTOS[d.photo] : mealURI(d.art.kind, d.art.seed), working = d.state === 'working', est = isEstimate(d.state);
+  const src = d.photo ? PHOTOS[d.photo] || photoSrc(d.photo) : d.img ? esc(d.img) : mealURI(d.art.kind, d.art.seed), working = d.state === 'working', est = isEstimate(d.state);
   const st = {
     working: ['', '<span class="spin"></span>Estimating calories and macros'],
     ai: [' ok', ic('sparkle', 18) + '<span>Claude\'s estimate from your ' + (d.photo ? 'photo' : 'description') + (d.conf ? ', ' + d.conf + ' confidence' : '') + '. Photo estimates often run low, so check the portions.</span>'],
     sample: ['', ic('image', 18) + '<span>Sample estimate for a sample photo. Your own photos get a real one.</span>'],
+    edit: ['', ic('pencil', 18) + '<span>Editing a meal you logged. Change anything, or say what to change.</span>'],
     guess: ['', ic('info', 18) + '<span>Rough match from a small built-in food list. Check the numbers.</span>'],
     notfood: [' no', ic('info', 18) + '<span>This does not look like food. Type the details in, or switch it above.</span>'],
     off: ['', ic('info', 18) + '<span>Photo estimates need Claude switched on for this page. Type the numbers in for now.</span>']
@@ -2919,17 +2935,19 @@ function mealSheet() {
   const items = d.items.length ? '<div class="field"><span class="lbl">What is in it</span><div class="mitems">' + d.items.map((it, i) => '<div class="mitem"><span class="grow"><b>' + esc(it.name) + '</b><small>' + Math.round(it.kcal * it.mult / 5) * 5 + ' kcal</small></span>' + seg('mealItem', it.mult, ' data-i="' + i + '"') +
     '<button class="rm" data-a="mealItemDel" data-i="' + i + '" aria-label="Remove ' + esc(it.name) + '">' + ic('x', 18) + '</button></div>').join('') + '</div></div>' : '';
   const prior = est ? mealPrior(d) : null;
-  let h = sheetHead('Log a meal', { back: true }) + '<div class="sh-b">' + kindSwitch() + '<div class="prev sq"><img src="' + src + '" alt="Your meal"></div><div class="aicheck' + st[0] + '">' + st[1] + '</div>';
+  let h = sheetHead(d.editId ? 'Edit meal' : 'Log a meal', { back: true }) + '<div class="sh-b">' + kindSwitch() + '<div class="prev sq"><img src="' + src + '" alt="Your meal"></div><div class="aicheck' + st[0] + '">' + st[1] + '</div>';
   if (!working) {
     h += '<div class="card mcard" id="ml-head">' + mealHead(d) + '</div>' +
       (prior ? '<div class="aicheck">' + ic('clock', 18) + '<span>Last time you logged this at ' + fmtN(prior.kcal) + ' kcal.</span><button class="link" data-a="mealUsePrior">Use that</button></div>' : '') +
       '<div class="field"><label for="ml-name">What is it?</label><input class="input" id="ml-name" data-m="meal.name" value="' + esc(d.name) + '" placeholder="Veggie burrito bowl" autocomplete="off"></div>' + items;
     if (d.base) h += '<div class="field"><span class="lbl">' + (d.items.length ? 'How big was the whole plate?' : 'How big was the portion?') + '</span>' + seg('mealSize', d.size) + '</div>';
-    if (est) h += '<div class="field"><label for="ml-hint">Something off? Say what to change</label><div class="send"><input class="input" id="ml-hint" data-m="meal.hint" data-enter="mealRefine" value="' + esc(d.hint) + '" placeholder="No rice, extra paneer, cooked in butter" autocomplete="off"><button class="btn btn-ink wide" data-a="mealRefine"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>' : 'Re-estimate') + '</button></div></div>';
+    if (est || d.editId) h += '<div class="field fix"><span class="lbl">Not quite right? Tell it what to change</span>' +
+      '<button class="btn btn-w fix-mic' + (d.listening ? ' on' : '') + '" data-a="mealMic"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? '<span class="spin"></span>Re-estimating' : ic('mic', 22) + (d.listening ? 'Listening. Tap when done' : 'Say what to change')) + '</button>' +
+      '<div class="send"><input class="input" id="ml-hint" data-m="meal.hint" data-enter="mealRefine" value="' + esc(d.hint) + '" placeholder="Or type it: no rice, extra paneer" autocomplete="off"><button class="btn btn-ink wide" data-a="mealRefine"' + (d.busy ? ' disabled' : '') + '>Fix</button></div></div>';
     h += d.nums || !d.base ? '<div class="mgrid">' + fld('kcal', 'Calories', 'kcal') + fld('p', 'Protein', 'g') + fld('c', 'Carbs', 'g') + fld('f', 'Fat', 'g') + '</div>' : '<button class="btn btn-line btn-w" data-a="mealNums">' + ic('pencil', 18) + 'Type the numbers yourself</button>';
     h += '<div class="field"><span class="lbl">Which meal</span><div class="chips">' + SLOTS.map(s => '<button class="chip" data-a="mealSlot" data-k="' + s[0] + '" aria-pressed="' + (d.slot === s[0]) + '">' + s[1] + '</button>').join('') + '</div></div>';
   }
-  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="mealLog"' + (working ? ' disabled' : '') + '>Log meal</button></div>';
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="mealLog"' + (working ? ' disabled' : '') + '>' + (d.editId ? 'Save changes' : 'Log meal') + '</button></div>';
 }
 A.mealSlot = el => { D.meal.slot = el.dataset.k; drawSheets(false); };
 A.mealSize = el => { const d = D.meal; d.size = +el.dataset.v; d.typed = false; mealRecalc(d); drawSheets(false); };
@@ -2968,8 +2986,13 @@ A.mealRefine = async () => {
 A.mealLog = () => {
   const d = D.meal; if (!d) return;
   if (!String(d.name).trim() || d.kcal === '' || isNaN(+d.kcal)) { toast('Add a name and the calories to log this meal.'); return; }
-  if (d.photo) savePhoto(d.photo, PHOTOS[d.photo]);
   const k = d.base ? mealFactor(d) : 1, b = d.base || {}, est = isEstimate(d.state) && !d.typed;
+  if (d.editId) {
+    const m = S.meals.find(x => x.id === d.editId);
+    if (m) Object.assign(m, { name: String(d.name).trim(), kcal: Math.round(+d.kcal), p: Math.round(+d.p || 0), c: Math.round(+d.c || 0), f: Math.round(+d.f || 0), fib: b.fib != null ? Math.round(b.fib * k) : m.fib, na: b.na != null ? round10(b.na * k) : m.na, slot: d.slot, est: est, edited: now() });
+    D.meal = null; closeAll(); save(); render(); toast(m ? 'Meal updated: ' + fmtN(m.kcal) + ' kcal, ' + m.p + ' g protein' : 'That meal is gone', 'check'); return;
+  }
+  if (d.photo) savePhoto(d.photo, PHOTOS[d.photo]);
   S.meals.push({ id: uid(), ts: now(), name: String(d.name).trim(), kcal: Math.round(+d.kcal), p: Math.round(+d.p || 0), c: Math.round(+d.c || 0), f: Math.round(+d.f || 0), fib: b.fib != null ? Math.round(b.fib * k) : null, na: b.na != null ? round10(b.na * k) : null,
     slot: d.slot, art: d.art || { kind: 'bowl', seed: 3 }, photo: d.photo, src: d.state, est: est });
   checkBadges();
@@ -3193,7 +3216,8 @@ function foodBody() {
   }
   const viaHealth = conn().health || conn().hconnect;
   h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2><button class="link" data-a="openGoals">Change goals</button></div>' +
-    (t.meals.length ? '<div>' + t.meals.map(m => '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? m.kcal : m.p) + '<small>' + (kc ? m.p + ' g protein' : 'g protein') + '</small></span></button>').join('') + '</div>'
+    (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
+      '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? fmtN(m.kcal) + '<i>kcal</i>' : m.p + '<i>g</i>') + '<small>' + (kc ? m.p + ' g protein' : 'protein') + '</small></span></button></div>').join('') + '</div>' + (off === 0 && t.meals.length && !S.ui.swipeSeen ? '<p class="mute sw-tip">' + ic('info', 14) + 'Swipe a meal left to edit or delete it.</p>' : '')
       : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Snap your first meal.' : 'on this day.') + '</p>') + '</div>';
   h += '<div><div class="sec-h"><h2 class="h2">Last 7 days</h2></div>' + foodWeekCard(fd) + '</div>';
   h += '<div class="menu" style="margin:0"><button data-a="openNutrients"><span class="mi">' + ic('drop', 20) + '</span><span class="g"><b>Fibre and sodium</b><span>' + (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates</span></span><span class="chev">' + ic('chevR', 18) + '</span></button></div>';
@@ -3218,7 +3242,7 @@ A.openMeal = el => {
     return sheetHead(m.name) + '<div class="sh-b"><div class="prev sq"><img src="' + mealImg(m) + '" alt=""></div>' +
       '<div class="stats" style="margin:0"><div><b>' + m.kcal + '</b><span>kcal</span></div><div><b>' + m.p + '</b><span>g protein</span></div><div><b>' + m.c + '</b><span>g carbs</span></div><div><b>' + m.f + '</b><span>g fat</span></div></div>' +
       '<p class="mute" style="font-size:13.5px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + dateLong(m.ts) + ' at ' + clock(m.ts) + (m.est ? '. A rough estimate from a photo or description.' : '.') + (x ? ' About ' + x[0] + ' g fibre and ' + fmtN(x[1]) + ' mg sodium.' : '') + '</p>' +
-      '<button class="btn btn-line btn-w" data-a="delMeal" data-id="' + id + '">' + ic('trash', 18) + 'Remove this meal</button></div>';
+      '<div class="two"><button class="btn btn-ink" data-a="mealEdit" data-id="' + id + '">' + ic('pencil', 18) + 'Edit</button><button class="btn btn-line" data-a="delMeal" data-id="' + id + '">' + ic('trash', 18) + 'Remove</button></div></div>';
   });
 };
 A.delMeal = el => { S.meals = S.meals.filter(m => m.id !== el.dataset.id); (S.gone || (S.gone = {}))[el.dataset.id] = now(); save(); closeSheet(); refresh(); toast('Meal removed'); };
@@ -4366,13 +4390,17 @@ function initVoice() {
     if (window.claude && typeof window.claude.use === 'function') {
       window.claude.use('dictation').then(d => {
         VOICE.d = d || null; if (!d) return;
-        d.onPartial(e => { if (D.say) { D.say.partial = (e && e.text) || ''; sayPaint(); } });
-        d.onFinal(e => sayHeard((e && e.text) || ''));
-        d.onState(e => voiceState(e.state, e.reason));
+        bindDictation(d);
         if (D.say) drawSheets(false);
       }).catch(() => { VOICE.d = null; });
-    } else VOICE.d = null;
+    } else { VOICE.d = typeof nativeDictation === 'function' ? nativeDictation() : null; if (VOICE.d) bindDictation(VOICE.d); }
   } catch (e) { VOICE.d = null; }
+}
+// One microphone, two places that listen: the Say it sheet, and the correction box on a meal.
+function bindDictation(d) {
+  d.onPartial(e => { const t = (e && e.text) || ''; if (VOICE.target === 'meal') mealVoice('partial', t); else if (D.say) { D.say.partial = t; sayPaint(); } });
+  d.onFinal(e => { const t = (e && e.text) || ''; if (VOICE.target === 'meal') mealVoice('final', t); else sayHeard(t); });
+  d.onState(e => { if (VOICE.target === 'meal') { VOICE.state = e.state || 'idle'; mealVoice('state', '', e.state, e.reason); } else voiceState(e.state, e.reason); });
 }
 // 'claude': Claude's dictation. 'web': the browser's own. 'kb': the microphone on the keyboard.
 function voiceKind() { return VOICE.off ? 'kb' : VOICE.d ? 'claude' : VOICE.sr ? 'web' : 'kb'; }
@@ -4436,6 +4464,7 @@ A.openSay = el => {
 // Called straight from the tap: a microphone only opens on the person's own press.
 A.sayMic = () => {
   const s = D.say, k = voiceKind(); if (!s || s.busy) return;
+  VOICE.target = 'say';
   if (k === 'claude') {
     if (VOICE.state !== 'idle') { VOICE.d.stop().catch(() => { }); return; }
     VOICE.d.start().catch(err => {
@@ -4906,6 +4935,19 @@ function remindSync() {
 setTimeout(remindSync, 1500);
 setInterval(remindSync, 60000);
 
+// Speech to text in the iPhone app, shaped like Claude's dictation so the Say it sheet uses it as is.
+function nativeDictation() {
+  const h = appNative(); if (!h) return null;
+  const L = { partial: [], final: [], state: [] };
+  window.__speech = e => { if (e && L[e.type]) L[e.type].forEach(f => f(e)); };
+  const fail = c => { L.state.forEach(f => f({ state: 'idle', reason: c })); const x = new Error(c); x.code = c; return x; };
+  return {
+    onPartial: f => L.partial.push(f), onFinal: f => L.final.push(f), onState: f => L.state.push(f),
+    start: () => { L.state.forEach(f => f({ state: 'starting' })); return h.postMessage({ op: 'listen' }).then(ok => { if (!ok) throw fail('unavailable'); }, err => { throw fail((err && err.message) || 'unavailable'); }); },
+    stop: () => h.postMessage({ op: 'listenStop' })
+  };
+}
+
 /* The friendlier layer: one capture button with a menu, a Today card on Home,
    next-weight suggestions, a weight log, and Coach. Nothing here removes a feature;
    it puts the ones that were already there where they are easier to reach. */
@@ -5067,6 +5109,91 @@ A.coachSend = async () => {
   save(); drawSheets(false); coachScroll();
 };
 function coachScroll() { const l = $('.coach-log'); if (l) l.scrollTop = l.scrollHeight; }
+
+/* Easier meal fixes. Say what to change instead of typing it, and swipe a meal
+   on the Food tab to edit or delete it. */
+
+/* ---- say what to change ----
+   Uses whichever microphone this page has: the iPhone app's own, Claude's dictation,
+   or the browser's. Where there is none, the keyboard's microphone does the listening. */
+let _mealRec = null;
+A.mealMic = () => {
+  const d = D.meal; if (!d || d.busy) return;
+  const k = voiceKind();
+  if (k === 'claude') {
+    if (d.listening) { VOICE.d.stop().catch(() => { }); return; }
+    VOICE.target = 'meal'; d.listening = true; d.hint = ''; drawSheets(false);
+    VOICE.d.start().catch(err => { const c = err && err.code; mealVoice('state', '', 'idle', c || 'unavailable'); });
+  } else if (k === 'web') {
+    if (_mealRec) { try { _mealRec.stop(); } catch (e) { } return; }
+    let rec; try { rec = new VOICE.sr(); } catch (e) { mealKeyboard(); return; }
+    rec.lang = navigator.language || 'en-US'; rec.interimResults = true; rec.continuous = false;
+    rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; mealVoice(e.results[e.results.length - 1].isFinal ? 'final' : 'partial', t); };
+    rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') VOICE.off = true; };
+    rec.onend = () => { _mealRec = null; mealVoice('state', '', 'idle', VOICE.off ? 'not_granted' : 'stopped'); };
+    _mealRec = rec; d.listening = true; d.hint = ''; drawSheets(false);
+    try { rec.start(); } catch (e) { _mealRec = null; d.listening = false; mealKeyboard(); }
+  } else mealKeyboard();
+};
+function mealKeyboard() { const d = D.meal; if (d) { d.listening = false; drawSheets(false); } const i = $('#ml-hint'); if (i) i.focus(); toast('Tap the microphone on your keyboard and say what to change.'); }
+// Words as they arrive, then a fresh estimate as soon as you stop talking.
+function mealVoice(kind, text, state, reason) {
+  const d = D.meal; if (!d) { VOICE.target = 'say'; return; }
+  if (kind === 'partial' || kind === 'final') {
+    d.hint = text; const i = $('#ml-hint'); if (i) i.value = text; return;
+  }
+  if (state !== 'idle') return;
+  d.listening = false; VOICE.target = 'say';
+  if (reason === 'not_granted' || reason === 'unavailable') { VOICE.off = reason === 'not_granted'; drawSheets(false); toast(reason === 'not_granted' ? 'Lock In does not have the microphone. Turn it on in Settings, or type the change.' : 'The microphone is not available right now. Type the change instead.'); return; }
+  if (String(d.hint || '').trim()) A.mealRefine(); else { drawSheets(false); if (reason === 'no_speech') toast('Did not catch that. Tap the microphone and try again.'); }
+}
+
+/* ---- edit a logged meal ---- */
+A.mealEdit = el => {
+  const m = S.meals.find(x => x.id === el.dataset.id); if (!m) return;
+  closeAll(); swipeClose(); D.snap = null;
+  D.meal = { editId: m.id, photo: m.photo || null, img: m.img || null, art: m.art || { kind: 'bowl', seed: 3 }, text: m.name, name: m.name, kcal: m.kcal, p: m.p, c: m.c, f: m.f,
+    base: { kcal: m.kcal, p: m.p, c: m.c, f: m.f, fib: m.fib, na: m.na }, items: [], size: 1, slot: m.slot, state: 'edit', conf: '', hint: '', nums: true, busy: false, typed: true };
+  openSheet(mealSheet, { cls: 'full', onClose: () => { if (D.meal && D.meal.editId) D.meal = null; } });
+};
+A.mealDel = el => {
+  const id = el.dataset.id, m = S.meals.find(x => x.id === id); if (!m) return;
+  swipeClose();
+  S.meals = S.meals.filter(x => x.id !== id); (S.gone || (S.gone = {}))[id] = now(); save(); refresh();
+  toast(m.name + ' removed (' + fmtN(m.kcal) + ' kcal)', 'trash');
+};
+
+/* ---- swipe a meal row ----
+   Drag left to show Edit and Delete. Vertical scrolling still works, and only one row is open at a time. */
+const SW = { el: null, x0: 0, y0: 0, dx: 0, open: null, axis: null, id: null };
+const SW_W = 152;
+function swipeRow(row) { return row && row.closest('.mswipe'); }
+function swipeSet(el, x, anim) { const r = el.querySelector('.meal'); if (!r) return; r.style.transition = anim ? 'transform .22s ease' : 'none'; r.style.transform = x ? 'translateX(' + x + 'px)' : ''; el.classList.toggle('open', x < 0); }
+function swipeClose() { if (SW.open) { swipeSet(SW.open, 0, true); SW.open = null; } }
+document.addEventListener('pointerdown', e => {
+  const el = swipeRow(e.target); if (!el || e.target.closest('.mswipe-acts')) { if (SW.open && !e.target.closest('.mswipe-acts')) swipeClose(); return; }
+  if (SW.open && SW.open !== el) swipeClose();
+  SW.el = el; SW.x0 = e.clientX; SW.y0 = e.clientY; SW.dx = 0; SW.axis = null; SW.id = e.pointerId; SW.start = el.classList.contains('open') ? -SW_W : 0;
+});
+document.addEventListener('pointermove', e => {
+  if (!SW.el || e.pointerId !== SW.id) return;
+  const dx = e.clientX - SW.x0, dy = e.clientY - SW.y0;
+  if (!SW.axis) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; SW.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; }
+  if (SW.axis !== 'x') { SW.el = null; return; }
+  SW.dx = dx; swipeSet(SW.el, clamp(SW.start + dx, -SW_W - 30, 0), false);
+});
+document.addEventListener('pointerup', e => {
+  if (!SW.el || e.pointerId !== SW.id) return;
+  const el = SW.el; SW.el = null;
+  if (SW.axis !== 'x') return;
+  const open = SW.start + SW.dx < -SW_W / 2;
+  swipeSet(el, open ? -SW_W : 0, true); SW.open = open ? el : null;
+  if (open && !S.ui.swipeSeen) { S.ui.swipeSeen = true; save(); const tip = $('.sw-tip'); if (tip) tip.remove(); }
+  SW.justSwiped = Date.now();   // a swipe is not a tap on the meal
+});
+document.addEventListener('pointercancel', () => { if (SW.el) { swipeSet(SW.el, SW.start, true); SW.el = null; } });
+// Stop the click that ends a swipe from opening the meal.
+document.addEventListener('click', e => { if (SW.justSwiped && Date.now() - SW.justSwiped < 350 && swipeRow(e.target)) { e.stopPropagation(); e.preventDefault(); } }, true);
 
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */
