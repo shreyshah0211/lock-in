@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Lock In uses the camera for your gym check-in and meal photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Lock In uses the microphone when you describe a workout or a meal out loud.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Lock In turns what you say into a workout or a meal entry.</string>
+</dict>
+</plist>
