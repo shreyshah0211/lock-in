@@ -42,7 +42,8 @@ A.openPlan = async () => {
 
 /* ---- first-run intro: four screens, then the camera ----
    The last screen sets your own targets and shows them in the real nutrition bar,
-   so the first thing the app counts toward is yours. */
+   so the first thing the app counts toward is yours. From there you either start
+   your own streak from zero or look around the sample first. */
 const INTRO_N = 4;
 function introTargets() {
   const g = S.goals, step = (k, label, val, unit, d) => '<div class="it-row"><span><b>' + label + '</b><small>' + unit + '</small></span><div class="stepper"><button data-a="introStep" data-k="' + k + '" data-d="' + (-d) + '" aria-label="Less">' + ic('minus') + '</button><span class="v">' + fmtN(val) + '</span><button data-a="introStep" data-k="' + k + '" data-d="' + d + '" aria-label="More">' + ic('plus') + '</button></div></div>';
@@ -60,11 +61,12 @@ A.openIntro = () => {
       { art: introTargets(), t: 'Set your own targets', s: 'Change them any time. Food stays private to you.' }
     ][i];
     return '<div class="intro"><button class="cam-ic" style="align-self:flex-end" data-a="closeSheet" aria-label="Skip the intro">' + ic('x') + '</button><div class="intro-art">' + steps.art + '</div><h2>' + steps.t + '</h2><p>' + steps.s + '</p>' +
-      '<div class="dots">' + Array.from({ length: INTRO_N }, (_, k) => '<i class="' + (k === i ? 'on' : '') + '"></i>').join('') + '</div><button class="btn btn-go btn-w" data-a="introNext">' + (last ? ic('camera', 20) + 'Take a photo' : 'Next') + '</button>' +
-      (last ? '<button class="intro-skip" data-a="closeSheet">Look around first</button>' : '') + '</div>';
+      '<div class="dots">' + Array.from({ length: INTRO_N }, (_, k) => '<i class="' + (k === i ? 'on' : '') + '"></i>').join('') + '</div>' + (last && S.mode !== 'real' ? '<button class="btn btn-go btn-w" data-a="introReal"' + (D.realBusy ? ' disabled' : '') + '>' + (D.realBusy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Checking your account' : ic('camera', 20) + 'Start my own streak') + '</button><button class="intro-skip" data-a="closeSheet">Look around the sample first</button>'
+        : '<button class="btn btn-go btn-w" data-a="introNext">' + (last ? ic('camera', 20) + 'Take a photo' : 'Next') + '</button>') + '</div>';
   }, { cls: 'full dark', onClose: () => { if (S.ui.coach) { S.ui.coach = false; save(); } } });
 };
 A.introNext = () => { if (D.intro < INTRO_N - 1) { D.intro++; drawSheets(false); } else { closeAll(); A.goCam(); } };
+A.introReal = async () => { await goReal(); closeAll(); A.goCam(); };
 A.introStep = el => {
   const k = el.dataset.k, d = +el.dataset.d;
   if (k === 'gym') S.me.goalPerWeek = clamp(S.me.goalPerWeek + d, 1, 7); else S.goals[k] = clamp(S.goals[k] + d, k === 'kcal' ? 1200 : 40, k === 'kcal' ? 6000 : 300);

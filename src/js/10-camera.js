@@ -6,6 +6,9 @@ const cam = { live: null, stream: null, facing: 'environment', busy: false };
 const isTouch = () => { try { return matchMedia('(pointer:coarse)').matches; } catch (e) { return false; } };
 function camProbe() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { cam.live = false; return; }
+  // Inside another page's frame a phone cannot give this page a viewfinder, so go straight to the phone's own camera.
+  let framed = true; try { framed = window.self !== window.top; } catch (e) { }
+  if (framed && isTouch()) { cam.live = false; return; }
   try { navigator.permissions.query({ name: 'camera' }).then(p => { if (p.state === 'denied') cam.live = false; }).catch(() => { }); } catch (e) { }
 }
 async function camStart() {
@@ -28,7 +31,8 @@ VIEWS.cam = () => {
   const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
   const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
-  const sample = (k, label, src) => '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
+  // Sample photos are for looking around. With your own data on, only real photos count.
+  const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
   const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
   const right = intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.

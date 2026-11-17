@@ -132,7 +132,7 @@ function wordmark() {
 }
 function imgOf(o) {
   // a real photo when there is one, else the drawn scene, or the workout card when there was no photo at all
-  if (o.photo && PHOTOS[o.photo]) return PHOTOS[o.photo];
+  const ph = o.photo && photoSrc(o.photo); if (ph) return ph;
   return o.scene.stat ? statURI(o.scene.stat) : sceneURI(o.scene.kind, o.scene.seed);
 }
 function bar(frac, color) { return '<div class="bar"><i style="width:' + (clamp(frac, 0, 1) * 100).toFixed(1) + '%' + (color ? ';background:' + color : '') + '"></i></div>'; }

@@ -10,7 +10,7 @@ function nutritionBar(fd, big) {
     (kc ? '<div class="macros' + (big ? '' : ' mini') + '">' + macro('p', 'Protein', 'var(--protein)') + macro('c', 'Carbs', 'var(--carbs)') + macro('f', 'Fat', 'var(--fat)') + '</div>' : '') + '</div>';
 }
 function dayLabel(fd) { const t = foodDay(now()); return fd === t ? 'Today' : fd === t - 1 ? 'Yesterday' : dateLong(dayStart(fd)); }
-function mealImg(m) { return m.photo && PHOTOS[m.photo] ? PHOTOS[m.photo] : mealURI(m.art.kind, m.art.seed); }
+function mealImg(m) { return (m.photo && photoSrc(m.photo)) || mealURI(m.art.kind, m.art.seed); }
 // Fibre and sodium for a meal: what Claude estimated, or the built-in figure for a built-in food.
 function mealX(m) { return m.fib != null || m.na != null ? [m.fib || 0, m.na || 0] : FOOD_X[m.name] || null; }
 // The last seven days: how many had anything logged, and the daily average over the finished ones.
@@ -70,7 +70,7 @@ A.openMeal = el => {
       '<button class="btn btn-line btn-w" data-a="delMeal" data-id="' + id + '">' + ic('trash', 18) + 'Remove this meal</button></div>';
   });
 };
-A.delMeal = el => { S.meals = S.meals.filter(m => m.id !== el.dataset.id); save(); closeSheet(); refresh(); toast('Meal removed'); };
+A.delMeal = el => { S.meals = S.meals.filter(m => m.id !== el.dataset.id); (S.gone || (S.gone = {}))[el.dataset.id] = now(); save(); closeSheet(); refresh(); toast('Meal removed'); };
 // Fibre and sodium live one tap down: useful to some people, noise to most.
 const FIBRE_GUIDE = 30, SODIUM_GUIDE = 2300;
 A.openNutrients = () => openSheet(() => {

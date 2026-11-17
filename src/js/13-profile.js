@@ -119,7 +119,7 @@ A.openBadge = el => {
 };
 
 /* ---- progress photos ---- */
-function pgSrc(p) { return p.photo && PHOTOS[p.photo] ? PHOTOS[p.photo] : progressURI(p.art || 0); }
+function pgSrc(p) { return (p.photo && photoSrc(p.photo)) || progressURI(p.art || 0); }
 A.openProgress = () => openSheet(() => {
   const pg = S.progress.slice().sort((a, b) => b.ts - a.ts);
   return sheetHead('Progress photos', { back: true }) + '<div class="sh-b"><div class="aicheck">' + ic('lock', 18) + 'Only you can see these. They never go to your feed.</div><div class="pgrid">' + pg.map(p => '<button data-a="openCompare"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
@@ -154,14 +154,14 @@ A.openSettings = () => {
     const s = S.settings, m = S.me;
     const row = (t, d, on, key) => '<div class="setrow"><div class="grow"><div class="t">' + t + '</div><div class="s">' + d + '</div></div>' + sw(on, 'setToggle', 'data-k="' + key + '"') + '</div>';
     const inp = (k, label) => '<div class="field"><label for="st-' + k + '">' + label + '</label><input class="input" id="st-' + k + '" data-m="st.' + k + '" data-on="stLive" value="' + esc(D.st[k]) + '" maxlength="28" autocomplete="off"></div>';
-    return sheetHead('Settings', { back: true }) + '<div class="sh-b">' +
+    return sheetHead('Settings', { back: true }) + '<div class="sh-b">' + dataCard() +
       '<div class="two">' + inp('name', 'Name') + inp('handle', 'Username') + inp('campus', 'Campus') + inp('gym', 'Home gym') + '</div>' +
       '<div class="field"><span class="lbl">Weekly goal</span><div class="stepper"><button data-a="goalStep" data-d="-1" aria-label="Fewer">' + ic('minus') + '</button><span class="v">' + m.goalPerWeek + '</span><button data-a="goalStep" data-d="1" aria-label="More">' + ic('plus') + '</button><span class="u">check-ins a week</span></div></div>' +
       '<div><h3 class="h2">What friends can see</h3>' + row('Streak and time left', 'Always on. It is the point of the app.', true, 'locked') + row('Workouts and effort points', 'What you trained, how long and how hard.', s.share.workouts, 'share.workouts') + row('Lifts and new bests', 'Weights you log.', s.share.lifts, 'share.lifts') +
       '<div class="setrow"><div class="grow"><div class="t">Food, health data and progress photos</div><div class="s">Always private.</div></div>' + ic('lock', 20) + '</div></div>' +
       '<div><h3 class="h2">Streak</h3>' + row('Use rest passes automatically', 'Spend a pass instead of losing the streak.', s.autoPass, 'autoPass') + '</div>' +
       '<button class="btn btn-line btn-w" data-a="openIntro">Replay the intro</button>' +
-      '<div class="card"><h3 class="h2" style="margin-bottom:4px">Prototype tools</h3><p class="mute" style="font-size:13.5px;margin-bottom:12px">Jump forward in time to watch your clock drain, or start the sample data over.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-white btn-s" data-a="skip" data-h="6">Skip 6 hours</button><button class="btn btn-white btn-s" data-a="skip" data-h="24">Skip 24 hours</button><button class="btn btn-white btn-s" data-a="resetDemo">Start over</button></div></div></div>';
+      (S.mode === 'real' ? '' : '<div class="card"><h3 class="h2" style="margin-bottom:4px">Prototype tools</h3><p class="mute" style="font-size:13.5px;margin-bottom:12px">Jump forward in time to watch your clock drain, or start the sample data over.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-white btn-s" data-a="skip" data-h="6">Skip 6 hours</button><button class="btn btn-white btn-s" data-a="skip" data-h="24">Skip 24 hours</button><button class="btn btn-white btn-s" data-a="resetDemo">Start over</button></div></div>') + '</div>';
   }, { cls: 'full', onClose: () => { render(); } });
 };
 A.stLive = () => {

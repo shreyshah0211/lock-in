@@ -169,7 +169,7 @@ function doCheckin(o) {
   const c = mkCheckin({ ts: t, type: o.type, mins: o.mins, effort: o.effort, nl: lifts.length, photo: o.photo, caption: o.caption, verified: o.verified, pr: pr, lifts: lifts });
   if (o.scene) c.scene = o.scene;
   // how this check-in was proven: photo, photo plus a recorded workout, a photo from outside, or the workout alone
-  c.proof = o.proof || 'photo'; if (o.tag) c.tag = o.tag; if (o.screen) c.screen = true;
+  c.proof = o.proof || 'photo'; c.aud = o.audience || 'friends'; if (o.tag) c.tag = o.tag; if (o.screen) c.screen = true;
   const earned = [];
   if (comeback) { c.pts += COMEBACK_PTS; c.bonus = COMEBACK_PTS; earned.push({ icon: 'bolt', text: 'Comeback bonus, +' + COMEBACK_PTS + ' points' }); }
   S.checkins.push(c);

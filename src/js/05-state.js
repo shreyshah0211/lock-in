@@ -1,6 +1,7 @@
 const KEY = 'lockin.v5', PKEY = 'lockin.photos.v4';
 let PHOTOS = {};   // photo key -> data URL (photos the person took)
 let MEM = false;   // true when browser storage is unavailable
+let FRESH = false; // true when this page load found nothing saved in the browser
 
 function pointsFor(c) {
   return Math.round(8 + Math.min(c.mins, 120) * 0.25 + c.effort * 6 + Math.min(c.nl || 0, 6) * 2 + (c.pr ? 6 : 0));
@@ -93,7 +94,7 @@ function seedState() {
   });
 
   return {
-    v: 4, createdAt: t, offset: 0, conn: {}, detected: null, detectedUsedAt: 0,
+    v: 4, createdAt: t, offset: 0, mode: 'sample', rev: 0, conn: {}, detected: null, detectedUsedAt: 0,
     me: { id: 'me', name: 'Shrey', handle: 'shrey', campus: 'UW', gym: 'IMA', color: '#141A33', bio: '', lastCheckin: last.ts, streakStart: dayStart(today - 22) + 17 * HOUR, passes: 1, ext: 0, sincePass: 4, best: 41, lost: null, goalPerWeek: 4, usedPass: false, lastRepair: 0 },
     checkins: checkins, friends: friends,
     requests: [{ id: 'rq1', name: 'Nina Alvarez', color: '#D9466B', note: 'Trains at IMA' }, { id: 'rq2', name: 'Sam Whitaker', color: '#2D8B57', note: '2 friends in common' }],
@@ -127,7 +128,7 @@ function loadState() {
     if (raw) { const st = JSON.parse(raw); if (st && st.v === 4 && st.me && st.checkins) { S = st; } }
     const p = localStorage.getItem(PKEY); if (p) PHOTOS = JSON.parse(p) || {};
   } catch (e) { MEM = true; }
-  if (!S) S = seedState();
+  if (!S) { S = seedState(); FRESH = true; }
   upgradeState();
   S.ui.tab = S.ui.tab || 'home';
 }
@@ -138,14 +139,31 @@ function upgradeState() {
   if (S.conn && S.conn.strava) delete S.conn.strava;   // Strava now arrives through Apple Health or Health Connect
   S.posts.forEach(p => { if (p.uid === 'me' && !p.by) p.by = following().slice(0, Math.min(9, p.rx.fire + p.rx.flex + p.rx.clap)).map(f => f.id); });
   if (S.ui.recapSeen === undefined) S.ui.recapSeen = '';
+  if (!S.mode) S.mode = 'sample';   // 'sample' to look around, 'real' for your own data
+  if (!S.rev) S.rev = 0;
+}
+// Your own data, from zero. The sample friends stay, so the social screens have people in them.
+function realState(from) {
+  const st = seedState(), old = from || S;
+  Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
+  st.checkins = []; st.meals = []; st.lifts = {}; st.progress = []; st.badges = {}; st.activity = []; st.requests = []; st.squads = [];
+  st.posts = st.posts.filter(p => p.uid !== 'me'); st.friends.forEach(f => { f.duo = 0; });
+  st.goals = Object.assign({}, old.goals); st.settings = JSON.parse(JSON.stringify(old.settings));
+  st.mode = 'real'; st.rev = Date.now(); st.ui.coach = false;
+  return st;
 }
 let _saveT = 0;
 function save() {
   clearTimeout(_saveT);
-  _saveT = setTimeout(() => { if (MEM) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { MEM = true; } }, 250);
+  _saveT = setTimeout(() => {
+    syncStamp();   // marks the moment your own data last changed
+    if (!MEM) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { MEM = true; } }
+    syncPush();
+  }, 250);
 }
-function savePhoto(key, dataURL) {
+function savePhoto(key, dataURL, localOnly) {
   PHOTOS[key] = dataURL;
+  if (!localOnly) photoPush(key, dataURL);
   if (MEM) return;
   // Browser storage is small, so keep only the newest photos; older ones fall back to a drawn scene.
   const keys = Object.keys(PHOTOS);

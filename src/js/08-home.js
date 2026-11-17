@@ -39,6 +39,7 @@ function feedPosts() {
 // Home shows at most one card between your clock and the feed. First match wins: a workout
 // your phone recorded, last month's recap (once), a friend about to run out, the offer to connect.
 function homeCard() {
+  const off = syncOfferCard(); if (off) return off;
   const det = detectedCard(); if (det) return det;
   const rc = recapCard(); if (rc) return rc;
   const close = following().filter(f => pAlive(f) && pLeft(f) < 6 * HOUR).sort((a, b) => pLeft(a) - pLeft(b))[0];
@@ -104,7 +105,7 @@ A.sendComment = el => {
 
 /* ---- activity ---- */
 A.openActivity = () => {
-  openSheet(() => sheetHead('Activity') + '<div class="sh-b"><div class="rows">' + S.activity.map(a => {
+  openSheet(() => sheetHead('Activity') + '<div class="sh-b">' + (S.activity.length ? '' : '<p class="empty">Nothing yet. Props, nudges and passes show up here.</p>') + '<div class="rows">' + S.activity.map(a => {
     const u = a.uid ? person(a.uid) : null;
     return '<div class="row">' + (u ? av(u, 42, { nowarn: true }) : '<span class="av plain" style="--s:42px;--c:var(--wash)"><i style="color:var(--iron)">' + ic(a.icon === 'flame' ? 'bell' : a.icon, 20) + '</i></span>') +
       '<div class="grow"><div style="font-weight:' + (a.read ? 500 : 700) + '">' + esc(a.text) + '</div><div class="s">' + ago(a.ts) + '</div></div>' +
