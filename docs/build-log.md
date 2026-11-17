@@ -1,5 +1,19 @@
 # Build log
 
+## v5 (16 Nov 2026)
+Made usable on an iPhone as the owner's own app, without leaving the Claude-hosted page (the only place photo recognition works without a server).
+
+- **Your own data.** The last intro screen offers "Start my own streak": check-ins, meals, lifts, progress photos and badges start empty, the clock runs on real time, and the sample photos and time-skip tools are hidden. The sample stays available from Settings. Friends, squads, the league and rewards remain sample data.
+- **Saved to the Claude account.** In that mode the app keeps one private document per signed-in person (plus one per photo) in the page's database. A new or cleared browser picks the data up at start-up with no intro; a second device sees changes within a moment.
+- **Combining copies.** Two copies are merged, not swapped: check-ins, meals, lifts and progress photos are joined by id, removed meals leave a marker so they stay removed, and single-value settings come from whichever copy changed last. Only "Erase my data" (two taps) replaces everything. Nothing is stamped as changed until the account has been read, so a stale device cannot overwrite a newer copy, and an empty device never overwrites data.
+- **iPhone fixes.** Fields are 16 px on touch screens so Safari does not zoom; tappable non-button elements are marked clickable, which Safari needs before it sends taps; pressed states work; safe-area padding for the notch and home bar; inside Claude the camera button goes straight to the phone's own camera.
+
+Verified on the final build: the phone test (33 checks at iPhone size across three simulated devices sharing one simulated account: start from zero, first photo, save, second device, simultaneous edits, removal, cleared storage, slow connection, erase), plus every earlier suite.
+
+Not verified: anything on a physical iPhone, the real account database (the tests simulate it), and recognition of a real photo by the live model.
+
+Not possible from a web page, and so not built: push notifications, a Home Screen widget, Apple Health, and an App Store or TestFlight install. Those need the native build described in `reports/Lock In next improvements.md`.
+
 ## v4 (16 Nov 2026)
 The twelve "prototype now" items from `reports/Lock In next improvements.md`. Nothing the owner liked in v3 was removed: the centre camera button, the nutrition bar and the visible workout progress stay where they were, and the new detail sits under them or one tap down.
 
