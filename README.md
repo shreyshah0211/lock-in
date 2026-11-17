@@ -37,7 +37,15 @@ Your streak, check-ins, meals, lifts and photos are saved to your Claude account
 5. Choose the iPhone in the device menu at the top of Xcode and press the Run button.
 6. The first time, on the phone: Settings, General, VPN & Device Management, trust your developer certificate, then open Lock In.
 
-With a free account the app stops opening after 7 days; press Run again to renew it. Data is kept on the phone only. Photo recognition, calorie estimates from photos and Claude's reading of what you say do not work in this app yet, because those run through Claude when the page is hosted there. The app asks what a photo is and you type the numbers. Notifications, a widget and Apple Health are not wired up either. This project has not been built or run by its author: it was written without access to Xcode.
+With a free account the app stops opening after 7 days; press Run again to renew it. Data is kept on the phone only. Notifications, a widget and Apple Health are not wired up yet.
+
+**Claude in the app.** Photo recognition, calorie estimates and Say it call the Claude API from the app itself (`ios/LockIn/ClaudeBridge.swift`), so they need your own API key:
+
+1. Copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig` (git ignores it).
+2. Put your key from console.anthropic.com after `CLAUDE_API_KEY =`, and optionally your signing team after `DEVELOPMENT_TEAM =`.
+3. Build again.
+
+The key is built into your copy of the app, which is fine for your own phone but not for an app you hand to others. Without a key the app still works and asks you what each photo is.
 
 ## Try it on a computer
 

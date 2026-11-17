@@ -1,0 +1,4 @@
+// Settings shared by Debug and Release for the LockIn target.
+// Your own values (API key, signing team) live in Secrets.xcconfig, which git ignores.
+// Copy Secrets.example.xcconfig to Secrets.xcconfig and fill it in.
+#include? "Secrets.xcconfig"

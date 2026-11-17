@@ -13,6 +13,8 @@ struct WebScreen: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true          // the live camera view plays inside the page
         config.mediaTypesRequiringUserActionForPlayback = []
+        // Photo recognition, meal estimates and Say it ask Claude through this handler.
+        config.userContentController.addScriptMessageHandler(ClaudeBridge(), contentWorld: .page, name: ClaudeBridge.handlerName)
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.uiDelegate = context.coordinator

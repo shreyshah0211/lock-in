@@ -2299,8 +2299,27 @@ function initAI() {
   try {
     if (window.claude && typeof window.claude.use === 'function') {
       _aiP = window.claude.use('sample').then(s => { _ai = s || null; return _ai; }).catch(() => { _ai = null; return null; });
+    } else if (nativeClaude()) {
+      _aiP = nativeClaudeAI().then(s => { _ai = s; return s; });
     } else { _ai = null; _aiP = Promise.resolve(null); }
   } catch (e) { _ai = null; _aiP = Promise.resolve(null); }
+}
+/* Inside the iPhone app (ios/) there is no window.claude. The app offers a "claude" message
+   handler instead, which calls the Claude API with a key kept on the native side
+   (ios/LockIn/ClaudeBridge.swift). This wraps it in the same json()/limits() shape. */
+function nativeClaude() { try { return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.claude || null; } catch (e) { return null; } }
+function blobB64(b) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(r.error); r.readAsDataURL(b); }); }
+async function nativeClaudeAI() {
+  const h = nativeClaude(), err = e => { const x = new Error('claude'); x.code = (e && e.message) || 'upstream_error'; return x; };
+  try { const st = await h.postMessage({ op: 'status' }); if (!st || !st.ready) return null; } catch (e) { return null; }
+  return {
+    limits: () => Promise.resolve({ images: true }),
+    json: async (prompt, opt) => {
+      const imgs = await Promise.all(((opt && opt.images) || []).map(async b => ({ type: b.type || 'image/jpeg', data: await blobB64(b) })));
+      let txt; try { txt = await h.postMessage({ op: 'json', prompt: String(prompt), images: imgs }); } catch (e) { throw err(e); }
+      return JSON.parse(txt);
+    }
+  };
 }
 function getAI(waitMs) {
   if (_aiBlocked) return Promise.resolve(null);
