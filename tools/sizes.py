@@ -12,7 +12,7 @@ with sync_playwright() as pw:
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(url); pg.wait_for_timeout(500); pg.screenshot(path=str(root/f'shots/sz-{w}-intro.png')); pg.evaluate('closeAll()'); pg.wait_for_timeout(200)
         pg.screenshot(path=str(root/f'shots/sz-{w}-0home.png'))
-        vis(pg,'[data-a="goCam"]'); pg.wait_for_timeout(300); pg.screenshot(path=str(root/f'shots/sz-{w}-1cam.png'))
+        pg.evaluate('A.goCam()'); pg.wait_for_timeout(300); pg.screenshot(path=str(root/f'shots/sz-{w}-1cam.png'))
         vis(pg,'[data-a="camSample"][data-k="food"]'); pg.wait_for_timeout(1400); pg.screenshot(path=str(root/f'shots/sz-{w}-2meal.png'))
         ov = pg.evaluate(OV % '#layer .sheet:last-of-type')
         if ov[0] or ov[1]: bad += 1; print(w, 'meal draft overflow', ov)

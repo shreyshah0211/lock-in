@@ -236,7 +236,7 @@ function checkinSheet() {
     '<div class="lift"><input class="input" id="lf-n' + i + '" list="lift-names" placeholder="Bench press" data-m="ci.lifts.' + i + '.name" data-on="ciPtsLive" value="' + esc(l.name || '') + '" autocomplete="off"><input class="input" id="lf-w' + i + '" type="number" inputmode="decimal" placeholder="' + S.settings.units + '" data-m="ci.lifts.' + i + '.w" value="' + esc(l.w) + '"><input class="input" id="lf-r' + i + '" type="number" inputmode="numeric" placeholder="5" data-m="ci.lifts.' + i + '.reps" value="' + esc(l.reps) + '"><input class="input" id="lf-s' + i + '" type="number" inputmode="numeric" placeholder="3" data-m="ci.lifts.' + i + '.sets" value="' + esc(l.sets) + '"><button class="rm" data-a="ciLiftDel" data-i="' + i + '" aria-label="Remove exercise">' + ic('x', 18) + '</button></div>').join('') : '';
   // Two questions are enough to post. Everything else is optional and tucked away.
   const more = d.more ? '<div class="field"><span class="lbl">How long?</span><div class="stepper"><button data-a="ciMins" data-d="-5" aria-label="5 minutes less">' + ic('minus') + '</button><span class="v" id="ci-mins">' + d.mins + '</span><button data-a="ciMins" data-d="5" aria-label="5 minutes more">' + ic('plus') + '</button><span class="u">minutes</span></div></div>' +
-    '<div class="field"><span class="lbl">Lifts</span>' + lifts + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-line btn-s" data-a="ciLiftAdd">' + ic('plus', 16) + 'Add a lift</button>' + '</div></div>' +
+    '<div class="field"><span class="lbl">Lifts</span>' + lifts + '<div id="ci-hints">' + liftHints(d) + '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-line btn-s" data-a="ciLiftAdd">' + ic('plus', 16) + 'Add a lift</button>' + '</div></div>' +
     '<div class="field"><span class="lbl">Anything to note about today?</span><div class="chips">' + TAGS.map(t => '<button class="chip" data-a="ciTag" data-k="' + t + '" aria-pressed="' + (d.tag === t) + '">' + t + '</button>').join('') + '</div></div>' +
     '<div class="field"><label for="ci-cap">Caption</label><input class="input" id="ci-cap" placeholder="Say something about today" maxlength="120" data-m="ci.caption" value="' + esc(d.caption) + '" autocomplete="off"></div>' +
     '<div class="field"><span class="lbl">Who can see it</span><div class="seg">' + [['friends', 'Friends'], ['squads', 'My squads'], ['me', 'Only me']].map(x => '<button data-a="ciAud" data-k="' + x[0] + '" aria-pressed="' + (d.audience === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>'
@@ -260,7 +260,7 @@ A.ciRetake = () => { D.ci = null; D.snap = null; closeSheet(); };
 A.ciRecheck = () => { const d = D.ci; if (d && d.blob) ciCheck(d); };
 A.ciLiftAdd = () => { D.ci.lifts.push({ name: '', w: '', reps: '', sets: '' }); drawSheets(false); const i = $('#lf-n' + (D.ci.lifts.length - 1)); if (i) i.focus(); };
 A.ciLiftDel = el => { D.ci.lifts.splice(+el.dataset.i, 1); drawSheets(false); };
-A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; };
+A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; const h = $('#ci-hints'); if (h) h.innerHTML = liftHints(D.ci); };
 A.ciPost = () => {
   const d = D.ci; if (!d) return;
   const why = ciBlocked(d);

@@ -55,7 +55,7 @@ function todayTiles() {
 }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me);
-  let h = heroPanel() + homeCard() + noticedStrip() + todayTiles();
+  let h = heroPanel() + todayCard() + homeCard() + noticedStrip();
   const order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin);
   h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All ' + fr.length + '</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') +

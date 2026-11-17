@@ -39,7 +39,7 @@ def go(pw, mock):
     if mock: pg.add_init_script(MOCK)
     tag = 'ai  ' if mock else 'noai'; ev = pg.evaluate
     def shot(n): pg.screenshot(path=str(root/'shots'/f'ph-{tag.strip()}-{n}.png'))
-    def snap(): vis(pg, '[data-a="goCam"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1500)
+    def snap(): vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1500)
     pg.goto(url); pg.wait_for_timeout(500); ev('closeAll()')
     check(tag, 'camera falls back when no live camera', ev("(A.goCam(), new Promise(r => setTimeout(() => r([cam.live, !!document.querySelector('#cam-video')]), 400)))"), [False, False]); ev("A.camClose()")
     if mock:
@@ -109,14 +109,14 @@ def go(pw, mock):
         check(tag, 'from Food, no Claude: straight to the meal form', ev("[D.snap.kind, D.meal && D.meal.state]"), ['food', 'off']); ev("closeAll()")
     # proof that needs no photo inside the gym
     n0 = ev("window.__calls ? window.__calls.length : 0")
-    ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+    ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
     pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900); shot('6-outside')
     check(tag, 'outside photo gets an outside check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['ok', True, 1] if mock else ['off', True, 0])
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600)
     check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof, document.querySelector('#p-' + S.posts[0].id + ' .proof').textContent]"), ['outside', 'outside', 'Outside photo'])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     if mock:
-        ev("window.__outsideOk = false"); vis(pg, '[data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+        ev("window.__outsideOk = false"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
         pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900)
         check(tag, 'outside photo that is not a gym is blocked', ev("[D.ci && D.ci.ai, document.querySelector('#ci-post').disabled]"), ['no', True])
         ev("window.__outsideOk = true; closeAll(); D.ci = null; D.snap = null; A.camClose && A.camClose(); S.ui.tab = 'home'; render()")
@@ -131,7 +131,7 @@ def go(pw, mock):
     # a comeback after a lost streak earns the bonus
     ev("S.settings.autoPass = false; skipTime(80)"); pg.wait_for_timeout(200)
     check(tag, 'streak lost', ev("[pAlive(S.me), !!S.me.lost]"), [False, True])
-    vis(pg, '[data-a="goCam"]'); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1200); pts = ev("ciPts(D.ci)"); vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1500)
+    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1200); pts = ev("ciPts(D.ci)"); vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1500)
     check(tag, 'comeback bonus', ev("[S.checkins[S.checkins.length - 1].bonus, S.checkins[S.checkins.length - 1].pts - %d]" % pts), [20, 20])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     # plans, props, duo pause
@@ -153,7 +153,7 @@ def live(pw):
     ctx = b.new_context(viewport={'width':390,'height':844}, device_scale_factor=2, permissions=['camera']); pg = ctx.new_page(); pg.set_default_timeout(5000); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type=='error' else None)
     pg.goto(url); pg.wait_for_timeout(500); pg.evaluate('closeAll()')
-    vis(pg, '[data-a="goCam"]'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/'shots/ph-live-0.png'))
+    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/'shots/ph-live-0.png'))
     check('live', 'viewfinder is on', pg.evaluate("[cam.live, !!cam.stream, (document.querySelector('#cam-video')||{}).videoWidth > 0, !!document.querySelector('[data-a=\"camFlip\"]')]"), [True, True, True, True])
     vis(pg, '[data-a="camShoot"]'); pg.wait_for_timeout(900); pg.screenshot(path=str(root/'shots/ph-live-1.png'))
     check('live', 'shutter takes the frame', pg.evaluate("[!!(D.snap && D.snap.ph), Object.keys(PHOTOS).length, D.snap.state]"), [True, 1, 'off'])

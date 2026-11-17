@@ -32,10 +32,9 @@ function renderTabs() {
   const tabBtn = it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 23) + '<span>' + it[2] + '</span></button>';
   // phone: four labelled tabs with the camera in the middle
   $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + tabBtn(NAV[1]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[2]) + tabBtn(NAV[3]) + '</div>' +
-    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam" aria-label="Open the camera">' +
+    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="openCapture" aria-label="Log something: photo, barcode, say it">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
-    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' +
-    (t === 'home' ? '<button class="say-fab" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' : '');
+    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' ;
   // computer: the same places down the side, with words next to everything
   const sd = $('#side'); if (!sd) return;
   const m = S.me, days = pDays(m);

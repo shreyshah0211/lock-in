@@ -17,6 +17,8 @@ struct WebScreen: UIViewRepresentable {
         config.userContentController.addScriptMessageHandler(ClaudeBridge(), contentWorld: .page, name: ClaudeBridge.handlerName)
         // Barcode scanning and product lookup for the Food tab.
         config.userContentController.addScriptMessageHandler(FoodScanner(), contentWorld: .page, name: FoodScanner.handlerName)
+        // Apple Maps for the gyms, and streak reminder notifications.
+        config.userContentController.addScriptMessageHandler(AppBridge(), contentWorld: .page, name: AppBridge.handlerName)
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.uiDelegate = context.coordinator

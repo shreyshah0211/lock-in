@@ -11,6 +11,13 @@ This is a prototype, not a shipped app. It runs in a browser from one HTML file,
 - **Check-ins that say how they were proven.** A gym photo, a photo plus a recorded workout, a photo from outside, or the recorded workout alone, for gyms that do not allow photos.
 - **Friends.** A feed of each friend's latest check-in, one kind of props, a line showing who noticed your check-in, plans to train together, nudges, a weekly leaderboard, and duo streaks that can pause.
 - **Squads and a league.** A squad shares one streak. Squads are ranked for the quarter on check-ins per member. The reward ideas on the same screen are a mock-up: nothing is real and nobody pays to enter.
+- **One capture button.** The orange button opens a menu: Photo (gym or meal, worked out for you), Barcode, Say it, Progress photo and Weight.
+- **Today.** A card at the top of Home: trained today or not, protein and calories left, the week so far, and the one thing to do next.
+- **Coach.** A chat with Claude that knows your check-ins, lifts, meals and goals. It gives ideas and never changes anything.
+- **Next weight.** Every lift shows what to try next time, from your own last set; the check-in form offers it with one tap.
+- **Weight log.** Log your weight and see the trend; goals set from your body follow it.
+- **Streak reminders.** In the iPhone app, notifications 12, 3 and 1 hour before your clock runs out.
+- **Apple Maps.** The drawn map stops at city level; a gym opens in Apple Maps with directions.
 - **Barcode.** Scan a packaged food (or type the number) to log it with the label's own numbers from Open Food Facts: servings or grams, Nutri-Score, processing level, additives, allergens and ingredients, what is left for today after it, and Claude's read of how it fits your goal with a better swap.
 - **Goals from your body.** Age, height, weight, activity and whether you want to lose fat, stay the same or build muscle (with a pace) become daily calories, protein, carbs and fat, with a date for a goal weight. You can still type your own.
 - **Food.** A calorie bar with protein, carbs and fat. A photo estimate is a draft you confirm: parts with small, medium and large portions, one line to correct it, and a rounded total labelled a rough estimate. Meals you have logged before can be logged again in one tap. Weekly averages, a protein-only mode, and fibre and sodium one tap down. Private by default.
