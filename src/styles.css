@@ -786,3 +786,20 @@ button.tile{display:flex;flex-direction:column;align-items:stretch;justify-conte
 .it-bar>small{display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--mute)}
 @media (max-height:720px){.it-bar .macros{display:none}}
 
+/* ---------- iPhone ---------- */
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{overscroll-behavior:none}
+[data-a]{cursor:pointer}   /* Safari on iPhone only sends taps to elements it considers clickable */
+#view,.sheet{-webkit-overflow-scrolling:touch}
+@media (pointer:coarse){
+  .input,.lift .input,.mgrid .input,textarea.input{font-size:16px}   /* below 16px Safari zooms the page when a field is tapped */
+}
+@media (max-width:500px){
+  #tabs{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  #view{padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px))}
+  .hero{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .top{padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .sticky-cta{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+  .cam-top{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+}
+
