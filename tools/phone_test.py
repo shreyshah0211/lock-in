@@ -71,9 +71,9 @@ with sync_playwright() as pw:
     A.wait_for_timeout(600)
     check('check-in and its photo are in the account', [len(core()['checkins']), core()['me']['streakStart'] is not None, (CORE + '/photos/' + key) in DB], [1, True, True])
     vis(A, '.done [data-a="closeSheet"]'); A.wait_for_timeout(200); shot(A, '06-home')
-    vis(A, '.tabbar [data-tab="food"]'); vis(A, '[data-a="openTypeMeal"]'); A.wait_for_timeout(200)
-    check('fields are 16px so the phone does not zoom', ev("getComputedStyle(document.querySelector('#tm-text')).fontSize"), '16px')
-    A.fill('#tm-text', 'two eggs and toast'); vis(A, '[data-a="typeMealGo"]'); A.wait_for_timeout(500); shot(A, '07-meal'); vis(A, '[data-a="mealLog"]'); A.wait_for_timeout(900); shot(A, '08-food')
+    vis(A, '.tabbar [data-tab="food"]'); vis(A, '.food-acts [data-a="openSay"]'); A.wait_for_timeout(200)
+    check('fields are 16px so the phone does not zoom', ev("getComputedStyle(document.querySelector('#say-text')).fontSize"), '16px')
+    A.fill('#say-text', 'two eggs and toast'); vis(A, '#say-go'); A.wait_for_timeout(500); shot(A, '07-meal'); vis(A, '[data-a="mealLog"]'); A.wait_for_timeout(900); shot(A, '08-food')
     check('meal logged and saved', [ev("S.meals.length"), len(core()['meals'])], [1, 1])
     check('photos can be tapped on a phone', ev("(S.ui.tab = 'home', render(), getComputedStyle(document.querySelector('.shot')).cursor)"), 'pointer')
     # the same person on a laptop: nothing saved there, yet everything arrives

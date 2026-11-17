@@ -81,7 +81,7 @@ def go(pw, mock):
         check(tag, 'progress photo saved', ev("[S.progress.length - %d, S.ui.tab]" % n), [1, 'you'])
         ev("closeAll()")
         # typed meal, plan
-        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '[data-a="openTypeMeal"]'); pg.fill('#tm-text','two eggs and toast'); vis(pg, '[data-a="typeMealGo"]'); pg.wait_for_timeout(900)
+        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '.food-acts [data-a="openSay"]'); pg.fill('#say-text','two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(900)
         check(tag, 'typed meal estimated, no switcher', ev("[D.meal && D.meal.state, D.snap, !!document.querySelector('.kind')]"), ['ai', None, False]); ev("closeAll()")
         vis(pg, '.tabbar [data-tab="you"]'); ev("A.openPlan()"); pg.wait_for_timeout(900); check(tag, 'plan', ev("D.plan && D.plan.state"), 'ai'); shot('5-plan'); ev("closeAll()")
         vis(pg, '[data-a="weekNote"]'); pg.wait_for_timeout(900)

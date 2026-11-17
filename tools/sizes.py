@@ -28,7 +28,7 @@ with sync_playwright() as pw:
             if ov[0] or ov[1]: bad += 1; print(w, t, 'overflow', ov)
         tb = pg.evaluate("(() => { const b=document.querySelector('.tabbar').getBoundingClientRect(), s=document.querySelector('.snap').getBoundingClientRect(); return [Math.round(s.left+s.width/2 - (b.left+b.width/2)), [...document.querySelectorAll('.tabbar button span')].every(e => e.scrollWidth <= e.clientWidth + 1)]; })()")
         if tb != [0, True]: bad += 1; print(w, 'tab bar: camera off-centre or labels clipped', tb)
-        for a in ['A.openConnections()','A.openWidgets()','A.openTiers()','A.openEffort()','A.openFriends()','A.openSettings()','A.openProgress()','A.openBadges()','A.openGoals()','A.openIntro()','A.openIntro();D.intro=3;drawSheets(false)','A.openNoPhoto()','A.newMeet()','A.openLeague()',"A.openReward({dataset:{k:'perk'}})","A.openReward({dataset:{k:'draw'}})",'A.openEffortInfo()','A.openSessions({dataset:{}})','A.openSession({dataset:{id:S.checkins[S.checkins.length-1].id}})','A.openRecap()','A.openNutrients()',"A.openProof({dataset:{k:'photo'}})","A.openNoticed({dataset:{id:S.posts.find(p=>p.uid==='me').id}})","A.openProfile({dataset:{id:'maya'}})"]:
+        for a in ['A.openConnections()','A.openWidgets()','A.openTiers()','A.openEffort()','A.openFriends()','A.openSettings()','A.openProgress()','A.openBadges()','A.openGoals()','A.openIntro()','A.openIntro();D.intro=3;drawSheets(false)','A.openNoPhoto()','A.newMeet()','A.openLeague()',"A.openReward({dataset:{k:'perk'}})","A.openReward({dataset:{k:'draw'}})",'A.openEffortInfo()','A.openSessions({dataset:{}})','A.openSession({dataset:{id:S.checkins[S.checkins.length-1].id}})','A.openRecap()','A.openNutrients()',"A.openProof({dataset:{k:'photo'}})","A.openNoticed({dataset:{id:S.posts.find(p=>p.uid==='me').id}})","A.openProfile({dataset:{id:'maya'}})","A.openSay({dataset:{k:'auto'}})","A.openSay({dataset:{k:'workout'}})","A.openMap()"]:
             pg.evaluate('closeAll();'+a); pg.wait_for_timeout(200)
             ov = pg.evaluate(OV % '#layer .sheet:last-of-type')
             if ov[0] or ov[1]: bad += 1; print(w, a, 'overflow', ov)
@@ -46,7 +46,7 @@ with sync_playwright() as pw:
             for sel in ['#view','#side','#rail'] if g['rail'] else ['#view','#side']:
                 ov = pg.evaluate(OV % sel)
                 if ov[0] or ov[1]: bad += 1; print(w, t, sel, 'overflow', ov)
-        for a in ['A.openFriends()','A.openTiers()','A.openGoals()','A.openIntro()']:
+        for a in ['A.openFriends()','A.openTiers()','A.openGoals()','A.openIntro()',"A.openSay({dataset:{k:'auto'}})",'A.openMap()']:
             pg.evaluate('closeAll();'+a); pg.wait_for_timeout(500)   # sheets slide in over 0.34s; measure once they have settled
             ov = pg.evaluate(OV % '#layer .sheet:last-of-type')
             inside = pg.evaluate("(() => { const s=document.querySelector('#layer .sheet:last-of-type').getBoundingClientRect(), p=document.querySelector('#phone').getBoundingClientRect(); return s.left>=p.left-1 && s.right<=p.right+1 && s.top>=p.top-1 && s.bottom<=p.bottom+1; })()")
