@@ -900,3 +900,4 @@ body{overscroll-behavior:none}
 .bg-act .row b{display:block;font-weight:700}
 .bg-act .row small{display:block;font-size:12.5px}
 .bg-act .row[aria-pressed="true"] b{color:var(--go)}
+.nophoto-link{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--mute);text-decoration:underline;text-underline-offset:3px;align-self:flex-start}

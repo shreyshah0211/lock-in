@@ -15,6 +15,7 @@ window.claude = { use: async (n) => {
     const meal = { name: 'Paneer rice bowl', calories: 612, protein_g: 28, carbs_g: 74, fat_g: 21, fiber_g: 6, sodium_mg: 804, items: [{name:'rice', calories: 240},{name:'paneer', calories: 260}], confidence: 'medium' };
     if (input.includes('weekly note')) { window.__calls.push('note'); return { note: 'Four days running, then two off. Put the easy day in the middle next week.' }; }
     if (input.includes('one camera button for everything')) { window.__calls.push('snap'); const k = window.__snapKind; return k === 'gym' ? { kind: 'gym', workout: 'legs', note: 'squat rack and plates', screen: window.__screen } : k === 'food' ? Object.assign({ kind: 'food' }, meal) : { kind: 'other' }; }
+    if (input.includes('outside check-in')) { window.__calls.push('outsidecheck'); return { gym: window.__outsideOk !== false, workout: 'other', note: 'rec centre entrance' }; }
     if (input.includes('gym habit app')) { window.__calls.push('gymcheck'); return { gym: false, workout: 'other', note: 'a plate of food' }; }
     if (input.includes('next 3 sessions')) { window.__calls.push('plan'); return [{focus:'Pull',why:'Nine days since your last pull day.'},{focus:'Cardio',why:'An easy day between lifts.'},{focus:'Legs',why:'Back to legs once you have recovered.'}]; }
     window.__calls.push('meal'); return Object.assign({ food: true }, meal);
@@ -69,14 +70,21 @@ def go(pw, mock):
         vis(pg, '[data-a="mealLog"]'); pg.wait_for_timeout(500); shot('3-food-tab')
         check(tag, 'meal logged, Food tab opens', ev("[S.ui.tab, dayTotals(foodDay(now())).kcal - %d, sheets.length, S.meals[S.meals.length - 1].fib, S.meals[S.meals.length - 1].est]" % before), ['food', 700, 0, 6, False])
         check(tag, 'log again adds the same numbers', ev("(() => { const b = document.querySelector('[data-a=mealAgain]'), m = S.meals.find(x => x.id === b.dataset.id), k0 = dayTotals(foodDay(now())).kcal; b.click(); return [dayTotals(foodDay(now())).kcal - k0 === m.kcal, S.meals[S.meals.length - 1].src]; })()"), [True, 'again'])
-        # a photo of a screen prompts a retake and is never rejected
+        # a photo of a screen cannot be posted: it asks for a retake
         ev("window.__snapKind='gym'; window.__screen=true; window.__calls=[]"); snap(); shot('3b-screen')
-        check(tag, 'screen photo: soft retake prompt', ev("[D.ci && D.ci.screen, !!document.querySelector('.aicheck.warn'), !!document.querySelector('[data-a=ciPost]')]"), [True, True, True])
+        check(tag, 'screen photo: blocked, retake prompt', ev("[D.ci && D.ci.screen, !!document.querySelector('.aicheck.warn'), document.querySelector('#ci-post').disabled]"), [True, True, True])
+        n = ev("S.checkins.length"); ev("A.ciPost()"); check(tag, 'screen photo: post refused', ev("S.checkins.length - %d" % n), 0)
         vis(pg, '[data-a="ciRetake"]'); pg.wait_for_timeout(300)
         check(tag, 'retake goes back to the camera', ev("[D.ci, D.snap, S.ui.tab, sheets.length]"), [None, None, 'cam', 0]); ev("window.__screen=false; A.camClose()")
         # neither
         ev("window.__snapKind='other'; window.__calls=[]"); snap(); shot('4-unsure')
         check(tag, 'unclear photo asks', ev("[D.snap.state, D.snap.kind, document.querySelectorAll('.snap-ask button').length]"), ['unsure', None, 3])
+        # not a gym, filed as a check-in anyway: Claude's gym check says no and it cannot be posted
+        vis(pg, '[data-a="snapPick"][data-k="gym"]'); pg.wait_for_timeout(700); shot('4b-not-gym')
+        check(tag, 'not a gym: check-in blocked', ev("[D.ci && D.ci.ai, document.querySelector('#ci-post').disabled, !!document.querySelector('[data-a=ciRetake]'), !!document.querySelector('.nophoto-link')]"), ['no', True, True, True])
+        n = ev("S.checkins.length"); ev("A.ciPost()"); check(tag, 'not a gym: post refused', ev("S.checkins.length - %d" % n), 0)
+        vis(pg, '[data-a="ciRetake"]'); pg.wait_for_timeout(300); ev("A.camClose()")
+        ev("window.__snapKind='other'; window.__calls=[]"); snap()
         vis(pg, '[data-a="snapPick"][data-k="progress"]'); pg.wait_for_timeout(300); n = ev("S.progress.length"); vis(pg, '[data-a="pgSave"]'); pg.wait_for_timeout(400)
         check(tag, 'progress photo saved', ev("[S.progress.length - %d, S.ui.tab]" % n), [1, 'you'])
         ev("closeAll()")
@@ -103,10 +111,15 @@ def go(pw, mock):
     n0 = ev("window.__calls ? window.__calls.length : 0")
     ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
     pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900); shot('6-outside')
-    check(tag, 'outside photo skips the gym check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['outside', True, 0])
+    check(tag, 'outside photo gets an outside check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['ok', True, 1] if mock else ['off', True, 0])
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600)
     check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof, document.querySelector('#p-' + S.posts[0].id + ' .proof').textContent]"), ['outside', 'outside', 'Outside photo'])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
+    if mock:
+        ev("window.__outsideOk = false"); vis(pg, '[data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+        pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900)
+        check(tag, 'outside photo that is not a gym is blocked', ev("[D.ci && D.ci.ai, document.querySelector('#ci-post').disabled]"), ['no', True])
+        ev("window.__outsideOk = true; closeAll(); D.ci = null; D.snap = null; A.camClose && A.camClose(); S.ui.tab = 'home'; render()")
     ev("A.connOn({dataset:{k:'health'}})"); pg.wait_for_timeout(300)
     vis(pg, '.dt-alt'); pg.wait_for_timeout(400); shot('7-workout-only')
     check(tag, 'recorded workout stands in for the photo', ev("[D.ci.noPhoto, D.ci.ai, D.ci.photo, !!D.ci.scene.stat, !!document.querySelector('.kind')]"), [True, 'workout', None, True, False])

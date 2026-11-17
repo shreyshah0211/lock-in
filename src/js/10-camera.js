@@ -118,7 +118,7 @@ function gotPhoto(ph, sampleKind) {
   if (intent === 'progress' || sampleKind === 'progress') { D.snap = null; startProgress(ph); return; }
   const out = !intent && !!D.camOutside; D.camOutside = false;
   const s = D.snap = { ph: ph, sample: !ph, sampleKind: sampleKind || 'gym', kind: null, state: 'working', gym: null, meal: null, manual: false, screen: false, outside: out };
-  // An outside photo is taken at its word. It would never look like a gym, so there is nothing to check.
+  // An outside photo skips the gym-or-food look; startCheckin checks it is plausibly a gym's entrance instead.
   if (out) { s.kind = 'gym'; s.manual = true; s.state = 'outside'; startCheckin(ph); return; }
   openSheet(snapSheet, { cls: 'full dark' });
   if (!ph) { setTimeout(() => { if (D.snap !== s || s.kind) return; s.kind = sampleKind || 'gym'; s.state = 'sample'; snapRoute(); }, 950); return; }
@@ -172,35 +172,58 @@ function startCheckin(ph, opts) {
   const type = det ? det.type : seen && seen.workout ? seen.workout : nextType();
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
-    noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : out ? 'outside' : !ph ? 'sample' : seen ? 'ok' : 'checking', note: seen ? seen.note : '' };
+    noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : !ph ? (out ? 'outside' : 'sample') : seen && !out ? 'ok' : 'checking', note: seen ? seen.note : '', blob: ph ? ph.blob : null };
   const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
   openSheet(checkinSheet, { cls: 'full', onClose: () => { if (D.ci) D.snap = null; } });
-  if (ph && !seen && !out) {
-    const d = D.ci;
-    aiGymCheck(ph.blob).then(r => {
-      if (D.ci !== d) return;
-      d.ai = r.state; d.note = r.note || ''; d.screen = !!r.screen;
-      const box = $('#ci-proof'); if (box) box.innerHTML = aiRow(d);
-      if (r.workout && !d.touched && r.workout !== d.type) { d.type = r.workout; const tc = $('#ci-types'); if (tc) tc.innerHTML = typeChips(d); }
-    });
-  }
+  if (D.ci.ai === 'checking') ciCheck(D.ci);
+}
+// Claude looks at the photo. Only a photo that plausibly shows a workout (or, for an outside photo,
+// a gym's entrance) can be posted; the result updates the form in place so nothing typed is lost.
+function ciCheck(d) {
+  d.ai = 'checking'; ciPaint(d);
+  aiGymCheck(d.blob, d.outside).then(r => {
+    if (D.ci !== d) return;
+    d.ai = r.state; d.note = r.note || ''; d.screen = !!r.screen;
+    if (r.workout && !d.touched && r.workout !== d.type) { d.type = r.workout; const tc = $('#ci-types'); if (tc) tc.innerHTML = typeChips(d); }
+    ciPaint(d);
+  });
+}
+function ciPaint(d) {
+  const box = $('#ci-proof'); if (box) box.innerHTML = aiRow(d);
+  const b = $('#ci-post'); if (b) b.outerHTML = ciPostBtn(d);
+}
+// Why this check-in cannot be posted yet, or null when it can.
+function ciBlocked(d) {
+  if (d.noPhoto || d.ai === 'sample' || d.ai === 'off' || (d.ai === 'outside' && !d.photo)) return null;
+  if (d.ai === 'checking') return 'checking';
+  if (d.ai === 'busy' || d.ai === 'error') return 'retry';
+  if (d.ai === 'no') return 'no';
+  if (d.screen) return 'screen';
+  return null;
+}
+function ciPostBtn(d) {
+  const why = ciBlocked(d);
+  return '<button class="btn btn-go btn-w" id="ci-post" data-a="ciPost"' + (why ? ' disabled' : '') + '>' +
+    (why === 'checking' ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Checking your photo' : why ? 'Needs a gym photo to post' : 'Post check-in<span id="ci-pts" style="opacity:.85;font-weight:600">+' + ciPts(d) + ' points</span>') + '</button>';
 }
 // What backs this check-in, said in plain words above the form.
 function aiRow(d) {
   const m = {
-    checking: ['', '<span class="spin"></span>Checking that this looks like a gym'],
-    ok: [' ok', ic('check', 18) + 'Gym photo verified' + (d.note ? ': ' + esc(d.note) : '')],
-    no: [' no', ic('info', 18) + 'This does not look like a workout. You can still post it, marked as not verified.'],
+    checking: ['', '<span class="spin"></span>' + (d.outside ? 'Checking that this looks like a gym from outside' : 'Checking that this looks like a gym')],
+    ok: [' ok', ic('check', 18) + (d.outside ? 'Outside photo verified' : 'Gym photo verified') + (d.note ? ': ' + esc(d.note) : '')],
+    no: [' no', ic('info', 18) + '<span>' + (d.outside ? 'This does not look like the outside of a gym, so it cannot count. Take it at the entrance or the building.' : 'This does not look like a gym or a workout, so it cannot count for your streak. Take the photo where you train.') + '</span><button class="link" data-a="ciRetake">Retake</button>'],
+    error: [' no', ic('info', 18) + '<span>Could not check the photo just now. Check your connection: it needs a check before it counts.</span><button class="link" data-a="ciRecheck">Check again</button>'],
     sample: ['', ic('image', 18) + 'Sample photo. Your own photos get checked by Claude.'],
-    busy: ['', ic('info', 18) + 'The gym check is busy right now. Posting without it.'],
+    busy: [' no', ic('info', 18) + '<span>The photo check is busy right now. Wait a moment and check again.</span><button class="link" data-a="ciRecheck">Check again</button>'],
     off: ['', ic('info', 18) + 'Checking photos needs Claude switched on for this page. Posting without it.'],
-    outside: ['', ic('pin', 18) + 'Outside photo. It counts, and friends see it was taken outside the gym.'],
+    outside: ['', ic('pin', 18) + 'Sample outside photo. Your own outside photos get checked by Claude.'],
     workout: [' ok', ic('heart', 18) + 'No photo. This check-in rests on the ' + d.mins + ' minute workout ' + esc(d.device) + ' recorded.']
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
     (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
-    (d.screen ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen. Retake it if you can.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '');
+    (d.screen && d.ai !== 'checking' && d.ai !== 'no' ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen or a screenshot, so it cannot count. Take the photo with your camera at the gym.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '') +
+    (ciBlocked(d) === 'no' || ciBlocked(d) === 'screen' ? '<button class="link nophoto-link" data-a="openNoPhoto">' + ic('info', 16) + 'No photos allowed in your gym?</button>' : '');
 }
 function ciProof(d) { return d.noPhoto ? 'workout' : d.outside ? 'outside' : d.device ? 'both' : 'photo'; }
 function typeChips(d) { return TYPES.map(t => '<button class="chip" data-a="ciType" data-k="' + t.k + '" aria-pressed="' + (d.type === t.k) + '">' + t.n + '</button>').join(''); }
@@ -224,7 +247,7 @@ function checkinSheet() {
     '<button class="btn btn-line btn-w say-in" data-a="openSay" data-k="workout">' + ic('mic', 20) + (d.said ? 'Say it again' : 'Say what you trained') + '</button>' +
     '<div class="field"><span class="lbl">What did you train?</span><div class="chips" id="ci-types">' + typeChips(d) + '</div></div>' +
     '<div class="field"><span class="lbl">How hard was it?</span><div class="effort">' + eff + '</div></div>' + more +
-    '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="ciPost">Post check-in<span id="ci-pts" style="opacity:.85;font-weight:600">+' + ciPts(d) + ' points</span></button></div>' +
+    '</div><div class="sticky-cta">' + ciPostBtn(d) + '</div>' +
     '<datalist id="lift-names">' + LIFT_NAMES.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>';
 }
 A.ciType = el => { const d = D.ci; d.type = el.dataset.k; d.touched = true; if (d.noPhoto) d.scene.stat.type = d.type; else if (!d.photo) d.scene = sceneFor(d.type, d.scene.seed); drawSheets(false); };
@@ -234,14 +257,17 @@ A.ciAud = el => { D.ci.audience = el.dataset.k; drawSheets(false); };
 A.ciTag = el => { D.ci.tag = D.ci.tag === el.dataset.k ? '' : el.dataset.k; drawSheets(false); };
 A.ciMore = () => { D.ci.more = true; drawSheets(false); };
 A.ciRetake = () => { D.ci = null; D.snap = null; closeSheet(); };
+A.ciRecheck = () => { const d = D.ci; if (d && d.blob) ciCheck(d); };
 A.ciLiftAdd = () => { D.ci.lifts.push({ name: '', w: '', reps: '', sets: '' }); drawSheets(false); const i = $('#lf-n' + (D.ci.lifts.length - 1)); if (i) i.focus(); };
 A.ciLiftDel = el => { D.ci.lifts.splice(+el.dataset.i, 1); drawSheets(false); };
 A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; };
 A.ciPost = () => {
   const d = D.ci; if (!d) return;
+  const why = ciBlocked(d);
+  if (why) { toast(why === 'checking' ? 'Still checking your photo. One moment.' : why === 'retry' ? 'The photo has not been checked yet. Tap Check again.' : 'This photo cannot count. Retake it at the gym.'); return; }
   const before = leftMs();
   if (d.photo) savePhoto(d.photo, PHOTOS[d.photo]);
-  const res = doCheckin({ type: d.type, mins: d.mins, effort: d.effort, lifts: d.lifts, caption: d.caption.trim(), photo: d.photo, scene: d.scene, verified: d.ai === 'ok' && !d.screen ? true : d.ai === 'no' ? false : d.ai === 'sample' ? 'sample' : null, audience: d.audience, proof: ciProof(d), tag: d.tag, screen: d.screen });
+  const res = doCheckin({ type: d.type, mins: d.mins, effort: d.effort, lifts: d.lifts, caption: d.caption.trim(), photo: d.photo, scene: d.scene, verified: d.ai === 'ok' && !d.screen ? true : d.ai === 'sample' ? 'sample' : null, audience: d.audience, proof: ciProof(d), tag: d.tag, screen: d.screen });
   if (d.device) { S.detected = null; S.detectedUsedAt = now(); save(); }
   S.ui.coach = false; save();
   D.ci = null; D.snap = null; D.camIntent = null; closeAll(); S.ui.tab = 'home'; scrollPos.home = 0; render();

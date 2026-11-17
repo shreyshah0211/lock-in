@@ -49,17 +49,21 @@ const quoted = (t, n) => String(t || '').slice(0, n).replace(/"/g, '\'');
 // A photo of a screen is flagged, never rejected: gyms are full of glass and mirrors, so the flag can be wrong.
 const SCREEN_ASK = 'Add "screen": true if the image is a photo of another screen or a screenshot instead of the real scene in front of the camera, otherwise "screen": false. ';
 
-async function aiGymCheck(blob) {
+// outside: the gym does not allow photos inside, so the photo is of the entrance or the building.
+async function aiGymCheck(blob, outside) {
   const s = await getAIImages(); if (!s) return { state: 'off' };
   try {
-    const res = await s.json(
-      'This photo was just taken as a check-in for a gym habit app. Decide whether it plausibly shows the person at a workout: a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup. ' +
-      'A bedroom with no equipment, food, or an unrelated scene is not a workout. ' +
-      'Reply with only a JSON object like {"gym": true, "workout": "legs", "note": "squat rack and plates", "screen": false}. ' +
-      '"workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. ' + SCREEN_ASK,
+    const res = await s.json(outside
+      ? 'This photo was just taken as an outside check-in for a gym habit app, because the gym does not allow photos inside. Decide whether it plausibly shows the outside or entrance of a gym, fitness centre, rec centre, climbing gym, studio, pool or sports facility, or the person at such a door with a gym bag. ' +
+        'A home interior, food, a street with no such building, or an unrelated scene does not count. ' +
+        'Reply with only a JSON object like {"gym": true, "workout": "other", "note": "rec centre entrance", "screen": false}. "workout" is always "other". "note" is at most 8 words describing what you see. ' + SCREEN_ASK
+      : 'This photo was just taken as a check-in for a gym habit app. Decide whether it plausibly shows the person at a workout: a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup. ' +
+        'A bedroom with no equipment, food, or an unrelated scene is not a workout. ' +
+        'Reply with only a JSON object like {"gym": true, "workout": "legs", "note": "squat rack and plates", "screen": false}. ' +
+        '"workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. ' + SCREEN_ASK,
       { images: [blob], modelTier: 'quick' });
-    return { state: res && res.gym ? 'ok' : 'no', workout: res && TYPE[res.workout] ? res.workout : null, note: res && typeof res.note === 'string' ? res.note.slice(0, 80) : '', screen: !!(res && res.screen === true) };
-  } catch (e) { return { state: aiFail(e) === 'rate_limited' ? 'busy' : 'off' }; }
+    return { state: res && res.gym ? 'ok' : 'no', workout: !outside && res && TYPE[res.workout] ? res.workout : null, note: res && typeof res.note === 'string' ? res.note.slice(0, 80) : '', screen: !!(res && res.screen === true) };
+  } catch (e) { const c = aiFail(e); return { state: c === 'rate_limited' ? 'busy' : _aiBlocked ? 'off' : 'error' }; }
 }
 const MEAL_FORMAT = 'Reply with only a JSON object like {"food": true, "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. ' +
   'Use whole numbers. "name" is a short plain name for the whole meal. "items" lists up to 6 parts, and their calories add up to the total. "confidence" is low, medium or high. If it is not food or drink, reply {"food": false}.';
