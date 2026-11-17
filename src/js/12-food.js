@@ -10,7 +10,7 @@ function nutritionBar(fd, big) {
     (kc ? '<div class="macros' + (big ? '' : ' mini') + '">' + macro('p', 'Protein', 'var(--protein)') + macro('c', 'Carbs', 'var(--carbs)') + macro('f', 'Fat', 'var(--fat)') + '</div>' : '') + '</div>';
 }
 function dayLabel(fd) { const t = foodDay(now()); return fd === t ? 'Today' : fd === t - 1 ? 'Yesterday' : dateLong(dayStart(fd)); }
-function mealImg(m) { return (m.photo && photoSrc(m.photo)) || mealURI(m.art.kind, m.art.seed); }
+function mealImg(m) { return (m.photo && photoSrc(m.photo)) || (m.img && /^https:\/\//.test(m.img) ? esc(m.img) : '') || mealURI(m.art.kind, m.art.seed); }
 // Fibre and sodium for a meal: what Claude estimated, or the built-in figure for a built-in food.
 function mealX(m) { return m.fib != null || m.na != null ? [m.fib || 0, m.na || 0] : FOOD_X[m.name] || null; }
 // The last seven days: how many had anything logged, and the daily average over the finished ones.
@@ -35,7 +35,8 @@ function foodBody() {
   let h = '<div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + kc + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + !kc + '">Protein only</button></div>';
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
   if (off === 0) {
-    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
+    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="scanBarcode">' + ic('scan', 19) + 'Barcode</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
+    if (!S.body) h += '<button class="card bg-nudge" data-a="openBodyGoals"><span class="mi">' + ic('target', 22) + '</span><span class="grow"><b>Set your goals from your body</b><span class="mute">Height, weight and what you want. Takes 30 seconds.</span></span>' + ic('chevR', 18) + '</button>';
     const rec = recentMeals();
     if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
@@ -86,7 +87,7 @@ A.openGoals = () => {
   D.goals = Object.assign({}, S.goals);
   openSheet(() => {
     const f = (k, label, unit) => '<div class="field"><label for="gl-' + k + '">' + label + '</label><input class="input" id="gl-' + k + '" type="number" inputmode="numeric" min="0" data-m="goals.' + k + '" value="' + esc(D.goals[k]) + '" placeholder="' + unit + '"></div>';
-    return sheetHead('Daily goals') + '<div class="sh-b"><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
+    return sheetHead('Daily goals') + '<div class="sh-b"><button class="btn btn-go btn-w" data-a="openBodyGoals">' + ic('target', 19) + (S.body ? 'Work them out again from my body' : 'Work them out from my body') + '</button><p class="mute" style="font-size:13px">Or type your own:</p><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
   });
 };
 A.saveGoals = () => {

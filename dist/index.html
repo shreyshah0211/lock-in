@@ -431,7 +431,8 @@ textarea.input{resize:none;min-height:84px}
 .macro .l{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px}
 .macro .l span{color:var(--mute);font-weight:600}
 .macro .bar{background:#E1E4EC}
-.food-acts{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
+.food-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.food-acts .btn-go{grid-column:1/-1}
 .water{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .water button{width:30px;height:36px;display:grid;place-items:center;color:#D5D8E2;transition:transform .12s}
 .water button:active{transform:scale(.85)}
@@ -879,6 +880,40 @@ body{overscroll-behavior:none}
 .say-ask .btn{background:#fff}
 .cam-alt svg{vertical-align:-3px;margin-right:5px}
 @media (prefers-reduced-motion:reduce){.say-mic.on::before,.say-mic.on::after{animation:none;opacity:.5}}
+
+/* Barcode: the scanned product sheet */
+.bc-top{display:flex;gap:14px;align-items:flex-start}
+.bc-top>img,.bc-ph{width:84px;height:84px;border-radius:20px;object-fit:contain;background:#fff;border:1px solid var(--line);flex:none;display:grid;place-items:center;color:var(--mute)}
+.bc-top b{display:block;font-size:17px;font-weight:800;line-height:1.25}
+.bc-top .mute{display:block;font-size:13.5px;margin-top:2px}
+.bc-badges{margin-top:8px;gap:6px}
+.bc-step{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--mist);border-radius:20px;padding:8px}
+.bc-step .icon-btn{background:#fff}
+.bc-step .icon-btn[disabled]{opacity:.4}
+.bc-step>span{text-align:center;font-weight:700}
+.bc-step b{font-size:22px;margin-right:4px}
+.bc-step small{display:block;font-size:12.5px;color:var(--mute);font-weight:600}
+.bc-unit{align-self:center;font-weight:700;color:var(--mute);min-width:28px}
+.bc-fit .tile{background:var(--mist)}
+.bc-ai{background:#F1F6FF}
+.bc-ai-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bc-ai-h b{flex:1;min-width:0;font-size:15.5px}
+.bc-ai-l{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.bc-ai-l li{display:flex;gap:8px;align-items:flex-start}
+.bc-ai-l svg{flex:none;margin-top:2px}
+.bc-ing{background:var(--mist);border-radius:18px;padding:12px 16px;font-size:13.5px}
+.bc-ing summary{font-weight:700;cursor:pointer}
+.bc-ing p{margin-top:8px;line-height:1.45}
+/* Goals from your body */
+.bg-nudge{display:flex;align-items:center;gap:14px;text-align:left;width:100%}
+.bg-nudge .mi{width:44px;height:44px;border-radius:50%;background:#FFE9DF;color:var(--go);display:grid;place-items:center;flex:none}
+.bg-nudge b{display:block;font-weight:800}
+.bg-nudge .mute{display:block;font-size:13px}
+.bg-act{background:var(--mist);border-radius:20px;padding:0 14px}
+.bg-act .row{text-align:left;border-bottom-color:#E1E4EC}
+.bg-act .row b{display:block;font-weight:700}
+.bg-act .row small{display:block;font-size:12.5px}
+.bg-act .row[aria-pressed="true"] b{color:var(--go)}
 
 </style>
 </head>
@@ -1556,7 +1591,7 @@ function realState(from) {
   Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
   st.checkins = []; st.meals = []; st.lifts = {}; st.progress = []; st.badges = {}; st.activity = []; st.requests = []; st.squads = [];
   st.posts = st.posts.filter(p => p.uid !== 'me'); st.friends.forEach(f => { f.duo = 0; });
-  st.goals = Object.assign({}, old.goals); st.settings = JSON.parse(JSON.stringify(old.settings));
+  st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
   st.mode = 'real'; st.rev = Date.now(); st.ui.coach = false;
   return st;
 }
@@ -3038,7 +3073,7 @@ function nutritionBar(fd, big) {
     (kc ? '<div class="macros' + (big ? '' : ' mini') + '">' + macro('p', 'Protein', 'var(--protein)') + macro('c', 'Carbs', 'var(--carbs)') + macro('f', 'Fat', 'var(--fat)') + '</div>' : '') + '</div>';
 }
 function dayLabel(fd) { const t = foodDay(now()); return fd === t ? 'Today' : fd === t - 1 ? 'Yesterday' : dateLong(dayStart(fd)); }
-function mealImg(m) { return (m.photo && photoSrc(m.photo)) || mealURI(m.art.kind, m.art.seed); }
+function mealImg(m) { return (m.photo && photoSrc(m.photo)) || (m.img && /^https:\/\//.test(m.img) ? esc(m.img) : '') || mealURI(m.art.kind, m.art.seed); }
 // Fibre and sodium for a meal: what Claude estimated, or the built-in figure for a built-in food.
 function mealX(m) { return m.fib != null || m.na != null ? [m.fib || 0, m.na || 0] : FOOD_X[m.name] || null; }
 // The last seven days: how many had anything logged, and the daily average over the finished ones.
@@ -3063,7 +3098,8 @@ function foodBody() {
   let h = '<div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + kc + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + !kc + '">Protein only</button></div>';
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
   if (off === 0) {
-    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
+    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="scanBarcode">' + ic('scan', 19) + 'Barcode</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
+    if (!S.body) h += '<button class="card bg-nudge" data-a="openBodyGoals"><span class="mi">' + ic('target', 22) + '</span><span class="grow"><b>Set your goals from your body</b><span class="mute">Height, weight and what you want. Takes 30 seconds.</span></span>' + ic('chevR', 18) + '</button>';
     const rec = recentMeals();
     if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
@@ -3114,7 +3150,7 @@ A.openGoals = () => {
   D.goals = Object.assign({}, S.goals);
   openSheet(() => {
     const f = (k, label, unit) => '<div class="field"><label for="gl-' + k + '">' + label + '</label><input class="input" id="gl-' + k + '" type="number" inputmode="numeric" min="0" data-m="goals.' + k + '" value="' + esc(D.goals[k]) + '" placeholder="' + unit + '"></div>';
-    return sheetHead('Daily goals') + '<div class="sh-b"><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
+    return sheetHead('Daily goals') + '<div class="sh-b"><button class="btn btn-go btn-w" data-a="openBodyGoals">' + ic('target', 19) + (S.body ? 'Work them out again from my body' : 'Work them out from my body') + '</button><p class="mute" style="font-size:13px">Or type your own:</p><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
   });
 };
 A.saveGoals = () => {
@@ -3701,7 +3737,7 @@ function sansRev(c) { const o = Object.assign({}, c); delete o.rev; return o; }
 function coreOf() {
   const cut = now() - KEEP_MEALS, gone = {};
   Object.keys(S.gone || {}).forEach(k => { if (S.gone[k] > now() - 60 * DAY) gone[k] = S.gone[k]; });
-  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
+  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, body: S.body || null, settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
 }
 // Called on every save: notes the moment your own data last changed. Waits while the account is still being read.
 function syncStamp() {
@@ -3754,7 +3790,7 @@ function applyCore(c, keepOlder) {
   const mine = real && keepOlder ? { ci: S.checkins.slice(0, -KEEP_CHECKINS), ml: S.meals.filter(m => m.ts <= cut) } : { ci: [], ml: [] };
   base.me = Object.assign({}, c.me, { id: 'me' });
   base.checkins = join(c.checkins || [], S.checkins.length > KEEP_CHECKINS ? mine.ci : []); base.meals = join(c.meals || [], mine.ml); base.progress = (c.progress || []).slice();
-  ['goals', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
+  ['goals', 'body', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
   base.weekNote = c.weekNote || null; base.gone = gone; base.epoch = c.epoch || 0; if (c.ui) Object.assign(base.ui, c.ui);
   base.mode = 'real'; base.offset = 0; base.rev = c.rev || 0; base.ui.coach = false;
   S = base; upgradeState(); ensureMyPosts(); _dp = null; _lz = null;
@@ -4465,6 +4501,286 @@ function guessSay(text, force) {
   if (kind === 'workout') return { state: 'ok', kind: 'workout', workout: guessWorkout(text) };
   return { state: 'ok', kind: 'other' };
 }
+
+/* Barcode. Scan a packaged food and log it with the label's own numbers, which
+   beat any photo estimate. The product comes from Open Food Facts, a free open
+   database; Claude then reads it against your goals for today.
+
+   Where the scan happens depends on where the page runs:
+   - inside the iPhone app, the app's own camera scanner (ios/LockIn/FoodScanner.swift);
+   - anywhere else, you type the number printed under the bars.
+   The lookup goes through the app when it can, and straight to Open Food Facts otherwise. */
+function foodNative() { try { return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.food || null; } catch (e) { return null; } }
+const BC = { can: null };
+async function bcCanScan() {
+  if (BC.can !== null) return BC.can;
+  const h = foodNative(); if (!h) return (BC.can = false);
+  try { BC.can = !!(await h.postMessage({ op: 'canScan' })); } catch (e) { BC.can = false; }
+  return BC.can;
+}
+async function bcLookup(code) {
+  const h = foodNative();
+  if (h) {
+    try { return JSON.parse(await h.postMessage({ op: 'product', code: code })); }
+    catch (e) { const x = new Error('lookup'); x.code = (e && e.message) || 'offline'; throw x; }
+  }
+  let r;
+  try { r = await fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=code,product_name,brands,quantity,serving_size,serving_quantity,nutrition_data_per,nutriments,nutriscore_grade,nova_group,additives_tags,allergens_tags,ingredients_text,image_front_small_url'); }
+  catch (e) { const x = new Error('lookup'); x.code = 'offline'; throw x; }
+  const j = await r.json().catch(() => null);
+  if (!j || j.status !== 1 || !j.product) { const x = new Error('lookup'); x.code = 'not_found'; throw x; }
+  return j.product;
+}
+
+// The parts of an Open Food Facts product the app uses, per 100 g (or ml) and per serving.
+function bcShape(p, code) {
+  const n = p.nutriments || {}, v = k => { const x = +n[k]; return isFinite(x) ? x : null; };
+  const per100 = { kcal: v('energy-kcal_100g'), p: v('proteins_100g'), c: v('carbohydrates_100g'), f: v('fat_100g'), fib: v('fiber_100g'), sug: v('sugars_100g'), sat: v('saturated-fat_100g'), na: v('sodium_100g') };
+  if (per100.kcal == null && v('energy_100g') != null) per100.kcal = v('energy_100g') / 4.184;   // some labels only give kJ
+  const sq = +p.serving_quantity, unit = /ml/i.test(p.nutrition_data_per || '') || /ml|fl/i.test(p.serving_size || '') ? 'ml' : 'g';
+  const tags = a => (Array.isArray(a) ? a : []).map(t => String(t).replace(/^[a-z]{2}:/, '').replace(/-/g, ' '));
+  return {
+    code: code, name: String(p.product_name || '').trim() || 'Unnamed product', brand: String(p.brands || '').split(',')[0].trim(), qty: p.quantity || '',
+    serving: isFinite(sq) && sq > 0 ? { amt: Math.round(sq * 10) / 10, label: p.serving_size || '' } : null, unit: unit, per100: per100,
+    nutri: /^[a-e]$/.test(p.nutriscore_grade || '') ? p.nutriscore_grade : null, nova: [1, 2, 3, 4].includes(+p.nova_group) ? +p.nova_group : null,
+    additives: [...new Set(tags(p.additives_tags).map(t => t.toUpperCase()))], allergens: tags(p.allergens_tags), ingredients: String(p.ingredients_text || '').trim().slice(0, 1200),
+    img: /^https:\/\//.test(p.image_front_small_url || '') ? p.image_front_small_url : null
+  };
+}
+// How much of the product: grams (or ml) eaten.
+function bcAmount(d) { return Math.max(0, +d.amt || 0); }
+function bcTotals(d) {
+  const k = bcAmount(d) / 100, x = d.prod.per100, r = (val, dp) => val == null ? null : Math.round(val * k * (dp || 1)) / (dp || 1);
+  return { kcal: Math.round((x.kcal || 0) * k), p: r(x.p || 0, 1), c: r(x.c || 0, 1), f: r(x.f || 0, 1), fib: r(x.fib), sug: r(x.sug), sat: r(x.sat), na: x.na == null ? null : Math.round(x.na * k * 1000) };
+}
+
+const NUTRI_COL = { a: '#1E8F4E', b: '#7AC547', c: '#F2B30C', d: '#EE7A1B', e: '#D8311B' };
+const NOVA_TXT = { 1: 'Unprocessed or minimally processed', 2: 'Processed culinary ingredient', 3: 'Processed food', 4: 'Ultra-processed food' };
+
+/* ---- entry ---- */
+A.scanBarcode = async () => {
+  if (await bcCanScan()) {
+    let code;
+    try { code = await foodNative().postMessage({ op: 'scan' }); }
+    catch (e) { const why = e && e.message; if (why === 'type' || why === 'unsupported') bcTypeSheet(); return; }
+    if (code) bcOpen(String(code));
+  } else bcTypeSheet();
+};
+function bcTypeSheet() {
+  D.bcType = { code: '' };
+  openSheet(() => sheetHead('Type the barcode') + '<div class="sh-b"><p class="mute">The number printed under the bars, usually 8, 12 or 13 digits.</p>' +
+    '<div class="field"><label for="bc-code">Barcode number</label><input class="input" id="bc-code" inputmode="numeric" autocomplete="off" data-m="bcType.code" data-enter="bcTyped" placeholder="0 49000 02891 1"></div>' +
+    '<button class="btn btn-ink btn-w" data-a="bcTyped">Look it up</button></div>', { after: el => { const i = el && el.querySelector('#bc-code'); if (i) i.focus(); } });
+}
+A.bcTyped = () => {
+  const code = String((D.bcType && D.bcType.code) || '').replace(/\D/g, '');
+  if (code.length < 6) { toast('That number looks too short. Check the digits under the bars.'); return; }
+  closeSheet(); bcOpen(code);
+};
+
+/* ---- the product sheet ---- */
+function bcOpen(code) {
+  D.bc = { code: code, state: 'loading', prod: null, amt: 100, mode: 'serving', n: 1, slot: slotNow(), ai: null };
+  const d = D.bc;
+  openSheet(bcSheet, { cls: 'full', onClose: () => { if (D.bc === d) D.bc = null; } });
+  bcLookup(code).then(p => {
+    if (D.bc !== d) return;
+    d.prod = bcShape(p, code); d.state = d.prod.per100.kcal == null ? 'nonum' : 'ok';
+    if (d.prod.serving) { d.mode = 'serving'; d.amt = d.prod.serving.amt; } else { d.mode = 'grams'; d.amt = 100; }
+    // Scanned before: start from the amount you ate last time.
+    const last = S.meals.filter(m => m.code === code && m.amt).sort((a, b) => b.ts - a.ts)[0];
+    if (last) { d.amt = last.amt; d.mode = 'grams'; if (d.prod.serving && Math.abs(last.amt / d.prod.serving.amt - Math.round(last.amt / d.prod.serving.amt * 2) / 2) < .01) { d.mode = 'serving'; d.n = Math.round(last.amt / d.prod.serving.amt * 2) / 2; } }
+    drawSheets(false);
+    if (d.state === 'ok') bcInsight(d);
+  }).catch(e => { if (D.bc !== d) return; d.state = e && e.code === 'not_found' ? 'missing' : 'offline'; drawSheets(false); });
+}
+function bcSheet() {
+  const d = D.bc; if (!d) return '';
+  if (d.state === 'loading') return sheetHead('Scanned food', { back: true }) + '<div class="sh-b"><div class="aicheck"><span class="spin"></span>Looking up ' + esc(d.code) + '</div></div>';
+  if (d.state === 'missing' || d.state === 'offline') {
+    return sheetHead('Scanned food', { back: true }) + '<div class="sh-b"><div class="aicheck no">' + ic('info', 18) + '<span>' + (d.state === 'missing' ? 'Barcode ' + esc(d.code) + ' is not in the food database yet.' : 'Could not reach the food database. Check your connection and try again.') + '</span></div>' +
+      '<p class="mute">You can snap the nutrition label instead, and Claude reads the numbers off it.</p>' +
+      '<div class="two"><button class="btn btn-go" data-a="bcLabel">' + ic('camera', 20) + 'Snap the label</button><button class="btn btn-line" data-a="' + (d.state === 'offline' ? 'bcRetry' : 'scanBarcode') + '">' + ic('scan', 19) + (d.state === 'offline' ? 'Try again' : 'Scan again') + '</button></div></div>';
+  }
+  const p = d.prod, t = bcTotals(d), kc = S.ui.showKcal !== false;
+  let h = sheetHead('Scanned food', { back: true }) + '<div class="sh-b">';
+  h += '<div class="bc-top">' + (p.img ? '<img src="' + esc(p.img) + '" alt="">' : '<span class="bc-ph">' + ic('scan', 30) + '</span>') + '<div class="grow"><b>' + esc(p.name) + '</b><span class="mute">' + esc([p.brand, p.qty].filter(Boolean).join(', ')) + '</span>' +
+    '<div class="chips bc-badges">' + (p.nutri ? '<span class="pill bc-ns" style="background:' + NUTRI_COL[p.nutri] + ';color:#fff">Nutri-Score ' + p.nutri.toUpperCase() + '</span>' : '') + (p.nova ? '<span class="pill' + (p.nova === 4 ? ' hot' : p.nova === 1 ? ' ok' : '') + '">NOVA ' + p.nova + '</span>' : '') + '</div></div></div>';
+  if (d.state === 'nonum') return h + '<div class="aicheck no">' + ic('info', 18) + '<span>The database has this product but no nutrition numbers for it. Snap the label instead.</span></div><button class="btn btn-go btn-w" data-a="bcLabel">' + ic('camera', 20) + 'Snap the label</button></div>';
+
+  h += '<div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + fmtN(t.kcal) + '</b>kcal</span><span class="mh-t">From the label</span></div>' +
+    '<div class="mmac"><span><b>' + t.p + ' g</b>protein</span><span><b>' + t.c + ' g</b>carbs</span><span><b>' + t.f + ' g</b>fat</span></div></div>';
+
+  // How much: servings when the label gives one, or grams.
+  const u = p.unit;
+  h += '<div class="field"><span class="lbl">How much did you have?</span>' + (p.serving ? '<div class="seg"><button data-a="bcMode" data-k="serving" aria-pressed="' + (d.mode === 'serving') + '">Servings</button><button data-a="bcMode" data-k="grams" aria-pressed="' + (d.mode === 'grams') + '">' + (u === 'ml' ? 'Millilitres' : 'Grams') + '</button></div>' : '');
+  if (d.mode === 'serving' && p.serving) {
+    h += '<div class="bc-step"><button class="icon-btn" data-a="bcStep" data-d="-0.5" aria-label="Half a serving less"' + (d.n <= .5 ? ' disabled' : '') + '>' + ic('minus', 20) + '</button><span><b class="num">' + d.n + '</b> ' + (d.n === 1 ? 'serving' : 'servings') + '<small>' + esc(p.serving.label || p.serving.amt + ' ' + u) + ' each</small></span><button class="icon-btn" data-a="bcStep" data-d="0.5" aria-label="Half a serving more">' + ic('plus', 20) + '</button></div>';
+  } else {
+    h += '<div class="send"><input class="input" id="bc-amt" type="number" inputmode="decimal" min="0" data-m="bc.amt" data-on="bcAmt" value="' + esc(d.amt) + '"><span class="bc-unit">' + u + '</span></div>' +
+      '<div class="chips">' + [30, 50, 100, 150, 250].map(g => '<button class="chip" data-a="bcGrams" data-v="' + g + '" aria-pressed="' + (+d.amt === g) + '">' + g + ' ' + u + '</button>').join('') + '</div>';
+  }
+  h += '</div>';
+
+  // How it fits today.
+  const today = dayTotals(foodDay(now())), g = S.goals, leftK = g.kcal - today.kcal - t.kcal, leftP = g.p - today.p - t.p, dens = t.kcal > 0 ? t.p / t.kcal * 100 : 0;
+  h += '<div class="card bc-fit"><div class="sec-h" style="margin:0 0 8px"><h2 class="h2" style="font-size:16px">After this, today</h2></div><div class="two">' +
+    (kc ? '<div class="tile"><div class="k">Calories</div><div class="v">' + fmtN(Math.abs(Math.round(leftK))) + '<small>' + (leftK >= 0 ? 'left' : 'over') + '</small></div>' + bar((today.kcal + t.kcal) / g.kcal, 'var(--go)') + '</div>' : '') +
+    '<div class="tile"><div class="k">Protein</div><div class="v">' + (leftP > 0 ? Math.round(leftP) + '<small>g to go</small>' : ic('check', 22) + '<small>goal hit</small>') + '</div>' + bar((today.p + t.p) / g.p, 'var(--protein)') + '</div></div>' +
+    (t.kcal > 40 ? '<p class="mute" style="font-size:13px;margin-top:10px">' + (dens >= 10 ? ic('check', 14) + ' High protein: ' : '') + Math.round(dens * 10) / 10 + ' g protein per 100 kcal' + (dens >= 10 ? '.' : dens < 3 ? ', low for the calories.' : '.') + '</p>' : '') + '</div>';
+
+  // Claude's read.
+  h += bcInsightCard(d);
+
+  // The detail.
+  const row = (k, v) => v == null ? '' : '<div class="row" style="padding:9px 0"><div class="grow">' + k + '</div><b>' + v + '</b></div>';
+  h += '<div class="card" style="padding:6px 16px"><div class="rows">' + row('Sugar', t.sug == null ? null : t.sug + ' g') + row('Saturated fat', t.sat == null ? null : t.sat + ' g') + row('Fibre', t.fib == null ? null : t.fib + ' g') + row('Sodium', t.na == null ? null : fmtN(t.na) + ' mg') +
+    row('Processing', p.nova ? NOVA_TXT[p.nova] : null) + row('Additives', p.additives.length ? p.additives.length + '' : null) + '</div></div>';
+  if (p.allergens.length) h += '<div class="aicheck no">' + ic('info', 18) + '<span>Contains ' + esc(p.allergens.join(', ')) + '</span></div>';
+  if (p.ingredients) h += '<details class="bc-ing"><summary>Ingredients' + (p.additives.length ? ' and additives' : '') + '</summary><p>' + esc(p.ingredients) + '</p>' + (p.additives.length ? '<p class="mute">Additives: ' + esc(p.additives.join(', ')) + '</p>' : '') + '</details>';
+  h += '<div class="field"><span class="lbl">Which meal</span><div class="chips">' + SLOTS.map(s => '<button class="chip" data-a="bcSlot" data-k="' + s[0] + '" aria-pressed="' + (d.slot === s[0]) + '">' + s[1] + '</button>').join('') + '</div></div>';
+  h += '<p class="mute" style="font-size:12.5px">Product data from Open Food Facts, a free database anyone can add to. Check the numbers against the pack.</p>';
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="bcLog"' + (t.kcal <= 0 && !bcAmount(d) ? ' disabled' : '') + '>Log ' + fmtN(t.kcal) + ' kcal</button></div>';
+}
+function bcInsightCard(d) {
+  const a = d.ai;
+  if (!a || a.state === 'off') return '';
+  if (a.state === 'working') return '<div class="aicheck"><span class="spin"></span>Claude is reading the label</div>';
+  if (a.state !== 'ok') return '';
+  const r = a.r, li = (arr, icn) => arr.map(x => '<li>' + ic(icn, 15) + '<span>' + esc(x) + '</span></li>').join('');
+  return '<div class="card bc-ai"><div class="bc-ai-h">' + ic('sparkle', 18) + '<b>' + esc(r.verdict) + '</b>' + (r.score ? '<span class="pill' + (r.score >= 7 ? ' ok' : r.score <= 4 ? ' hot' : '') + '">' + r.score + '/10 for you</span>' : '') + '</div>' +
+    (r.good.length || r.watch.length ? '<ul class="bc-ai-l">' + li(r.good, 'check') + li(r.watch, 'info') + '</ul>' : '') +
+    (r.swap ? '<p class="mute" style="font-size:13.5px;margin-top:8px"><b>Try instead:</b> ' + esc(r.swap) + '</p>' : '') + '</div>';
+}
+// Claude reads the product against today's numbers. Optional: the sheet works without it.
+async function bcInsight(d) {
+  d.ai = { state: 'working' }; drawSheets(false);
+  const s = await getAI(); if (D.bc !== d) return;
+  if (!s) { d.ai = { state: 'off' }; drawSheets(false); return; }
+  const p = d.prod, x = p.per100, today = dayTotals(foodDay(now())), g = S.goals, body = S.body || {};
+  const r1 = v => v == null ? 'unknown' : Math.round(v * 10) / 10;
+  const facts = 'Product: ' + quoted([p.brand, p.name].filter(Boolean).join(' '), 120) + (p.qty ? ' (' + quoted(p.qty, 40) + ')' : '') + '. Per 100 ' + p.unit + ': ' + Math.round(x.kcal) + ' kcal, protein ' + r1(x.p) + ' g, carbs ' + r1(x.c) + ' g, sugar ' + r1(x.sug) + ' g, fat ' + r1(x.f) + ' g, saturated fat ' + r1(x.sat) + ' g, fibre ' + r1(x.fib) + ' g, sodium ' + (x.na == null ? 'unknown' : Math.round(x.na * 1000) + ' mg') + '. ' +
+    (p.serving ? 'One serving is ' + quoted(p.serving.label || p.serving.amt + ' ' + p.unit, 40) + '. ' : '') + (p.nutri ? 'Nutri-Score ' + p.nutri.toUpperCase() + '. ' : '') + (p.nova ? 'NOVA group ' + p.nova + '. ' : '') +
+    (p.additives.length ? 'Additives: ' + quoted(p.additives.join(', '), 200) + '. ' : '') + (p.ingredients ? 'Ingredients: "' + quoted(p.ingredients, 700) + '". ' : '');
+  const me = 'The person lifts and tracks food in a gym habit app. Their daily goal is ' + g.kcal + ' kcal and ' + g.p + ' g protein' + (body.goal ? ', and they want to ' + ({ lose: 'lose fat', keep: 'maintain their weight', gain: 'build muscle' })[body.goal] : '') + '. So far today they have eaten ' + Math.round(today.kcal) + ' kcal and ' + Math.round(today.p) + ' g protein. ';
+  try {
+    const res = await s.json(facts + me + 'Give a short, honest read of this product for them, in plain words, speaking to them as "you". No medical claims and no moralising about food. ' +
+      'Reply with only a JSON object like {"verdict": "Solid protein snack, light on sugar", "score": 7, "good": ["17 g protein per serving"], "watch": ["Sweetened with sucralose"], "swap": ""}. ' +
+      '"verdict" is at most 8 words. "score" is 1 to 10 for how well it fits their goal. "good" and "watch" have at most 3 short points each, each under 12 words, drawn from the facts above. "swap" is one specific better-fitting alternative, or "" if this is already a good pick.', { modelTier: 'quick' });
+    if (D.bc !== d) return;
+    const arr = v => (Array.isArray(v) ? v : []).filter(z => typeof z === 'string' && z.trim()).slice(0, 3).map(z => z.trim().slice(0, 90));
+    d.ai = res && typeof res.verdict === 'string' ? { state: 'ok', r: { verdict: res.verdict.slice(0, 70), score: num(res.score, 0, 10) || null, good: arr(res.good), watch: arr(res.watch), swap: typeof res.swap === 'string' ? res.swap.trim().slice(0, 120) : '' } } : { state: 'off' };
+  } catch (e) { aiFail(e); if (D.bc === d) d.ai = { state: 'off' }; }
+  if (D.bc === d) drawSheets(false);
+}
+A.bcRetry = () => { const d = D.bc; if (!d) return; closeSheet(); bcOpen(d.code); };
+A.bcLabel = (el, e) => { closeAll(); D.bc = null; openCam('meal', e); };
+A.bcMode = el => { const d = D.bc, p = d.prod; d.mode = el.dataset.k; if (d.mode === 'serving' && p.serving) d.amt = Math.round(p.serving.amt * d.n * 10) / 10; drawSheets(false); };
+A.bcStep = el => { const d = D.bc, p = d.prod; d.n = clamp(Math.round((d.n + +el.dataset.d) * 2) / 2, .5, 20); d.amt = Math.round(p.serving.amt * d.n * 10) / 10; drawSheets(false); };
+A.bcGrams = el => { D.bc.amt = +el.dataset.v; drawSheets(false); };
+// Typing an amount redraws everything but the box being typed in.
+A.bcAmt = () => { const ae = document.activeElement, pos = ae && ae.selectionStart; drawSheets(false); const i = $('#bc-amt'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) { } } };
+A.bcSlot = el => { D.bc.slot = el.dataset.k; drawSheets(false); };
+A.bcLog = () => {
+  const d = D.bc; if (!d || !d.prod) return;
+  const t = bcTotals(d), p = d.prod, amt = bcAmount(d); if (!amt) { toast('Set how much you had first.'); return; }
+  const name = (p.brand && p.name.toLowerCase().indexOf(p.brand.toLowerCase()) < 0 ? p.brand + ' ' : '') + p.name;
+  S.meals.push({ id: uid(), ts: now(), name: name.slice(0, 60), kcal: t.kcal, p: Math.round(t.p), c: Math.round(t.c), f: Math.round(t.f), fib: t.fib == null ? null : Math.round(t.fib), na: t.na == null ? null : round10(t.na),
+    slot: d.slot, art: { kind: 'bowl', seed: 3 }, photo: null, img: p.img, src: 'barcode', est: false, code: p.code, amt: amt });
+  checkBadges();
+  D.bc = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
+  toast(fmtN(t.kcal) + ' kcal and ' + Math.round(t.p) + ' g protein added to today', 'check');
+};
+
+/* Goals from your body. Instead of guessing four numbers, say who you are and what
+   you want, and Lock In works the targets out. You see the numbers before they are
+   saved, and you can still type your own afterwards.
+
+   - Energy: Mifflin-St Jeor for resting burn, times an activity factor.
+   - Losing fat: a deficit of 0.25 to 1% of body weight a week (0.5% suggested).
+   - Building muscle: a small surplus, 0.25 or 0.5% of body weight a week.
+   - Protein: 1.8 g per kg, or 2.2 g per kg while losing fat, to hold on to muscle.
+   - Fat: about 27% of calories, never under 0.6 g per kg. Carbs fill the rest. */
+const ACT = [['Mostly sitting', 1.2, 'Desk days, little walking'], ['Lightly active', 1.375, 'On your feet some, or 1 to 2 workouts a week'], ['Active', 1.55, '3 to 5 workouts a week'], ['Very active', 1.725, 'Hard training most days'], ['Athlete', 1.9, 'Twice a day, or a physical job']];
+const GOALS = [['lose', 'Lose fat'], ['keep', 'Stay the same'], ['gain', 'Build muscle']];
+const PACE = { lose: [[.25, 'Gentle'], [.5, 'Steady'], [.75, 'Faster'], [1, 'Aggressive']], gain: [[.25, 'Lean'], [.5, 'Faster']] };
+const KG_LB = 2.20462;
+
+function bodyKg(b) { const w = +b.weight; return S.settings.units === 'kg' ? w : w / KG_LB; }
+function bodyCm(b) { return S.settings.units === 'kg' ? +b.cm : ((+b.ft || 0) * 12 + (+b.inch || 0)) * 2.54; }
+function bodyReady(b) { return bodyKg(b) >= 30 && bodyKg(b) <= 300 && bodyCm(b) >= 120 && bodyCm(b) <= 230 && +b.age >= 13 && +b.age <= 100; }
+// The targets for a body, or null while something needed is missing.
+function goalsFor(b) {
+  if (!bodyReady(b)) return null;
+  const w = bodyKg(b), h = bodyCm(b), a = +b.age;
+  const bmr = 10 * w + 6.25 * h - 5 * a + (b.sex === 'f' ? -161 : 5), tdee = bmr * (ACT[b.act] || ACT[2])[1];
+  const pace = b.goal === 'keep' ? 0 : +b.pace || .5, perDay = w * pace / 100 * 7700 / 7;   // about 7,700 kcal in a kilo of body fat
+  const floor = b.sex === 'f' ? 1200 : 1500;
+  const kcal = Math.round(Math.max(floor, b.goal === 'lose' ? tdee - perDay : b.goal === 'gain' ? tdee + perDay : tdee) / 10) * 10;
+  const p = Math.round(w * (b.goal === 'lose' ? 2.2 : 1.8) / 5) * 5;
+  const f = Math.round(Math.max(w * .6, kcal * .27 / 9));
+  const c = Math.max(50, Math.round((kcal - p * 4 - f * 9) / 4));
+  return { kcal: kcal, p: p, c: c, f: f, tdee: Math.round(tdee / 10) * 10, perWeek: w * pace / 100 };
+}
+// When a target weight would be reached at this pace.
+function goalDate(b, g) {
+  const t = +b.target; if (!t || b.goal === 'keep' || !g || !g.perWeek) return null;
+  const tk = S.settings.units === 'kg' ? t : t / KG_LB, w = bodyKg(b), diff = b.goal === 'lose' ? w - tk : tk - w;
+  if (diff <= 0) return null;
+  return now() + diff / g.perWeek * 7 * DAY;
+}
+
+A.openBodyGoals = () => {
+  const lb = S.settings.units !== 'kg';
+  D.body = Object.assign({ sex: 'm', age: '', weight: '', ft: '', inch: '', cm: '', act: 2, goal: 'keep', pace: .5, target: '' }, S.body || {});
+  openSheet(bodySheet, { cls: 'full' });
+  if (lb && !D.body.ft && D.body.cm) { const i = Math.round(D.body.cm / 2.54); D.body.ft = Math.floor(i / 12); D.body.inch = i % 12; }
+};
+function bodySheet() {
+  const b = D.body; if (!b) return '';
+  const lb = S.settings.units !== 'kg', u = lb ? 'lb' : 'kg';
+  const num = (k, label, ph, extra) => '<div class="field"><label for="bg-' + k + '">' + label + '</label><input class="input" id="bg-' + k + '" type="number" inputmode="decimal" min="0" data-m="body.' + k + '" data-on="bodyLive" value="' + esc(b[k]) + '" placeholder="' + ph + '"' + (extra || '') + '></div>';
+  const seg = (action, cur, list) => '<div class="seg">' + list.map(x => '<button data-a="' + action + '" data-k="' + x[0] + '" aria-pressed="' + (String(cur) === String(x[0])) + '">' + x[1] + '</button>').join('') + '</div>';
+  let h = sheetHead('Set my goals', { back: true }) + '<div class="sh-b"><p class="mute">A few facts about you, and Lock In works out your calories and macros. You see them before anything is saved.</p>';
+  h += '<div class="field"><span class="lbl">What do you want?</span>' + seg('bodyGoal', b.goal, GOALS) + '</div>';
+  if (PACE[b.goal]) h += '<div class="field"><span class="lbl">How fast?</span>' + seg('bodyPace', b.pace, PACE[b.goal].map(p => [p[0], p[1]])) + '<p class="mute" style="font-size:13px">' + bodyPaceTxt(b) + '</p></div>';
+  h += '<div class="field"><span class="lbl">Body</span>' + seg('bodySex', b.sex, [['m', 'Male'], ['f', 'Female']]) + '<p class="mute" style="font-size:12.5px">Used only for the resting-burn formula.</p></div>';
+  h += '<div class="two">' + num('age', 'Age', '21') + num('weight', 'Weight, ' + u, lb ? '170' : '77') + '</div>';
+  h += lb ? '<div class="two">' + num('ft', 'Height, feet', '5') + num('inch', 'Inches', '10') + '</div>' : num('cm', 'Height, cm', '178');
+  h += '<div class="field"><span class="lbl">How active are you, gym included?</span><div class="rows bg-act">' + ACT.map((x, i) => '<button class="row" data-a="bodyAct" data-k="' + i + '" aria-pressed="' + (+b.act === i) + '"><span class="grow"><b>' + x[0] + '</b><small class="mute">' + x[2] + '</small></span>' + (+b.act === i ? ic('check', 20) : '') + '</button>').join('') + '</div></div>';
+  if (b.goal !== 'keep') h += num('target', 'Goal weight, ' + u + ' (optional)', b.goal === 'lose' ? (lb ? '160' : '72') : (lb ? '180' : '82'));
+  h += '<div id="bg-out">' + bodyOut(b) + '</div>';
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="bodySave"' + (goalsFor(b) ? '' : ' disabled') + ' id="bg-save">Use these goals</button></div>';
+}
+function bodyPaceTxt(b) {
+  const w = bodyKg(b), lb = S.settings.units !== 'kg', per = w ? w * b.pace / 100 : 0;
+  return 'About ' + b.pace + '% of your weight a week' + (per ? ', ' + (lb ? Math.round(per * KG_LB * 10) / 10 + ' lb' : Math.round(per * 10) / 10 + ' kg') : '') + '.' +
+    (b.goal === 'lose' && b.pace >= 1 ? ' Fast loss costs more muscle and is harder to keep up.' : b.goal === 'lose' && b.pace === .5 ? ' A pace most people can hold.' : b.goal === 'gain' && b.pace === .25 ? ' Slow, to keep most of the gain as muscle.' : '');
+}
+function bodyOut(b) {
+  const g = goalsFor(b);
+  if (!g) return '<div class="aicheck">' + ic('info', 18) + '<span>Fill in your age, weight and height to see your numbers.</span></div>';
+  const when = goalDate(b, g);
+  return '<div class="card bg-res"><div class="mhead"><span class="mh-n"><b class="num">' + fmtN(g.kcal) + '</b>kcal a day</span><span class="mh-t">' + (b.goal === 'keep' ? 'Your maintenance' : 'You burn about ' + fmtN(g.tdee)) + '</span></div>' +
+    '<div class="mmac"><span><b>' + g.p + ' g</b>protein</span><span><b>' + g.c + ' g</b>carbs</span><span><b>' + g.f + ' g</b>fat</span></div>' +
+    (when ? '<p class="mute" style="font-size:13px;margin-top:10px">' + ic('calendar', 14) + ' At this pace you reach ' + esc(b.target) + ' ' + (S.settings.units === 'kg' ? 'kg' : 'lb') + ' around ' + dateLong(when) + '.</p>' : '') +
+    '<p class="mute" style="font-size:12.5px;margin-top:8px">A starting point from a standard formula, not medical advice. If your weight is not moving the way you want after 2 to 3 weeks, adjust by about 100 to 200 kcal.</p></div>';
+}
+A.bodyLive = () => {
+  const o = $('#bg-out'); if (o) o.innerHTML = bodyOut(D.body);
+  const s = $('#bg-save'); if (s) s.disabled = !goalsFor(D.body);
+};
+A.bodyGoal = el => { const b = D.body; b.goal = el.dataset.k; if (PACE[b.goal] && !PACE[b.goal].some(p => p[0] === +b.pace)) b.pace = PACE[b.goal][Math.min(1, PACE[b.goal].length - 1)][0]; if (b.goal === 'gain') b.pace = .25; drawSheets(false); };
+A.bodyPace = el => { D.body.pace = +el.dataset.k; drawSheets(false); };
+A.bodySex = el => { D.body.sex = el.dataset.k; drawSheets(false); };
+A.bodyAct = el => { D.body.act = +el.dataset.k; drawSheets(false); };
+A.bodySave = () => {
+  const b = D.body, g = goalsFor(b); if (!g) return;
+  S.body = { sex: b.sex, age: +b.age, weight: +b.weight, ft: +b.ft || 0, inch: +b.inch || 0, cm: Math.round(bodyCm(b)), act: +b.act, goal: b.goal, pace: +b.pace, target: +b.target || null, at: now() };
+  S.goals = { kcal: g.kcal, p: g.p, c: g.c, f: g.f };
+  D.body = null; closeAll(); save(); refresh();
+  toast('Goals set: ' + fmtN(g.kcal) + ' kcal and ' + g.p + ' g protein a day', 'check');
+};
 
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */

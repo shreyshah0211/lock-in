@@ -148,7 +148,7 @@ function realState(from) {
   Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
   st.checkins = []; st.meals = []; st.lifts = {}; st.progress = []; st.badges = {}; st.activity = []; st.requests = []; st.squads = [];
   st.posts = st.posts.filter(p => p.uid !== 'me'); st.friends.forEach(f => { f.duo = 0; });
-  st.goals = Object.assign({}, old.goals); st.settings = JSON.parse(JSON.stringify(old.settings));
+  st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
   st.mode = 'real'; st.rev = Date.now(); st.ui.coach = false;
   return st;
 }

@@ -20,7 +20,7 @@ function sansRev(c) { const o = Object.assign({}, c); delete o.rev; return o; }
 function coreOf() {
   const cut = now() - KEEP_MEALS, gone = {};
   Object.keys(S.gone || {}).forEach(k => { if (S.gone[k] > now() - 60 * DAY) gone[k] = S.gone[k]; });
-  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
+  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, body: S.body || null, settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
 }
 // Called on every save: notes the moment your own data last changed. Waits while the account is still being read.
 function syncStamp() {
@@ -73,7 +73,7 @@ function applyCore(c, keepOlder) {
   const mine = real && keepOlder ? { ci: S.checkins.slice(0, -KEEP_CHECKINS), ml: S.meals.filter(m => m.ts <= cut) } : { ci: [], ml: [] };
   base.me = Object.assign({}, c.me, { id: 'me' });
   base.checkins = join(c.checkins || [], S.checkins.length > KEEP_CHECKINS ? mine.ci : []); base.meals = join(c.meals || [], mine.ml); base.progress = (c.progress || []).slice();
-  ['goals', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
+  ['goals', 'body', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
   base.weekNote = c.weekNote || null; base.gone = gone; base.epoch = c.epoch || 0; if (c.ui) Object.assign(base.ui, c.ui);
   base.mode = 'real'; base.offset = 0; base.rev = c.rev || 0; base.ui.coach = false;
   S = base; upgradeState(); ensureMyPosts(); _dp = null; _lz = null;

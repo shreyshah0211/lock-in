@@ -11,6 +11,8 @@ This is a prototype, not a shipped app. It runs in a browser from one HTML file,
 - **Check-ins that say how they were proven.** A gym photo, a photo plus a recorded workout, a photo from outside, or the recorded workout alone, for gyms that do not allow photos.
 - **Friends.** A feed of each friend's latest check-in, one kind of props, a line showing who noticed your check-in, plans to train together, nudges, a weekly leaderboard, and duo streaks that can pause.
 - **Squads and a league.** A squad shares one streak. Squads are ranked for the quarter on check-ins per member. The reward ideas on the same screen are a mock-up: nothing is real and nobody pays to enter.
+- **Barcode.** Scan a packaged food (or type the number) to log it with the label's own numbers from Open Food Facts: servings or grams, Nutri-Score, processing level, additives, allergens and ingredients, what is left for today after it, and Claude's read of how it fits your goal with a better swap.
+- **Goals from your body.** Age, height, weight, activity and whether you want to lose fat, stay the same or build muscle (with a pace) become daily calories, protein, carbs and fat, with a date for a goal weight. You can still type your own.
 - **Food.** A calorie bar with protein, carbs and fat. A photo estimate is a draft you confirm: parts with small, medium and large portions, one line to correct it, and a rounded total labelled a rough estimate. Meals you have logged before can be logged again in one tap. Weekly averages, a protein-only mode, and fibre and sodium one tap down. Private by default.
 - **Workout progress.** Check-ins against a weekly goal, effort points compared with your own last four weeks, an 8-week chart, a body map, best lifts, a six-month grid, a monthly recap and private progress photos. Every number opens the sessions behind it.
 - **Say it.** Describe a workout or a meal out loud and the app fills in the form: workout type, minutes, effort and lifts, or the meal with its calories and protein. You confirm before it counts, and a workout still needs its gym photo.
@@ -37,7 +39,7 @@ Your streak, check-ins, meals, lifts and photos are saved to your Claude account
 5. Choose the iPhone in the device menu at the top of Xcode and press the Run button.
 6. The first time, on the phone: Settings, General, VPN & Device Management, trust your developer certificate, then open Lock In.
 
-With a free account the app stops opening after 7 days; press Run again to renew it. Data is kept on the phone only. Notifications, a widget and Apple Health are not wired up yet.
+With a free account the app stops opening after 7 days; press Run again to renew it, or run `tools/install-iphone.sh`, which rebuilds and installs over Wi-Fi once the phone has been paired by cable (phone unlocked, same Wi-Fi as the Mac). Data is kept on the phone only. Notifications, a widget and Apple Health are not wired up yet.
 
 **Claude in the app.** Photo recognition, calorie estimates and Say it call the Claude API from the app itself (`ios/LockIn/ClaudeBridge.swift`), so they need your own API key:
 

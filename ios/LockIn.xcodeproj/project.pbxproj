@@ -12,6 +12,7 @@
 		EECDC1A068103C62934030F7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F0071DC750B6A0DE63204B1 /* Assets.xcassets */; };
 		BFC73B81B8A002DBC8CFCA87 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = F0DACD34064F2CA1C8BFA6D8 /* index.html */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ClaudeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B7C8D9E0F1A2 /* ClaudeBridge.swift */; };
+		A2B3C4D5E6F7A8B9C0D1E2F3 /* FoodScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* FoodScanner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		F0DACD34064F2CA1C8BFA6D8 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../dist/index.html; sourceTree = SOURCE_ROOT; };
 		B1C2D3E4F5A6B7C8D9E0F1A2 /* ClaudeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeBridge.swift; sourceTree = "<group>"; };
 		C1D2E3F4A5B6C7D8E9F0A1B2 /* LockIn.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = LockIn.xcconfig; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* FoodScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodScanner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 				01130DF6C4CF9FE55620CB4F /* LockInApp.swift */,
 				4805D0F99C9C4DE4B16818FD /* WebScreen.swift */,
 				B1C2D3E4F5A6B7C8D9E0F1A2 /* ClaudeBridge.swift */,
+				B2C3D4E5F6A7B8C9D0E1F2A3 /* FoodScanner.swift */,
 				7F0071DC750B6A0DE63204B1 /* Assets.xcassets */,
 				070E7EF4696C35AF028E12F3 /* Info.plist */,
 			);
@@ -147,6 +150,7 @@
 				EB9797A0D9D758BAE354A65C /* LockInApp.swift in Sources */,
 				F5AB9B87892E3A9DFD8C63AA /* WebScreen.swift in Sources */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* ClaudeBridge.swift in Sources */,
+				A2B3C4D5E6F7A8B9C0D1E2F3 /* FoodScanner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

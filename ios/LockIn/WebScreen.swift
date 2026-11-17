@@ -15,6 +15,8 @@ struct WebScreen: UIViewRepresentable {
         config.mediaTypesRequiringUserActionForPlayback = []
         // Photo recognition, meal estimates and Say it ask Claude through this handler.
         config.userContentController.addScriptMessageHandler(ClaudeBridge(), contentWorld: .page, name: ClaudeBridge.handlerName)
+        // Barcode scanning and product lookup for the Food tab.
+        config.userContentController.addScriptMessageHandler(FoodScanner(), contentWorld: .page, name: FoodScanner.handlerName)
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.uiDelegate = context.coordinator
