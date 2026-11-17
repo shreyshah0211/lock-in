@@ -26,6 +26,19 @@ This is a prototype, not a shipped app. It runs in a browser from one HTML file,
 
 Your streak, check-ins, meals, lifts and photos are saved to your Claude account, so they survive a cleared browser and show up on a laptop too. There are no notifications: add the deadline to your calendar from the check-in screen to get a reminder.
 
+## Run it as an iPhone app from Xcode
+
+`ios/LockIn.xcodeproj` is a small iPhone app that shows the built web app (`dist/index.html`) full screen, with the phone's camera and its own icon. It needs a Mac with Xcode; a free Apple Account is enough.
+
+1. Open `ios/LockIn.xcodeproj` in Xcode.
+2. Xcode, Settings, Accounts: add your Apple Account.
+3. Click **LockIn** at the top of the left sidebar, then **Signing & Capabilities**, and choose your name as the Team. If Xcode says the bundle identifier is taken, change it to anything unique.
+4. Plug in the iPhone and tap Trust. On the phone turn on Settings, Privacy & Security, Developer Mode, and restart when asked.
+5. Choose the iPhone in the device menu at the top of Xcode and press the Run button.
+6. The first time, on the phone: Settings, General, VPN & Device Management, trust your developer certificate, then open Lock In.
+
+With a free account the app stops opening after 7 days; press Run again to renew it. Data is kept on the phone only. Photo recognition, calorie estimates from photos and Claude's reading of what you say do not work in this app yet, because those run through Claude when the page is hosted there. The app asks what a photo is and you type the numbers. Notifications, a widget and Apple Health are not wired up either. This project has not been built or run by its author: it was written without access to Xcode.
+
 ## Try it on a computer
 
 Open `dist/index.html` in a browser. Nothing else is needed.
@@ -51,6 +64,7 @@ dist/index.html       the built single-file app (fonts inlined)
 tools/build.py        joins src/ into dist/index.html
 tools/geodata.js      rebuilds the map outlines (cd tools && npm install && node geodata.js)
 tools/*.py            browser tests (see below)
+ios/                  the Xcode project for the iPhone app (a shell around dist/index.html)
 docs/                 design note and build log
 reports/              research behind the product decisions
 ```
