@@ -47,7 +47,7 @@ with sync_playwright() as pw:
                 ov = pg.evaluate(OV % sel)
                 if ov[0] or ov[1]: bad += 1; print(w, t, sel, 'overflow', ov)
         for a in ['A.openFriends()','A.openTiers()','A.openGoals()','A.openIntro()']:
-            pg.evaluate('closeAll();'+a); pg.wait_for_timeout(250)
+            pg.evaluate('closeAll();'+a); pg.wait_for_timeout(500)   # sheets slide in over 0.34s; measure once they have settled
             ov = pg.evaluate(OV % '#layer .sheet:last-of-type')
             inside = pg.evaluate("(() => { const s=document.querySelector('#layer .sheet:last-of-type').getBoundingClientRect(), p=document.querySelector('#phone').getBoundingClientRect(); return s.left>=p.left-1 && s.right<=p.right+1 && s.top>=p.top-1 && s.bottom<=p.bottom+1; })()")
             if ov[0] or ov[1] or not inside: bad += 1; print(w, a, 'sheet problem', ov, 'inside column:', inside)

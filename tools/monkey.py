@@ -13,6 +13,7 @@ with sync_playwright() as pw:
     pg.on('pageerror', lambda e: errs.append('pageerror: '+str(e)+' after '+' > '.join(log[-4:])))
     pg.on('filechooser', lambda fc: fc.set_files([]))
     pg.goto(url); pg.wait_for_timeout(500)
+    if len(sys.argv) > 4 and sys.argv[4] == 'real': pg.evaluate("closeAll(); S = realState(S); upgradeState(); render()")   # run on your-own-data mode
     for i in range(260):
         els = pg.query_selector_all('[data-a]')
         vis = []

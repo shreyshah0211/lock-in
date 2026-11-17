@@ -11,7 +11,7 @@ def run(pw, name, vw, vh, steps):
     pg.on('console', lambda m: errs.append('console: '+m.text) if m.type=='error' else None)
     pg.on('pageerror', lambda e: errs.append('pageerror: '+str(e)))
     pg.goto(url); pg.wait_for_timeout(700)
-    if name != 'first': pg.evaluate('closeAll()')
+    if name not in ('first', 'real'): pg.evaluate('closeAll()')
     for i,(label, fn) in enumerate(steps):
         try:
             if fn: fn(pg)
@@ -36,7 +36,8 @@ def seq(*fns):
 W = lambda ms: (lambda pg: pg.wait_for_timeout(ms))
 flows = {
  'home': [('home',None),('home2',scroll(430)),('home3',scroll(1150)),('friends',seq(scroll(0),click('.hero [data-a="openFriends"]'))),('profile',click('.sheet [data-a="openProfile"][data-id="maya"]')),('activity',seq(back,back,act('openActivity'))),('passes',seq(back,act('openPasses'))),('rules',seq(back,act('openTiers')))],
- 'first': [('intro',None),('intro2',act('introNext')),('intro3',act('introNext')),('intro4',act('introNext')),('targets',seq(click('[data-a="introStep"][data-k="kcal"][data-d="100"]'),click('[data-a="introStep"][data-k="p"][data-d="10"]'))),('cam',act('introNext')),('reload',lambda pg: (pg.reload(), pg.wait_for_timeout(600)))],
+ 'first': [('intro',None),('intro2',act('introNext')),('intro3',act('introNext')),('intro4',act('introNext')),('targets',seq(click('[data-a="introStep"][data-k="kcal"][data-d="100"]'),click('[data-a="introStep"][data-k="p"][data-d="10"]'))),('cam',seq(act('introReal'),W(500))),('reload',lambda pg: (pg.reload(), pg.wait_for_timeout(600)))],
+ 'real': [('intro4',js("D.intro = 3; drawSheets(false)")),('camera',seq(act('introReal'),W(500))),('home',act('camClose')),('home2',scroll(520)),('ch',tab('ch')),('food',tab('food')),('you',tab('you')),('you2',scroll(620)),('settings',act('openSettings')),('activity',seq(back,tab('home'),act('openActivity'))),('sample',seq(back,js("A.openSettings()"),act('goSample'))),('settings2',js("A.openSettings()"))],
  'cam': [('cam',act('goCam')),('working',click('[data-a="camSample"][data-k="gym"]')),('composer',W(1100)),('more',seq(act('ciMore'),sscroll(600))),('posted',act('ciPost')),('done2',W(1500)),('duo',act('doneDuo')),('home-after',click('.done [data-a="closeSheet"]')),('feed',scroll(520)),
          ('mealwork',seq(scroll(0),act('goCam'),click('[data-a="camSample"][data-k="food"]'))),('meal',W(1500)),('asgym',click('[data-a="snapAs"][data-k="gym"]')),('asprog',click('[data-a="snapAs"][data-k="progress"]')),('asmeal',seq(click('[data-a="snapAs"][data-k="food"]'),W(500))),('logged',act('mealLog')),
          ('progcam',seq(tab('you'),js("A.addProgress()"))),('progsheet',click('[data-a="camSample"]')),('progsaved',act('pgSave'))],
