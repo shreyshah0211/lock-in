@@ -1,0 +1,7 @@
+tools/node_modules/
+shots/
+src.v2bak/
+research_notes/
+__pycache__/
+*.pyc
+.DS_Store
