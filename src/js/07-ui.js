@@ -17,7 +17,7 @@ function render() {
   curTab = tab;
   if (tab === 'cam') { camAttach(); camStart(); } else camStop();
   renderTabs(); renderRail();
-  live();
+  live(); globeMini();
 }
 // The camera button: always in the middle, always the same. The ring around it is your clock.
 function snapInfo() {
@@ -34,13 +34,15 @@ function renderTabs() {
   $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + tabBtn(NAV[1]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[2]) + tabBtn(NAV[3]) + '</div>' +
     '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam" aria-label="Open the camera">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
-    '<span class="snap-core">' + ic('camera', 28) + '</span></button>';
+    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' +
+    (t === 'home' ? '<button class="say-fab" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' : '');
   // computer: the same places down the side, with words next to everything
   const sd = $('#side'); if (!sd) return;
   const m = S.me, days = pDays(m);
   sd.innerHTML = '<button class="side-logo" data-a="tab" data-tab="home" aria-label="Lock In home">' + wordmark() + '</button>' +
     '<div class="side-nav">' + NAV.map(it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 22) + '<span>' + it[2] + '</span></button>').join('') + '</div>' +
     '<button class="btn btn-go side-snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam">' + ic('camera', 22) + 'Snap a photo</button>' +
+    '<button class="btn btn-line side-say" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' +
     '<p class="side-clock"><span class="dot" style="background:' + si.color + '"></span>' + (si.alive ? '<span><b data-live="left">' + fmtLeft(si.left) + '</b> left on your clock</span>' : si.rep ? '<span>Snap a gym photo to save your streak</span>' : '<span>Snap a gym photo to start a streak</span>') + '</p>' +
     '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openActivity">' + ic('bell', 20) + '<span>Activity</span>' + (unread ? '<i class="ndot"></i>' : '') + '</button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
     '<div class="side-me">' + av(m, 38, { plain: true }) + '<span><b>' + esc(m.name) + '</b><small>' + flameTxt(days) + '</small></span></div></div>';

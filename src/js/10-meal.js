@@ -145,17 +145,3 @@ A.mealAgain = el => {
   S.ui.foodOff = 0; save(); refresh();
   toast(m.name + ' logged again: ' + fmtN(m.kcal) + ' kcal, ' + m.p + ' g protein', 'check');
 };
-A.openTypeMeal = () => {
-  D.tm = { text: '', busy: false };
-  openSheet(() => sheetHead('Type what you ate') + '<div class="sh-b"><div class="field"><label for="tm-text">Describe it the way you would to a friend</label><textarea class="input" id="tm-text" data-m="tm.text" placeholder="Two eggs, toast with peanut butter and a banana">' + esc(D.tm.text) + '</textarea></div>' +
-    '<button class="btn btn-go btn-w" data-a="typeMealGo"' + (D.tm.busy ? ' disabled' : '') + '>' + (D.tm.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Estimating' : 'Estimate it') + '</button></div>');
-  setTimeout(() => { const t = $('#tm-text'); if (t) t.focus(); }, 60);
-};
-A.typeMealGo = async () => {
-  const text = (D.tm.text || '').trim(); if (!text) { toast('Type what you ate first.'); return; }
-  D.tm.busy = true; drawSheets(false);
-  const r = await aiMealText(text), g = guessMeal(text);
-  closeSheet();
-  if (r.state === 'ai') startMeal(null, Object.assign({ state: 'ai', kind: g.kind, text: text }, r.meal));
-  else startMeal(null, Object.assign({ state: 'guess', text: text }, g));
-};

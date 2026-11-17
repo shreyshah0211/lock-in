@@ -27,8 +27,9 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
-  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : 'Snap your gym or your food';
-  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const said = intent ? null : saidPending();
+  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
   const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
@@ -36,18 +37,19 @@ VIEWS.cam = () => {
   const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
   const right = intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
+  const sayAlt = intent === 'progress' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
     (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
     '<div class="cam-bot"><div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
-    '<p class="cam-note">' + how + '</p>' + gymOnly + '</div></div>';
+    '<p class="cam-note">' + how + '</p>' + gymOnly + sayAlt + '</div></div>';
 };
 
 let _prevTab = 'home';
 const _origTab = A.tab;
-A.tab = el => { D.camIntent = null; D.camOutside = false; _origTab(el); };
+A.tab = el => { D.camIntent = null; D.camOutside = false; D.said = null; _origTab(el); };
 function openCam(intent, e) {
   if (S.ui.tab !== 'cam') _prevTab = S.ui.tab;
   S.ui.tab = 'cam'; D.camIntent = intent || null; D.camOutside = false; if (intent) D.fromDetected = null;
@@ -56,7 +58,7 @@ function openCam(intent, e) {
   if (e && e.isTrusted && cam.live === false && isTouch() && intent !== 'progress') { const i = $('#cam-input'); i.value = ''; i.click(); }
 }
 A.goCam = (el, e) => { D.fromDetected = null; openCam(null, e); };
-A.camClose = () => { S.ui.tab = _prevTab || 'home'; D.camIntent = null; D.camOutside = false; render(); };
+A.camClose = () => { S.ui.tab = _prevTab || 'home'; D.camIntent = null; D.camOutside = false; D.said = null; render(); };
 A.camFlip = () => { cam.facing = cam.facing === 'user' ? 'environment' : 'user'; camStop(); camStart(); };
 A.camShoot = async () => {
   const v = $('#cam-video');
@@ -171,6 +173,7 @@ function startCheckin(ph, opts) {
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
     noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : out ? 'outside' : !ph ? 'sample' : seen ? 'ok' : 'checking', note: seen ? seen.note : '' };
+  const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
   openSheet(checkinSheet, { cls: 'full', onClose: () => { if (D.ci) D.snap = null; } });
   if (ph && !seen && !out) {
     const d = D.ci;
@@ -196,6 +199,7 @@ function aiRow(d) {
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
+    (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
     (d.screen ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen. Retake it if you can.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '');
 }
 function ciProof(d) { return d.noPhoto ? 'workout' : d.outside ? 'outside' : d.device ? 'both' : 'photo'; }
@@ -217,6 +221,7 @@ function checkinSheet() {
   return sheetHead('New check-in', { back: true }) + '<div class="sh-b">' + kindSwitch() +
     '<div class="prev"><img src="' + src + '" alt="' + (d.noPhoto ? 'Your recorded workout' : 'Your check-in photo') + '"><div class="tags"><span class="stick">' + flame(17, '#FF8A1E') + '<span style="color:#fff">Day <span class="num" style="font-size:19px">' + day + '</span></span></span><span class="stick">' + clock(now()) + ' at ' + esc(m.gym) + '</span></div></div>' +
     '<div class="proofs" id="ci-proof">' + aiRow(d) + '</div>' +
+    '<button class="btn btn-line btn-w say-in" data-a="openSay" data-k="workout">' + ic('mic', 20) + (d.said ? 'Say it again' : 'Say what you trained') + '</button>' +
     '<div class="field"><span class="lbl">What did you train?</span><div class="chips" id="ci-types">' + typeChips(d) + '</div></div>' +
     '<div class="field"><span class="lbl">How hard was it?</span><div class="effort">' + eff + '</div></div>' + more +
     '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="ciPost">Post check-in<span id="ci-pts" style="opacity:.85;font-weight:600">+' + ciPts(d) + ' points</span></button></div>' +

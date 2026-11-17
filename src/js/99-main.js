@@ -18,7 +18,7 @@ function renderRail() {
 }
 
 function boot() {
-  loadState(); initAI(); initMCP(); initSync(); camProbe();
+  loadState(); initAI(); initVoice(); initMCP(); initSync(); camProbe();
   document.addEventListener('touchstart', () => { }, { passive: true });   // lets iPhone show pressed states
   if (S.ui.tab === 'cam') S.ui.tab = 'home';   // never reopen on the camera
   $('#cam-input').addEventListener('change', onCamFile);

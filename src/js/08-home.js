@@ -60,7 +60,7 @@ VIEWS.home = () => {
   h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All ' + fr.length + '</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') +
     '<button data-a="openFriends" data-seg="find"><span class="av plain" style="--s:60px;--c:#676D85"><i>' + ic('plus', 24) + '</i></span><span class="nm">Find</span><span class="streak" style="visibility:hidden">0</span></button></div>';
-  h += meetsSection();
+  h += globeCard() + meetsSection();
   const posts = feedPosts();
   h += '<h2 class="feed-h">Last 48 hours</h2>' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">Nobody has checked in yet. Be the first.</p>') + '<p class="feed-end">One photo per friend, their latest.<br>Friends and their posts are sample data.</p>';
   return h;
