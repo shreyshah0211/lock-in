@@ -12,7 +12,8 @@ function mkCheckin(o) {
   return { id: uid(), ts: o.ts, type: o.type, mins: o.mins, effort: o.effort, nl: o.nl || 0, pts: pointsFor(o), scene: sceneFor(o.type, o.seed || Math.floor(Math.random() * 1e6)), photo: o.photo || null, caption: o.caption || '', verified: o.verified === undefined ? true : o.verified, pr: o.pr || null, lifts: o.lifts || null };
 }
 function seedCheckins(t, r) {
-  const today = dayNum(t), lastTs = t - 16.8 * HOUR, lastDay = dayNum(lastTs), out = [];
+  // the sample last trained yesterday, so a check-in today is always open to try
+  const today = dayNum(t), lastTs = Math.min(t - 16.8 * HOUR, dayStart(today) - 2 * HOUR), lastDay = dayNum(lastTs), out = [];
   const rot = ['push', 'pull', 'legs', 'cardio', 'upper', 'legs', 'full', 'core'];
   let ri = 0, prev = false, gap = 0;
   for (let d = today - 330; d <= lastDay; d++) {
@@ -135,11 +136,12 @@ function loadState() {
 // Things added after the first builds. State saved by an older build picks them up here.
 function upgradeState() {
   if (!S.meets) S.meets = seedMeets();
-  if (!S.league) S.league = seedLeague();
   if (S.conn && S.conn.strava) delete S.conn.strava;   // Strava now arrives through Apple Health or Health Connect
   S.posts.forEach(p => { if (p.uid === 'me' && !p.by) p.by = following().slice(0, Math.min(9, p.rx.fire + p.rx.flex + p.rx.clap)).map(f => f.id); });
   if (S.ui.recapSeen === undefined) S.ui.recapSeen = '';
   if (!S.mode) S.mode = 'sample';   // 'sample' to look around, 'real' for your own data
+  // A month of sample weigh-ins, so the weight log has something to show in the sample.
+  if (!S.weights) { S.weights = []; if (S.mode === 'sample') { const r = rng(91); for (let d = 34; d >= 0; d -= 1 + Math.floor(r() * 2)) S.weights.push({ ts: now() - d * DAY - 15 * HOUR, kg: Math.round((78.6 - (34 - d) * .045 + (r() - .5) * .7) * 10) / 10 }); } }
   if (!S.rev) S.rev = 0;
 }
 // Your own data, from zero. The sample friends stay, so the social screens have people in them.
@@ -148,7 +150,7 @@ function realState(from) {
   Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
   st.checkins = []; st.meals = []; st.lifts = {}; st.progress = []; st.badges = {}; st.activity = []; st.requests = []; st.squads = [];
   st.posts = st.posts.filter(p => p.uid !== 'me'); st.friends.forEach(f => { f.duo = 0; });
-  st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
+  st.weights = []; st.water = []; st.coachLog = []; st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
   st.mode = 'real'; st.rev = Date.now(); st.ui.coach = false;
   return st;
 }
@@ -157,6 +159,7 @@ function save() {
   clearTimeout(_saveT);
   _saveT = setTimeout(() => {
     syncStamp();   // marks the moment your own data last changed
+    if (typeof remindSync === 'function') remindSync();   // streak reminders follow the clock
     if (!MEM) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { MEM = true; } }
     syncPush();
   }, 250);

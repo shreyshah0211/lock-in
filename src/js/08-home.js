@@ -6,29 +6,23 @@ function leftClock(ms) {
 }
 function repairLeft() { return canRepair() ? S.me.lost.at + DAY - now() : 0; }
 function heroPanel() {
-  const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep), unread = S.activity.some(a => !a.read);
+  const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep);
   const state = alive ? timeState(left) : rep > 0 ? 'crit' : 'out';
-  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openFriends">' + ic('users', 18) + 'Friends</button><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
+  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '</div>';
   const mid = alive ? '<b data-live="clock">' + lc[0] + '</b><span data-live="clocklbl">' + lc[1] + '</span>' : rep > 0 ? '<b data-live="clock">' + lc[0] + '</b><span>to save your streak</span>' : '<b>0:00</b><span>on your clock</span>';
   h += '<div class="hero-dial">' + dial(204, alive ? left : rep, days, { id: 'me-dial', mid: mid, color: !alive && rep > 0 ? '#FF5347' : null }) + '</div>';
-  if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button><button class="pill" data-a="openPasses">' + ic('pass', 13) + plural(m.passes, 'pass') + '</button></div><p class="hero-sub">' + (left < 6 * HOUR ? 'Check in by ' + whenBy(deadline()) + ' or it ends.' : 'Next photo due ' + whenBy(deadline()) + '.') + '</p>';
-  else if (rep > 0) h += '<div class="hero-line"><span>Your ' + m.lost.days + ' day streak ran out</span></div><p class="hero-sub">Check in before the clock above hits zero and you get it back. One comeback a month.</p>';
-  else h += '<div class="hero-line"><span>' + (m.lost ? 'Your streak ended at ' + plural(m.lost.days, 'day') : 'No streak yet') + '</span></div><p class="hero-sub">One gym photo starts a new one' + (m.best ? '. Your best is ' + plural(m.best, 'day') : '') + '.</p>';
+  if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button></div><p class="hero-sub">Check in by ' + whenBy(deadline()) + '</p>';
+  else if (rep > 0) h += '<div class="hero-line"><span>Your ' + m.lost.days + ' day streak ran out</span></div><p class="hero-sub">Check in now to get it back.</p>';
+  else h += '<div class="hero-line"><span>' + (m.lost ? 'Streak ended at ' + plural(m.lost.days, 'day') : 'No streak yet') + '</span></div><p class="hero-sub">One gym photo starts it.</p>';
   return h + '</section>';
 }
+// A friend's latest photo: who, which day, when. Nothing to tap but their name.
 function postHTML(p, gated) {
   const u = person(p.uid); if (!u) return '';
-  const mine = p.uid === 'me', days = p.day || 1, pf = PROOF[proofKey(p)];
-  // Props are for the effort, and there is one kind. Nothing here rates how anyone looks.
-  const props = '<button class="react" data-a="' + (mine ? 'openNoticed' : 'react') + '" data-id="' + p.id + '" aria-pressed="' + (!mine && !!p.mine) + '" aria-label="' + (mine ? 'See who gave you props' : 'Give props') + '"><span class="e">👏</span>Props<span class="n">' + propsN(p) + '</span></button>';
-  const note = p.verified === false ? 'Not verified' : TYPE[p.type].v + ' at ' + p.gym;
+  const mine = p.uid === 'me', days = p.day || 1;
   if (gated) return '<article class="post"><div class="shot gated"><img src="' + imgOf(p) + '" alt=""><div class="gate">' + avPlain(u.name, u.color, 54) + '<b>' + esc(first(u.name)) + ' checked in ' + ago(p.ts) + '</b><span>Check in to see it.</span></div></div></article>';
-  return '<article class="post" id="p-' + p.id + '"><div class="shot" data-a="shotTap" data-id="' + p.id + '"><img src="' + imgOf(p) + '" alt="' + esc((mine ? 'Your' : first(u.name) + '\'s') + ' check-in') + '" loading="lazy">' +
-    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 44, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : u.name) + (p.verified === true ? ' ' + ic('check', 14) : '') + '</b><span>' + esc(note) + '</span></span></button><time>' + ago(p.ts) + '</time></div>' +
-    '<div class="tags"><span class="stick">' + flame(17, tierColor(days)) + 'Day <span class="num" style="font-size:19px">' + days + '</span></span><span class="stick">' + p.mins + ' min, ' + EFFORT[p.effort].toLowerCase() + '</span></div></div>' +
-    '<div class="post-a">' + props + '<button class="proof" data-a="openProof" data-k="' + proofKey(p) + '">' + ic(pf[1], 15) + pf[0] + '</button><button class="cbtn" data-a="openComments" data-id="' + p.id + '" aria-label="Comments">' + ic('comment', 20) + p.comments.length + '</button></div>' +
-    (p.pr ? '<span class="pill hot post-pr">' + ic('trend', 15) + 'New best: ' + esc(p.pr.lift) + ' ' + p.pr.w + ' ' + S.settings.units + '</span>' : '') +
-    (p.caption ? '<p class="post-c"><b>' + esc(mine ? 'You' : first(u.name)) + '</b> ' + esc(p.caption) + '</p>' : '') + '</article>';
+  return '<article class="post" id="p-' + p.id + '"><div class="shot"><img src="' + imgOf(p) + '" alt="' + esc((mine ? 'Your' : first(u.name) + '\'s') + ' check-in') + '" loading="lazy">' +
+    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 40, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : first(u.name)) + '</b><span>Day ' + days + '</span></span></button><time>' + ago(p.ts) + '</time></div></div></article>';
 }
 // One photo per person: their latest check-in from the last 48 hours.
 function feedPosts() {
@@ -36,33 +30,15 @@ function feedPosts() {
   S.posts.forEach(p => { if (seen[p.uid] || p.ts < cut) return; const u = person(p.uid); if (!u || (p.uid !== 'me' && !u.fol)) return; seen[p.uid] = 1; out.push(p); });
   return out;
 }
-// Home shows at most one card between your clock and the feed. First match wins: a workout
-// your phone recorded, last month's recap (once), a friend about to run out, the offer to connect.
-function homeCard() {
-  const off = syncOfferCard(); if (off) return off;
-  const det = detectedCard(); if (det) return det;
-  const rc = recapCard(); if (rc) return rc;
-  const close = following().filter(f => pAlive(f) && pLeft(f) < 6 * HOUR).sort((a, b) => pLeft(a) - pLeft(b))[0];
-  if (close) return '<div class="nudge">' + av(close, 44) + '<div class="grow"><b>' + esc(first(close.name)) + '</b> has ' + fmtLeftShort(pLeft(close)) + ' left on a ' + pDays(close) + ' day streak.</div><button class="btn btn-ink btn-s" data-a="nudge" data-id="' + close.id + '"' + (close.nudged ? ' disabled' : '') + '>' + (close.nudged ? 'Nudged' : ic('bolt', 16) + 'Nudge') + '</button></div>';
-  if (!connCount() && S.ui.connHint !== false) return '<div class="hint"><p>Let a recorded workout remind you to check in.</p><button data-a="openConnections">Connect</button><button data-a="hideConnHint" aria-label="Dismiss">' + ic('x', 18) + '</button></div>';
-  return '';
-}
-// Food and workouts at a glance. Each opens the full page.
-function todayTiles() {
-  const t = dayTotals(foodDay(now())), g = S.goals, kc = S.ui.showKcal !== false, have = Math.round(kc ? t.kcal : t.p), goal = kc ? g.kcal : g.p, ws = weekStats();
-  return '<div class="glance"><button class="tile" data-a="openFood"><span class="k">' + ic('bowl', 16) + 'Food today</span><span class="v">' + fmtN(have) + '<small>of ' + fmtN(goal) + (kc ? ' kcal' : ' g protein') + '</small></span>' + bar(have / goal, 'var(--iron)') + '<span class="d">' + Math.round(t.p) + ' g protein so far</span></button>' +
-    '<button class="tile" data-a="tab" data-tab="you"><span class="k">' + ic('dumbbell', 16) + 'Gym this week</span><span class="v">' + ws.n + '<small>of ' + ws.goal + ' check-ins</small></span>' + bar(ws.n / ws.goal, 'var(--go)') + '<span class="d">' + ws.pts + ' effort points</span></button></div>';
-}
+// Home shows a card only when something needs you: a workout your phone recorded,
+// or your own data waiting on this device.
+function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
-  const fr = following(), alive = pAlive(S.me);
-  let h = heroPanel() + homeCard() + noticedStrip() + todayTiles();
-  const order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin);
-  h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All ' + fr.length + '</button></div></div><div class="frow">' +
-    order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') +
-    '<button data-a="openFriends" data-seg="find"><span class="av plain" style="--s:60px;--c:#676D85"><i>' + ic('plus', 24) + '</i></span><span class="nm">Find</span><span class="streak" style="visibility:hidden">0</span></button></div>';
-  h += globeCard() + meetsSection();
-  const posts = feedPosts();
-  h += '<h2 class="feed-h">Last 48 hours</h2>' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">Nobody has checked in yet. Be the first.</p>') + '<p class="feed-end">One photo per friend, their latest.<br>Friends and their posts are sample data.</p>';
+  const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
+  let h = heroPanel() + todayCard() + homeCard();
+  h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
+    order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
+  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">No photos yet.</p>') + '</div>';
   return h;
 };
 
@@ -162,7 +138,7 @@ function heatGrid(levelAt, weeks, interactive, missAt) {
       else cells += interactive ? '<button class="l' + lv + (lv === 0 && missAt && missAt(d) ? ' miss' : '') + (S.ui.heatSel === d ? ' sel' : '') + (d === today ? ' today' : '') + '" data-a="heatSel" data-d="' + d + '" aria-label="' + dateLong(dayStart(d)) + '"></button>' : '<span class="l' + lv + '"></span>';
     }
   }
-  return '<div class="heat-m">' + months + '</div><div class="heat">' + cells + '</div>';
+  return '<div class="heat-m">' + months + '</div><div class="heat" style="grid-template-columns:repeat(' + weeks + ',minmax(0,1fr))">' + cells + '</div>';
 }
 const heatLegend = '<span class="legend">Less<i style="background:var(--h0);margin-left:4px"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4);margin-right:4px"></i>More effort</span>';
 A.openProfile = el => {

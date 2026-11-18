@@ -11,6 +11,7 @@
    Everything is drawn on a canvas from the outlines in 18-geodata.js, so it works
    with no map service. The two Seattle lakes are sketched by hand. */
 const RAD = Math.PI / 180;
+const MAP_ZMAX = 11;   // past city level, Apple Maps shows the streets (22-native.js)
 const mercX = lon => (lon + 180) / 360;
 const mercY = lat => { const p = clamp(lat, -85, 85) * RAD; return (1 - Math.log(Math.tan(Math.PI / 4 + p / 2)) / Math.PI) / 2; };
 // Where the sample gyms and campuses are: [lat, lon, city]
@@ -198,7 +199,7 @@ const easeIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, ea
 const MAP_N = mercY(78), MAP_S = mercY(-58);
 function mapZoomMin(w, h) { return Math.log2(Math.max(w, h / (MAP_S - MAP_N)) / 256); }
 function mapClamp(w, h) {
-  M.z = clamp(M.z, mapZoomMin(w, h), 14.5);
+  M.z = clamp(M.z, mapZoomMin(w, h), MAP_ZMAX);
   const Wz = 256 * Math.pow(2, M.z), hx = w / 2 / Wz, hy = h / 2 / Wz;
   M.mx = hx >= .5 ? .5 : clamp(M.mx, hx, 1 - hx); M.my = 2 * hy >= MAP_S - MAP_N ? (MAP_N + MAP_S) / 2 : clamp(M.my, MAP_N + hy, MAP_S - hy);
 }
@@ -247,7 +248,7 @@ function mapCardHTML() {
     const u = person(id), post = S.posts.find(p => p.uid === id); if (!u) return '';
     return '<button class="row" data-a="openProfile" data-id="' + id + '">' + av(u, 40, { nowarn: true, dark: true }) + '<span class="grow"><span class="t">' + esc(id === 'me' ? 'You' : u.name) + '</span><span class="s">' + (post ? esc(TYPE[post.type].v) + ', ' : '') + ago(u.lastCheckin) + '</span></span>' + streakChip(pDays(u)) + '</button>';
   }).join('')).join('');
-  return '<div class="map-card"><div class="mc-h"><b>' + esc(c.title) + '</b><button class="mc-x" data-a="mapClear" aria-label="Hide this card">' + ic('x', 18) + '</button></div><div class="mc-list">' + rows + '</div><p class="mc-n">The gym each friend checked in at, after they posted. Never where anyone is right now.' + (S.mode === 'real' ? ' Friends are still samples.' : '') + '</p></div>';
+  return '<div class="map-card"><div class="mc-h"><b>' + esc(c.title) + '</b><button class="mc-x" data-a="mapClear" aria-label="Hide this card">' + ic('x', 18) + '</button></div><button class="btn btn-go btn-s mc-apple" data-a="mapApple" data-n="' + esc(places[0] ? places[0].name : '') + '">' + ic('pin', 16) + 'See it in Apple Maps</button><div class="mc-list">' + rows + '</div><p class="mc-n">The gym each friend checked in at, after they posted. Never where anyone is right now.' + (S.mode === 'real' ? ' Friends are still samples.' : '') + '</p></div>';
 }
 function mapSheet() {
   return '<div class="mapw"><canvas id="map-cv" aria-label="Map of where your friends trained in the last 48 hours"></canvas><div id="map-ui" class="' + (M.t >= 1 ? 'on' : '') + '">' +
@@ -256,6 +257,7 @@ function mapSheet() {
     '<div id="map-card">' + mapCardHTML() + '</div></div></div>';
 }
 A.openMap = () => {
+  if (appNative()) { closeAll(); A.mapApple(); return; }   // in the iPhone app the map is Apple Maps itself
   if (S.ui.tab !== 'home') { S.ui.tab = 'home'; render(); }
   const mini = $('#mini-globe'), ph = $('#phone').getBoundingClientRect(), now0 = performance.now(), v = miniView(noMotion() ? 0 : now0);
   if (mini && mini.clientWidth) { const r = mini.getBoundingClientRect(); M.from = { x: r.left - ph.left + r.width * MINI.cx, y: r.top - ph.top + r.height * MINI.cy, r: r.height * MINI.r }; } else M.from = null;
@@ -266,7 +268,7 @@ A.openMap = () => {
 };
 // Close the way it opened: the map rolls back into a globe and settles into its card.
 A.mapClose = () => { if (noMotion() || M.t < 1) { closeSheet(); return; } const ui = $('#map-ui'); if (ui) ui.classList.remove('on'); M.card = null; M.sel = null; M.anim = { kind: 'close', t0: performance.now(), dur: 1000, v: miniView(performance.now()) }; mapKick(); };
-A.mapZoom = el => { const cv = $('#map-cv'); if (!cv) return; mapFly({ mx: M.mx, my: M.my, z: clamp(M.z + (+el.dataset.d) * 1.4, mapZoomMin(cv.clientWidth, cv.clientHeight), 14.5) }); };
+A.mapZoom = el => { const cv = $('#map-cv'); if (!cv) return; mapFly({ mx: M.mx, my: M.my, z: clamp(M.z + (+el.dataset.d) * 1.4, mapZoomMin(cv.clientWidth, cv.clientHeight), MAP_ZMAX) }); };
 A.mapWorld = () => { const cv = $('#map-cv'); if (!cv) return; M.card = null; M.sel = null; mapCardShow(); mapFly({ mx: M.mx, my: (MAP_N + MAP_S) / 2, z: mapZoomMin(cv.clientWidth, cv.clientHeight) }); };
 A.mapClear = () => { M.card = null; M.sel = null; mapCardShow(); mapKick(); };
 function mapCardShow() { const c = $('#map-card'); if (c) c.innerHTML = mapCardHTML(); }
@@ -279,9 +281,9 @@ function mapTap(x, y) {
   if (hit.else) { M.sel = null; M.card = { else: hit.else }; mapCardShow(); mapFly({ mx: mercX(hit.else[2]), my: mercY(hit.else[1]) + lift() / (256 * Math.pow(2, Math.max(M.z, 4.6))), z: Math.max(M.z, 4.6) }); return; }
   const g = hit.group, single = g.places.length === 1;
   M.sel = g.places.map(p => p.name); M.card = { title: hit.name + (single ? ', ' + g.places[0].city : ''), names: M.sel }; mapCardShow();
-  const fit = mapFit(g.places, w, h, 13.4);
+  const fit = mapFit(g.places, w, h, MAP_ZMAX);
   // several gyms under one dot: zoom until they separate. One gym: go in close.
-  const z = single ? Math.max(M.z, Math.min(13.4, M.z + 3.2)) : Math.max(M.z + 1.2, Math.min(fit.z, M.z + 4.5));
+  const z = Math.min(MAP_ZMAX, single ? Math.max(M.z, Math.min(10.6, M.z + 3.2)) : Math.max(M.z + 1.2, Math.min(fit.z, M.z + 4.5)));
   mapFly({ mx: fit.mx, my: fit.my + lift() / (256 * Math.pow(2, z)), z: z });
 }
 // Dragging pans, two fingers pinch, the wheel zooms about the pointer.
@@ -296,7 +298,7 @@ document.addEventListener('pointermove', e => {
   if (ids.length === 1) { M.mx -= (e.clientX - p.x) / Wz; M.my -= (e.clientY - p.y) / Wz; M.moved += Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y); }
   else if (ids.length === 2) {
     const o = M.ptrs[ids.find(i => +i !== e.pointerId)], d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y), cx = (e.clientX + o.x) / 2 - r.left, cy = (e.clientY + o.y) / 2 - r.top;
-    if (d0 > 0 && d1 > 0) { const ux = M.mx + (cx - w / 2) / Wz, uy = M.my + (cy - h / 2) / Wz; M.z = clamp(M.z + Math.log2(d1 / d0), mapZoomMin(w, h), 14.5); const W2 = 256 * Math.pow(2, M.z); M.mx = ux - (cx - w / 2) / W2; M.my = uy - (cy - h / 2) / W2; }
+    if (d0 > 0 && d1 > 0) { const ux = M.mx + (cx - w / 2) / Wz, uy = M.my + (cy - h / 2) / Wz; M.z = clamp(M.z + Math.log2(d1 / d0), mapZoomMin(w, h), MAP_ZMAX); const W2 = 256 * Math.pow(2, M.z); M.mx = ux - (cx - w / 2) / W2; M.my = uy - (cy - h / 2) / W2; }
     M.moved += 10;
   }
   p.x = e.clientX; p.y = e.clientY; mapKick();
@@ -312,7 +314,7 @@ document.addEventListener('wheel', e => {
   if (!e.target || e.target.id !== 'map-cv' || M.t < 1) return;
   e.preventDefault();
   const cv = e.target, r = cv.getBoundingClientRect(), w = r.width, h = r.height, cx = e.clientX - r.left, cy = e.clientY - r.top, Wz = 256 * Math.pow(2, M.z), ux = M.mx + (cx - w / 2) / Wz, uy = M.my + (cy - h / 2) / Wz;
-  M.anim = null; M.z = clamp(M.z - e.deltaY * .0035, mapZoomMin(w, h), 14.5);
+  M.anim = null; M.z = clamp(M.z - e.deltaY * .0035, mapZoomMin(w, h), MAP_ZMAX);
   const W2 = 256 * Math.pow(2, M.z); M.mx = ux - (cx - w / 2) / W2; M.my = uy - (cy - h / 2) / W2; mapKick();
 }, { passive: false });
 window.addEventListener('resize', () => { if ($('#map-cv')) mapKick(); });

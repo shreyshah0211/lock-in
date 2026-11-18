@@ -58,31 +58,49 @@ function splitCard() {
   return '<div class="card"><div class="card-k">What you train, last 60 days</div><div class="split">' + split.map(s => '<i style="width:' + (s.pct * 100).toFixed(1) + '%;background:' + TYPE[s.k].c + '"></i>').join('') + '</div><div class="split-l">' + split.map(s => '<span><i style="background:' + TYPE[s.k].c + '"></i>' + TYPE[s.k].n + ' ' + Math.round(s.pct * 100) + '%</span>').join('') + '</div></div>';
 }
 function liftRows(names) {
-  return names.map(n => { const a = S.lifts[n], best = Math.max(...a.map(e => e.w)), gain = best - a[0].w; return '<button class="liftrow" data-a="openLift" data-n="' + esc(n) + '"><span style="flex:1;min-width:0;text-align:left"><span style="font-weight:700;display:block">' + esc(n) + '</span><span class="mute" style="font-size:13px">' + (gain > 0 ? 'Up ' + gain + ' ' + S.settings.units + ' since ' + MO[new Date(a[0].ts).getMonth()] : a.length === 1 ? '1 entry' : a.length + ' entries') + '</span></span>' + (a.length > 1 ? spark(a.map(e => e.w), 74, 30) : '') + '<span class="v">' + best + '</span></button>'; }).join('');
+  return names.map(n => { const a = S.lifts[n], best = Math.max(...a.map(e => e.w)), gain = best - a[0].w; return '<button class="liftrow" data-a="openLift" data-n="' + esc(n) + '"><span style="flex:1;min-width:0;text-align:left"><span style="font-weight:700;display:block">' + esc(n) + '</span><span class="mute" style="font-size:13px">' + (gain > 0 ? 'Up ' + gain + ' ' + S.settings.units + ' since ' + MO[new Date(a[0].ts).getMonth()] : a.length === 1 ? '1 entry' : a.length + ' entries') + '</span>' + (nextLift(n) ? '<span class="lift-next">Next: ' + nextLift(n).w + ' × ' + nextLift(n).reps + '</span>' : '') + '</span>' + (a.length > 1 ? spark(a.map(e => e.w), 74, 30) : '') + '<span class="v">' + best + '</span></button>'; }).join('');
 }
 function myLifts() { return Object.keys(S.lifts).filter(n => S.lifts[n].length); }
 function badgeBtn(b) { const on = !!S.badges[b.k]; return '<button class="bdg' + (on ? '' : ' off') + '" data-a="openBadge" data-k="' + b.k + '"><span class="m">' + badgeShape(b.sh, on ? b.c : '#E4E6EE') + '<span class="gl">' + (b.icon === 'flame' ? flame(24, on ? '#fff' : '#B4B9C9') : ic(b.icon, 24)) + '</span></span>' + b.n + '</button>'; }
+// You: Food, Training, Body. Everything else sits behind the gear.
 VIEWS.you = () => {
-  const m = S.me, dp = dayPts(), lz = lapseDays(), n26 = checkinsSince(now() - 182 * DAY).length, hl = healthToday(), got = BADGES.filter(b => S.badges[b.k]).length, nc = connCount(), ws = weekStats(), lifts = myLifts();
-  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), bd = BADGES.slice().sort((a, b) => (S.badges[b.k] ? 1 : 0) - (S.badges[a.k] ? 1 : 0)).slice(0, 4);
-  const sec = (title, link, body, sub) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + (sub ? '<p class="sec-sub">' + sub + '</p>' : '') + body + '</div>';
-  let h = '<header class="top"><h1>You</h1><button class="btn btn-soft btn-s" data-a="openSettings">' + ic('gear', 17) + 'Settings</button></header>' + userCard(m);
-  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + splitCard() + bodyCard() + '</div>');
-  h += sec(n26 + ' check-ins in 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + '<div class="heat-f"><span class="legend"><i style="background:#C3C8D6"></i>&nbsp;Streak ended</span>' + heatLegend + '</div>' + dayDetail() + '</div>', 'One square a day. Darker means more effort. Tap a square to see that day.');
-  h += sec('Lifts', lifts.length > 3 ? '<button class="link" data-a="openEffort">All ' + lifts.length + '</button>' : '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts.slice(0, 3)) : '<p class="empty">Add a lift when you check in and it shows up here.</p>') + '</div>', 'Your best on each lift, in ' + S.settings.units + '. Tap one for its chart.');
-  h += sec('Progress photos', '<button class="link" data-a="openProgress">All ' + S.progress.length + '</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
-    '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add photo</b></button></div>', 'Private. Only you ever see these.');
-  h += sec('Milestones', '<button class="link" data-a="openBadges">' + got + ' of ' + BADGES.length + '</button>', '<div class="card"><div class="badges">' + bd.map(badgeBtn).join('') + '</div></div>');
-  if (hl) h += sec('Today, from ' + esc(hl.src), '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
-  h += '<div class="menu" style="margin-top:26px">' +
-    menuRow('openPlan', 'sparkle', 'Plan my next 3 sessions', 'Built from what you have trained lately') +
-    menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
-    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health, Health Connect, your calendar') +
-    menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
-    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours, rest passes and comebacks') + '</div>';
-  h += '<p class="pad mute" style="font-size:13px;margin:22px 0 10px">This is a prototype. Friends and their posts are sample data. What you do here stays in this browser.</p>';
-  return h;
+  const dp = dayPts(), lz = lapseDays(), ws = weekStats(), lifts = myLifts(), seg = S.ui.youSeg || 'food';
+  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), hl = healthToday(), off = S.ui.foodOff || 0;
+  const sec = (title, link, body) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + body + '</div>';
+  let h = '<header class="top"><h1>You</h1><button class="icon-btn" data-a="openMore" aria-label="More and settings">' + ic('gear', 22) + '</button></header>';
+  h += '<div class="pad"><div class="seg you-seg">' + [['food', 'Food'], ['training', 'Training'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
+  if (seg === 'food') {
+    h += '<div class="pad food-day"><h2>' + dayLabel(foodDay(now()) + off) + '</h2><button class="icon-btn" data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 20) + '</button><button class="icon-btn" data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 20) + '</button></div>';
+    h += '<div class="pad vstack">' + foodBody() + '</div>';
+  } else if (seg === 'training') {
+    h += sec('This week', '', progressTiles(ws));
+    h += sec('Last 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + dayDetail() + '</div>');
+    h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Lifts you log show up here.</p>') + '</div>');
+    h += '<div class="menu" style="margin-top:22px">' + menuRow('openCharts', 'trend', 'Charts', 'Weekly effort and what you train') + menuRow('openBadges', 'trophy', 'Milestones', BADGES.filter(b => S.badges[b.k]).length + ' of ' + BADGES.length) + '</div>';
+  } else {
+    h += sec('Weight', '', weightCard());
+    h += sec('Progress photos', '<button class="link" data-a="openProgress">All</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
+      '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add</b></button></div>');
+    if (hl) h += sec('Today', '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
+  }
+  return h + '<div style="height:24px"></div>';
 };
+// The charts that used to fill Training, one tap down.
+A.openCharts = () => openSheet(() => { const ws = weekStats(); return sheetHead('Charts', { back: true }) + '<div class="sh-b">' + weekNoteCard() + weekBars(ws) + splitCard() + bodyCard() + '</div>'; }, { cls: 'full' });
+// The gear: your profile, the tools, and settings.
+A.openMore = () => {
+  const nc = connCount();
+  openSheet(() => sheetHead('More') + '<div class="sh-b">' + userCard(S.me) + '<div class="menu" style="margin:0">' +
+    menuRow('openCoach', 'sparkle', 'Coach', 'Ask about training or food') +
+    menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') +
+    menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
+    menuRow('openMyGym', 'pin', 'My gym', S.gymLoc ? esc(S.gymLoc.name) : 'Notice when you arrive and leave') +
+    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health and more') +
+    menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
+    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +
+    menuRow('openSettings', 'gear', 'Settings', 'Profile, privacy, your data') + '</div></div>', { cls: 'full' });
+};
+A.youSeg = el => { S.ui.youSeg = el.dataset.k; save(); render(); $('#view').scrollTop = Math.min($('#view').scrollTop, 330); };
 A.heatSel = el => { const d = +el.dataset.d; S.ui.heatSel = S.ui.heatSel === d ? null : d; render(); };
 
 /* ---- all lifts ---- */

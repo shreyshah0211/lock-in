@@ -10,8 +10,11 @@ let curTab = null;
 function render() {
   const v = $('#view');
   if (curTab) scrollPos[curTab] = v.scrollTop;
+  if (S.ui.tab === 'food') { S.ui.tab = 'you'; S.ui.youSeg = 'food'; }   // Food lives inside You now
+  if (!VIEWS[S.ui.tab]) S.ui.tab = 'home';
   const tab = S.ui.tab;
   $('#phone').classList.toggle('cam-on', tab === 'cam');
+  $('#phone').classList.toggle('dark-top', tab === 'home');   // Home's dark clock runs up into the status bar
   v.innerHTML = (VIEWS[tab] || VIEWS.home)();
   v.scrollTop = curTab === tab ? scrollPos[tab] || 0 : (tab === 'home' ? scrollPos.home || 0 : 0);
   curTab = tab;
@@ -26,16 +29,15 @@ function snapInfo() {
   return { alive: alive, left: left, urgent: urgent, rep: rep, frac: alive ? clamp(left / WINDOW, 0, 1) : 0, color: alive ? timeColor(left) : rep ? '#E8321F' : '#B4B9C9',
     label: urgent ? fmtLeftShort(left) + ' left' : rep ? 'Save streak' : 'Snap' };
 }
-const NAV = [['home', 'home', 'Home'], ['ch', 'trophy', 'Compete'], ['food', 'bowl', 'Food'], ['you', 'user', 'You']];
+const NAV = [['home', 'home', 'Home'], ['you', 'user', 'You']];
 function renderTabs() {
-  const t = S.ui.tab, si = snapInfo(), C = 2 * Math.PI * 34, unread = S.activity.some(a => !a.read);
+  const t = S.ui.tab, si = snapInfo(), C = 2 * Math.PI * 34;
   const tabBtn = it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 23) + '<span>' + it[2] + '</span></button>';
-  // phone: four labelled tabs with the camera in the middle
-  $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + tabBtn(NAV[1]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[2]) + tabBtn(NAV[3]) + '</div>' +
-    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam" aria-label="Open the camera">' +
+  // phone: Home, the camera, You
+  $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[1]) + '</div>' +
+    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="openCapture" aria-label="Log something: photo, barcode, say it">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
-    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' +
-    (t === 'home' ? '<button class="say-fab" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' : '');
+    '<span class="snap-core">' + ic('camera', 28) + '</span></button>' ;
   // computer: the same places down the side, with words next to everything
   const sd = $('#side'); if (!sd) return;
   const m = S.me, days = pDays(m);
@@ -44,7 +46,7 @@ function renderTabs() {
     '<button class="btn btn-go side-snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam">' + ic('camera', 22) + 'Snap a photo</button>' +
     '<button class="btn btn-line side-say" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' +
     '<p class="side-clock"><span class="dot" style="background:' + si.color + '"></span>' + (si.alive ? '<span><b data-live="left">' + fmtLeft(si.left) + '</b> left on your clock</span>' : si.rep ? '<span>Snap a gym photo to save your streak</span>' : '<span>Snap a gym photo to start a streak</span>') + '</p>' +
-    '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openActivity">' + ic('bell', 20) + '<span>Activity</span>' + (unread ? '<i class="ndot"></i>' : '') + '</button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
+    '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
     '<div class="side-me">' + av(m, 38, { plain: true }) + '<span><b>' + esc(m.name) + '</b><small>' + flameTxt(days) + '</small></span></div></div>';
 }
 function flameTxt(days) { return days > 0 ? days + ' day streak' : 'No streak yet'; }

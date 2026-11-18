@@ -57,12 +57,12 @@ with sync_playwright() as pw:
     check('no sample photos once the data is yours', ev("document.querySelectorAll('[data-a=camSample]').length"), 0)
     check('saved to the account straight away', [core() is not None, core() and len(core()['checkins']), ev("SYNC.state")], [True, 0, 'on'])
     # every screen works with nothing in it
-    for t in ['home', 'ch', 'food', 'you']:
-        ev("S.ui.tab = '%s'; render()" % t); A.wait_for_timeout(120); shot(A, '03-empty-' + t)
+    for t in ['home', 'food', 'training', 'body']:
+        ev("S.ui.tab = '%s'; S.ui.youSeg = '%s'; render()" % ('home' if t == 'home' else 'you', t)); A.wait_for_timeout(120); shot(A, '03-empty-' + t)
         check('empty %s tab fits the phone' % t, ev(OV % '#view'), 0)
-    check('empty charts say what unlocks them', ev("document.querySelectorAll('#view .thresh').length"), 3)
+    check('empty charts say what unlocks them', ev("(() => { const k = S.ui.youSeg; S.ui.tab = 'you'; S.ui.youSeg = 'training'; render(); let n = document.querySelectorAll('#view .thresh').length; A.openCharts(); n += document.querySelectorAll('.sheet .thresh').length; closeAll(); S.ui.youSeg = k; render(); return n; })()"), 3)
     # a real photo becomes day 1
-    vis(A, '.tabbar [data-tab="home"]'); vis(A, '[data-a="goCam"]'); A.wait_for_timeout(200); A.set_input_files('#cam-input', IMG); A.wait_for_timeout(1300)
+    vis(A, '.tabbar [data-tab="home"]'); vis(A, '[data-a="openCapture"]'); A.wait_for_timeout(300); vis(A, '.capture [data-a="goCam"]'); A.wait_for_timeout(200); A.set_input_files('#cam-input', IMG); A.wait_for_timeout(1300)
     vis(A, '[data-a="snapPick"][data-k="gym"]'); A.wait_for_timeout(500); shot(A, '04-composer')
     check('composer fits the phone', ev(OV % '#layer .sheet:last-of-type'), 0)
     vis(A, '[data-a="ciPost"]'); A.wait_for_timeout(1700); shot(A, '05-day1')
@@ -71,11 +71,10 @@ with sync_playwright() as pw:
     A.wait_for_timeout(600)
     check('check-in and its photo are in the account', [len(core()['checkins']), core()['me']['streakStart'] is not None, (CORE + '/photos/' + key) in DB], [1, True, True])
     vis(A, '.done [data-a="closeSheet"]'); A.wait_for_timeout(200); shot(A, '06-home')
-    vis(A, '.tabbar [data-tab="food"]'); vis(A, '.food-acts [data-a="openSay"]'); A.wait_for_timeout(200)
+    vis(A, '.tabbar [data-tab="you"]'); vis(A, '[data-a="youSeg"][data-k="food"]'); vis(A, '#view [data-a="openCapture"]'); A.wait_for_timeout(250); vis(A, '.capture [data-to="openSay"]'); A.wait_for_timeout(200)
     check('fields are 16px so the phone does not zoom', ev("getComputedStyle(document.querySelector('#say-text')).fontSize"), '16px')
     A.fill('#say-text', 'two eggs and toast'); vis(A, '#say-go'); A.wait_for_timeout(500); shot(A, '07-meal'); vis(A, '[data-a="mealLog"]'); A.wait_for_timeout(900); shot(A, '08-food')
     check('meal logged and saved', [ev("S.meals.length"), len(core()['meals'])], [1, 1])
-    check('photos can be tapped on a phone', ev("(S.ui.tab = 'home', render(), getComputedStyle(document.querySelector('.shot')).cursor)"), 'pointer')
     # the same person on a laptop: nothing saved there, yet everything arrives
     B = device(pw, b, 'laptop'); B.goto(url); B.wait_for_timeout(1500); B.screenshot(path=str(root/'shots/phone-09-laptop.png'))
     check('laptop: picks up the account with no intro', B.evaluate("[S.mode, S.checkins.length, S.meals.length, sheets.length, pDays(S.me), S.posts.some(p => p.uid === 'me')]"), ['real', 1, 1, 0, 1, True])

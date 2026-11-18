@@ -28,16 +28,16 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
-  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
-  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const title = intent === 'water' ? 'Snap your water bottle' : intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
-  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
+  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : intent === 'water' ? 'Adds to today\'s water' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
-  const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
-  const right = intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
+  const left = intent === 'water' ? (S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="gym"><span class="b">' + ic('drop', 24) + '</span>Try a sample</button>') : intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
+  const right = intent === 'lift' || intent === 'water' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
-  const sayAlt = intent === 'progress' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
+  const sayAlt = intent === 'progress' || intent === 'lift' || intent === 'water' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
@@ -116,6 +116,8 @@ const KINDS = [['gym', 'Check-in', 'Gym check-in', 'Counts for your streak and g
 function gotPhoto(ph, sampleKind) {
   const intent = D.camIntent;
   if (intent === 'progress' || sampleKind === 'progress') { D.snap = null; startProgress(ph); return; }
+  if (intent === 'lift') { D.snap = null; startLiftPhoto(ph); return; }
+  if (intent === 'water') { D.snap = null; startWaterPhoto(ph); return; }
   const out = !intent && !!D.camOutside; D.camOutside = false;
   const s = D.snap = { ph: ph, sample: !ph, sampleKind: sampleKind || 'gym', kind: null, state: 'working', gym: null, meal: null, manual: false, screen: false, outside: out };
   // An outside photo skips the gym-or-food look; startCheckin checks it is plausibly a gym's entrance instead.
@@ -126,7 +128,8 @@ function gotPhoto(ph, sampleKind) {
   aiSnap(ph.blob).then(r => {
     if (D.snap !== s || s.kind) return;
     s.screen = !!r.screen;
-    if (r.state === 'ok' && r.kind !== 'other') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
+    if (r.state === 'ok' && r.kind === 'water' && r.water) { D.snap = null; closeSheet(); startWaterPhoto(ph, r.water); }
+    else if (r.state === 'ok' && r.kind !== 'other' && r.kind !== 'water') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
     else if (r.state !== 'ok' && intent === 'meal') { s.kind = 'food'; s.state = r.state; snapRoute(); }
     else { s.state = r.state === 'ok' ? 'unsure' : r.state; drawSheets(false); }
   });
@@ -167,12 +170,24 @@ function nextType() {
 // opts.workout: check in on the recorded workout alone, with no photo at all.
 function startCheckin(ph, opts) {
   const only = opts && opts.workout;
+  // One check-in a day. Another gym photo the same day adds a lift to the one already posted.
+  const done = todayCheckin();
+  if (done) {
+    const out0 = !!(D.snap && D.snap.outside);
+    if (only || out0) { D.snap = null; D.camIntent = null; closeAll(); if (S.ui.tab === 'cam') A.camClose(); toast('You already checked in today. The next one counts tomorrow.', 'check'); return; }
+    toast('Already checked in today, so this goes on today\'s workout.', 'check'); startLiftPhoto(ph); return;
+  }
   const det = only || (D.fromDetected && S.detected && D.fromDetected.id === S.detected.id ? S.detected : null); D.fromDetected = null;
   const sn = only ? null : D.snap, seen = sn && sn.gym, out = !!(sn && sn.outside);   // seen: Claude already looked at this photo
   const type = det ? det.type : seen && seen.workout ? seen.workout : nextType();
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
     noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : !ph ? (out ? 'outside' : 'sample') : seen && !out ? 'ok' : 'checking', note: seen ? seen.note : '', blob: ph ? ph.blob : null };
+  // Time at the gym from the phone's location fills in how long it was.
+  const gt = !only && !det && typeof gymToday === 'function' ? gymToday() : null;
+  if (gt && gt.mins >= 10) { D.ci.mins = clamp(Math.round(gt.mins / 5) * 5, 10, 180); D.ci.gymTime = gt; }
+  if (D.pendingLift) { D.ci.lifts = [D.pendingLift]; D.ci.more = true; D.pendingLift = null; }
+  else if (seen && seen.lift && seen.lift.w !== '') { D.ci.lifts = [{ name: seen.lift.name, w: seen.lift.w, reps: '', sets: '' }]; D.ci.more = true; D.ci.liftRead = seen.lift; }
   const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
   openSheet(checkinSheet, { cls: 'full', onClose: () => { if (D.ci) D.snap = null; } });
   if (D.ci.ai === 'checking') ciCheck(D.ci);
@@ -221,6 +236,8 @@ function aiRow(d) {
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
+    (d.gymTime ? '<div class="aicheck ok">' + ic('pin', 18) + '<span>' + (d.gymTime.inside ? 'At ' + esc(S.gymLoc ? S.gymLoc.name : 'your gym') + ' for ' + fmtMins(d.gymTime.mins) + ' so far' : fmtMins(d.gymTime.mins) + ' at ' + esc(S.gymLoc ? S.gymLoc.name : 'your gym') + ' today') + ', from your phone\'s location. Time filled in.</span></div>' : '') +
+    (d.liftRead ? '<div class="aicheck ok">' + ic('dumbbell', 18) + '<span>Read ' + esc(d.liftRead.name) + ', ' + d.liftRead.w + ' ' + S.settings.units + (d.liftRead.how ? ' (' + esc(d.liftRead.how) + ')' : '') + ' from the photo. Add your reps below.</span></div>' : '') +
     (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
     (d.screen && d.ai !== 'checking' && d.ai !== 'no' ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen or a screenshot, so it cannot count. Take the photo with your camera at the gym.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '') +
     (ciBlocked(d) === 'no' || ciBlocked(d) === 'screen' ? '<button class="link nophoto-link" data-a="openNoPhoto">' + ic('info', 16) + 'No photos allowed in your gym?</button>' : '');
@@ -236,11 +253,10 @@ function checkinSheet() {
     '<div class="lift"><input class="input" id="lf-n' + i + '" list="lift-names" placeholder="Bench press" data-m="ci.lifts.' + i + '.name" data-on="ciPtsLive" value="' + esc(l.name || '') + '" autocomplete="off"><input class="input" id="lf-w' + i + '" type="number" inputmode="decimal" placeholder="' + S.settings.units + '" data-m="ci.lifts.' + i + '.w" value="' + esc(l.w) + '"><input class="input" id="lf-r' + i + '" type="number" inputmode="numeric" placeholder="5" data-m="ci.lifts.' + i + '.reps" value="' + esc(l.reps) + '"><input class="input" id="lf-s' + i + '" type="number" inputmode="numeric" placeholder="3" data-m="ci.lifts.' + i + '.sets" value="' + esc(l.sets) + '"><button class="rm" data-a="ciLiftDel" data-i="' + i + '" aria-label="Remove exercise">' + ic('x', 18) + '</button></div>').join('') : '';
   // Two questions are enough to post. Everything else is optional and tucked away.
   const more = d.more ? '<div class="field"><span class="lbl">How long?</span><div class="stepper"><button data-a="ciMins" data-d="-5" aria-label="5 minutes less">' + ic('minus') + '</button><span class="v" id="ci-mins">' + d.mins + '</span><button data-a="ciMins" data-d="5" aria-label="5 minutes more">' + ic('plus') + '</button><span class="u">minutes</span></div></div>' +
-    '<div class="field"><span class="lbl">Lifts</span>' + lifts + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-line btn-s" data-a="ciLiftAdd">' + ic('plus', 16) + 'Add a lift</button>' + '</div></div>' +
+    '<div class="field"><span class="lbl">Lifts</span>' + lifts + '<div id="ci-hints">' + liftHints(d) + '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-line btn-s" data-a="ciLiftAdd">' + ic('plus', 16) + 'Add a lift</button>' + '</div></div>' +
     '<div class="field"><span class="lbl">Anything to note about today?</span><div class="chips">' + TAGS.map(t => '<button class="chip" data-a="ciTag" data-k="' + t + '" aria-pressed="' + (d.tag === t) + '">' + t + '</button>').join('') + '</div></div>' +
-    '<div class="field"><label for="ci-cap">Caption</label><input class="input" id="ci-cap" placeholder="Say something about today" maxlength="120" data-m="ci.caption" value="' + esc(d.caption) + '" autocomplete="off"></div>' +
-    '<div class="field"><span class="lbl">Who can see it</span><div class="seg">' + [['friends', 'Friends'], ['squads', 'My squads'], ['me', 'Only me']].map(x => '<button data-a="ciAud" data-k="' + x[0] + '" aria-pressed="' + (d.audience === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>'
-    : '<button class="btn btn-line btn-w" data-a="ciMore">' + ic('plus', 18) + 'Add time, lifts, a note or a caption</button>';
+    '<div class="field"><span class="lbl">Who can see it</span><div class="seg">' + [['friends', 'Friends'], ['me', 'Only me']].map(x => '<button data-a="ciAud" data-k="' + x[0] + '" aria-pressed="' + (d.audience === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>'
+    : '<button class="btn btn-line btn-w" data-a="ciMore">' + ic('plus', 18) + 'Add time, lifts or a note</button>';
   return sheetHead('New check-in', { back: true }) + '<div class="sh-b">' + kindSwitch() +
     '<div class="prev"><img src="' + src + '" alt="' + (d.noPhoto ? 'Your recorded workout' : 'Your check-in photo') + '"><div class="tags"><span class="stick">' + flame(17, '#FF8A1E') + '<span style="color:#fff">Day <span class="num" style="font-size:19px">' + day + '</span></span></span><span class="stick">' + clock(now()) + ' at ' + esc(m.gym) + '</span></div></div>' +
     '<div class="proofs" id="ci-proof">' + aiRow(d) + '</div>' +
@@ -260,9 +276,10 @@ A.ciRetake = () => { D.ci = null; D.snap = null; closeSheet(); };
 A.ciRecheck = () => { const d = D.ci; if (d && d.blob) ciCheck(d); };
 A.ciLiftAdd = () => { D.ci.lifts.push({ name: '', w: '', reps: '', sets: '' }); drawSheets(false); const i = $('#lf-n' + (D.ci.lifts.length - 1)); if (i) i.focus(); };
 A.ciLiftDel = el => { D.ci.lifts.splice(+el.dataset.i, 1); drawSheets(false); };
-A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; };
+A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; const h = $('#ci-hints'); if (h) h.innerHTML = liftHints(D.ci); };
 A.ciPost = () => {
   const d = D.ci; if (!d) return;
+  if (todayCheckin()) { toast('You already checked in today. The next one counts tomorrow.'); return; }
   const why = ciBlocked(d);
   if (why) { toast(why === 'checking' ? 'Still checking your photo. One moment.' : why === 'retry' ? 'The photo has not been checked yet. Tap Check again.' : 'This photo cannot count. Retake it at the gym.'); return; }
   const before = leftMs();
