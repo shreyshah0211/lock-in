@@ -995,3 +995,8 @@ body{overscroll-behavior:none}
 .cap-s{font-size:12px;padding:12px 2px}
 .td-food .grow{grid-template-columns:repeat(4,1fr);gap:10px}
 .td-m b{font-size:17px}
+.wc-cam{padding:0 12px;background:#E8F5FC;color:#0F6C9E}
+.wc-bottles{background:var(--mist);border-radius:18px;padding:0 14px}
+.wc-bottles .row>button.grow{display:flex;align-items:center;gap:8px;text-align:left}
+.wc-bottles small{color:var(--mute);font-weight:600}
+.wc-add{flex-wrap:nowrap;overflow-x:auto}.wc-add .btn{flex:none;white-space:nowrap}

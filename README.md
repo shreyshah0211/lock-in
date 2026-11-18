@@ -17,7 +17,7 @@ This is a prototype, not a shipped app. It runs in a browser from one HTML file,
 - **One check-in a day.** The streak counts days, so a second gym photo the same day adds to the workout you already posted instead of making a new check-in.
 - **Lift photo.** Snap the bar, the dumbbells or a machine stack: Claude reads the exercise and the weight, you confirm the reps, and it goes on today's workout (or becomes today's check-in if you have not posted yet). A normal gym photo with a readable weight fills the lift in too.
 - **Next weight.** Every lift shows what to try next time, from your own last set; the check-in form offers it with one tap.
-- **Water.** A daily goal (about 35 ml per kg of body weight, more on training days, or your own), one-tap glasses and bottles on the Food tab and in the capture menu, and "two glasses of water" through Say it. Drinks logged as meals, by photo, voice or barcode, count their fluid toward it.
+- **Water.** A daily goal (about 35 ml per kg of body weight, more on training days, or your own), one-tap glasses and bottles on the Food tab and in the capture menu, and "two glasses of water" through Say it. Drinks logged as meals, by photo, voice or barcode, count their fluid toward it. Snap any bottle or glass and Claude names it and says how much it holds (a Stanley Quencher, 40 oz); pick how much you drank, and the bottle is saved as a one-tap button.
 - **Weight log.** Log your weight and see the trend; goals set from your body follow it.
 - **Streak reminders.** In the iPhone app, notifications 12, 3 and 1 hour before your clock runs out.
 - **Apple Maps.** The drawn map stops at city level; a gym opens in Apple Maps with directions.

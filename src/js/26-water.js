@@ -31,7 +31,7 @@ function waterCard(fd) {
   return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
     (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' +
     '<div class="wc-drops" aria-label="' + Math.round(frac * 100) + '% of your water goal">' + drops + '</div>' +
-    (today ? '<div class="wc-add">' + WATER_ADD().slice(0, 2).map(x => '<button class="btn btn-soft btn-s" data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + x[2] + ' <small>' + x[1] + '</small></button>').join('') +
+    (today ? '<div class="wc-add"><button class="btn btn-soft btn-s wc-cam" data-a="openWaterCam" aria-label="Snap a bottle">' + ic('camera', 16) + '</button>' + bottleButtons(1).map(x => '<button class="btn btn-soft btn-s" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + esc(x[2]) + ' <small>' + x[1] + '</small></button>').join('') + WATER_ADD().slice(0, bottleButtons(1).length ? 1 : 2).map(x => '<button class="btn btn-soft btn-s" data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + x[2] + ' <small>' + x[1] + '</small></button>').join('') +
       (w.list.length ? '<button class="btn btn-soft btn-s wc-undo" data-a="waterUndo" aria-label="Undo the last water">' + ic('x', 15) + '</button>' : '') + '</div>' : '') +
     (w.meals.length ? '<p class="mute wc-note">' + ic('bowl', 14) + ' Includes ' + waterFmt(w.meals.reduce((a, m) => a + m.ml, 0)) + ' from ' + listNames(w.meals.map(m => m.name.toLowerCase()).slice(0, 3)) + '.</p>' : '') + '</div>';
 }
@@ -51,6 +51,8 @@ A.openWater = () => {
   openSheet(() => {
     const w = waterDay(), g = waterGoal(), u = waterUnit();
     return sheetHead('Water') + '<div class="sh-b"><div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + u + '</span><span class="mh-t">of ' + waterFmt(g) + ' today</span></div>' + bar(w.ml / g, 'var(--water)') + '</div>' +
+      '<button class="btn btn-go btn-w" data-a="capGo" data-to="openWaterCam">' + ic('camera', 20) + 'Snap a bottle or glass</button>' +
+      ((S.bottles || []).length ? '<div class="field"><span class="lbl">Your bottles</span><div class="rows wc-bottles">' + bottleButtons(6).map(x => '<div class="row"><button class="grow" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 18) + '<b>' + esc(x[2]) + '</b><small>' + x[1] + '</small></button><button class="rm" data-a="bottleDel" data-id="' + x[3] + '" aria-label="Forget this bottle">' + ic('x', 16) + '</button></div>').join('') + '</div></div>' : '') +
       '<div class="wc-big">' + WATER_ADD().map(x => '<button data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 24) + '<b>' + x[2] + '</b><small>' + x[1] + '</small></button>').join('') + '</div>' +
       '<div class="field"><label for="wt-amt">Another amount, ' + u + '</label><div class="send"><input class="input" id="wt-amt" type="number" inputmode="decimal" data-m="wt.amt" data-enter="waterCustom" placeholder="' + (waterUS() ? '12' : '330') + '"><button class="btn btn-ink wide" data-a="waterCustom">Add</button></div></div>' +
       (w.list.length || w.meals.length ? '<div class="card" style="padding:4px 16px"><div class="rows">' + w.list.slice().reverse().map(x => '<div class="row" style="padding:10px 0">' + ic('drop', 18) + '<div class="grow">Water, ' + clock(x.ts) + '</div><b>' + waterFmt(x.ml) + '</b><button class="rm" data-a="waterDel" data-id="' + x.id + '" aria-label="Remove">' + ic('x', 16) + '</button></div>').join('') +
@@ -81,3 +83,58 @@ function waterFromText(text) {
   if (rest.length) return null;
   return Math.round(ml || 250);
 }
+
+/* ---- water from a photo ----
+   Snap any bottle or glass: Claude names it and says how much it holds. You pick how
+   much of it you drank, and the bottle is remembered as a one-tap button. */
+function startWaterPhoto(ph, seen) {
+  D.wp = { photo: ph ? ph.key : null, state: ph ? (seen ? 'ok' : 'reading') : 'sample', bottle: seen || null, part: 1, keep: true };
+  const W = D.wp;
+  if (!ph) W.bottle = { name: 'Stanley Quencher 40 oz (sample)', ml: Math.round(40 * ML_OZ), fill: 1 };
+  if (W.bottle) W.part = waterPart(W.bottle.fill);
+  closeAll(); if (S.ui.tab === 'cam') A.camClose();
+  openSheet(waterPhotoSheet, { cls: 'full', onClose: () => { if (D.wp === W) D.wp = null; } });
+  if (ph && !seen) aiWaterPhoto(ph.blob).then(r => {
+    if (D.wp !== W) return;
+    W.state = r.state; if (r.water) { W.bottle = r.water; W.part = waterPart(r.water.fill); }
+    drawSheets(false);
+  });
+}
+// How much of it to log: the whole bottle unless it looks partly drunk already.
+function waterPart(fill) { return fill >= .85 ? 1 : fill >= .6 ? .75 : fill >= .35 ? .5 : .25; }
+function waterPhotoSheet() {
+  const W = D.wp; if (!W) return '';
+  const b = W.bottle, src = W.photo ? PHOTOS[W.photo] : null;
+  const st = { reading: ['', '<span class="spin"></span>Working out what it holds'], no: [' no', ic('info', 18) + '<span>Could not see a bottle or a glass in this photo. Retake it, or add water by hand.</span>'],
+    busy: [' no', ic('info', 18) + '<span>Claude is busy. Try again in a moment, or add water by hand.</span>'], error: [' no', ic('info', 18) + '<span>Could not read the photo just now. Add water by hand.</span>'],
+    off: ['', ic('info', 18) + '<span>Reading bottles from photos needs Claude switched on. Add water by hand.</span>'] }[W.state];
+  let h = sheetHead('Add water', { back: true }) + '<div class="sh-b">' + (src ? '<div class="prev sq"><img src="' + src + '" alt="Your bottle"></div>' : '');
+  if (!b || st) return h + '<div class="aicheck' + (st ? st[0] : '') + '">' + (st ? st[1] : '') + '</div>' + (W.state !== 'reading' ? '<button class="btn btn-ink btn-w" data-a="openWater">' + ic('drop', 18) + 'Add water by hand</button>' : '') + '</div>';
+  const parts = [[1, 'All of it'], [.75, '¾'], [.5, 'Half'], [.25, '¼']];
+  h += '<div class="aicheck ok">' + ic('drop', 18) + '<span><b>' + esc(b.name) + '</b>, holds ' + waterFmt(b.ml) + (b.fill < .85 ? '. Looks about ' + Math.round(b.fill * 100) + '% full.' : '.') + '</span></div>' +
+    '<div class="field"><span class="lbl">How much did you drink?</span><div class="seg">' + parts.map(p => '<button data-a="wpPart" data-v="' + p[0] + '" aria-pressed="' + (W.part === p[0]) + '">' + p[1] + '</button>').join('') + '</div></div>' +
+    '<div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + waterFmt(b.ml * W.part, true) + '</b>' + waterUnit() + '</span><span class="mh-t">to today\'s water</span></div></div>' +
+    '<div class="setrow"><div class="grow"><div class="t">Save this bottle</div><div class="s">One tap next time, no photo needed.</div></div>' + sw(W.keep, 'wpKeep') + '</div>';
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="wpSave">Add ' + waterFmt(b.ml * W.part) + ' water</button></div>';
+}
+A.wpPart = el => { D.wp.part = +el.dataset.v; drawSheets(false); };
+A.wpKeep = () => { D.wp.keep = !D.wp.keep; drawSheets(false); };
+A.wpSave = () => {
+  const W = D.wp; if (!W || !W.bottle) return;
+  const ml = Math.round(W.bottle.ml * W.part);
+  if (W.keep) {
+    const list = S.bottles || (S.bottles = []), name = W.bottle.name.replace(/\s*\(sample\)$/, '');
+    const same = list.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (same) { same.ml = W.bottle.ml; same.used = now(); } else list.unshift({ id: uid(), name: name, ml: W.bottle.ml, used: now() });
+    if (list.length > 6) list.length = 6;
+  }
+  D.wp = null; closeAll();
+  A.waterAdd({ dataset: { ml: ml } });
+};
+// Saved bottles, most recently used first, become add buttons.
+function bottleButtons(max) {
+  return (S.bottles || []).slice().sort((a, b) => (b.used || 0) - (a.used || 0)).slice(0, max).map(x => [x.ml, waterFmt(x.ml), x.name.replace(/\s+\d+(\.\d+)?\s*(oz|ml|l)$/i, ''), x.id]);
+}
+A.bottleUse = el => { const b = (S.bottles || []).find(x => x.id === el.dataset.id); if (b) b.used = now(); A.waterAdd(el); };
+A.bottleDel = el => { S.bottles = (S.bottles || []).filter(x => x.id !== el.dataset.id); save(); drawSheets(false); render(); };
+A.openWaterCam = (el, e) => openCam('water', e);

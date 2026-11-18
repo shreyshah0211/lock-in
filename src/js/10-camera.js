@@ -28,16 +28,16 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
-  const title = intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
-  const sub = intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const title = intent === 'water' ? 'Snap your water bottle' : intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
-  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
+  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : intent === 'water' ? 'Adds to today\'s water' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
-  const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
-  const right = intent === 'lift' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
+  const left = intent === 'water' ? (S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="gym"><span class="b">' + ic('drop', 24) + '</span>Try a sample</button>') : intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
+  const right = intent === 'lift' || intent === 'water' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
-  const sayAlt = intent === 'progress' || intent === 'lift' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
+  const sayAlt = intent === 'progress' || intent === 'lift' || intent === 'water' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
@@ -117,6 +117,7 @@ function gotPhoto(ph, sampleKind) {
   const intent = D.camIntent;
   if (intent === 'progress' || sampleKind === 'progress') { D.snap = null; startProgress(ph); return; }
   if (intent === 'lift') { D.snap = null; startLiftPhoto(ph); return; }
+  if (intent === 'water') { D.snap = null; startWaterPhoto(ph); return; }
   const out = !intent && !!D.camOutside; D.camOutside = false;
   const s = D.snap = { ph: ph, sample: !ph, sampleKind: sampleKind || 'gym', kind: null, state: 'working', gym: null, meal: null, manual: false, screen: false, outside: out };
   // An outside photo skips the gym-or-food look; startCheckin checks it is plausibly a gym's entrance instead.
@@ -127,7 +128,8 @@ function gotPhoto(ph, sampleKind) {
   aiSnap(ph.blob).then(r => {
     if (D.snap !== s || s.kind) return;
     s.screen = !!r.screen;
-    if (r.state === 'ok' && r.kind !== 'other') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
+    if (r.state === 'ok' && r.kind === 'water' && r.water) { D.snap = null; closeSheet(); startWaterPhoto(ph, r.water); }
+    else if (r.state === 'ok' && r.kind !== 'other' && r.kind !== 'water') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
     else if (r.state !== 'ok' && intent === 'meal') { s.kind = 'food'; s.state = r.state; snapRoute(); }
     else { s.state = r.state === 'ok' ? 'unsure' : r.state; drawSheets(false); }
   });

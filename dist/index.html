@@ -1009,6 +1009,11 @@ body{overscroll-behavior:none}
 .cap-s{font-size:12px;padding:12px 2px}
 .td-food .grow{grid-template-columns:repeat(4,1fr);gap:10px}
 .td-m b{font-size:17px}
+.wc-cam{padding:0 12px;background:#E8F5FC;color:#0F6C9E}
+.wc-bottles{background:var(--mist);border-radius:18px;padding:0 14px}
+.wc-bottles .row>button.grow{display:flex;align-items:center;gap:8px;text-align:left}
+.wc-bottles small{color:var(--mute);font-weight:600}
+.wc-add{flex-wrap:nowrap;overflow-x:auto}.wc-add .btn{flex:none;white-space:nowrap}
 
 </style>
 </head>
@@ -2491,6 +2496,21 @@ async function aiGymCheck(blob, outside) {
   } catch (e) { const c = aiFail(e); return { state: c === 'rate_limited' ? 'busy' : _aiBlocked ? 'off' : 'error' }; }
 }
 const WATER_ASK = '"water_ml" is the fluid in it, in millilitres: the whole volume for a drink (water, coffee, tea, milk, juice, a shake, soda), the broth for a soup, and 0 for solid food. ';
+// A water container: what it is, how much it holds full, and how full it looks.
+const WATER_SHAPE = '{"kind": "water", "container": "Stanley Quencher 40 oz", "capacity_oz": 40, "fill": 1, "screen": false}. "container" is the brand and model if you can tell, or a plain description such as "clear plastic bottle" or "pint glass". ' +
+  '"capacity_oz" is how much it holds when full, in US fluid ounces: use the size printed on it, or the size that model is known to come in (a Stanley Quencher is 30 or 40 oz, a Hydro Flask Wide Mouth 32 oz, an Owala FreeSip 24 oz, a standard disposable bottle 16.9 oz, a pint glass 16 oz); judge from the size in the photo when there is no other clue. "fill" is how full it looks, from 0 to 1. ';
+function shapeWater(r) {
+  const oz = +r.capacity_oz; if (!(oz > 1 && oz < 200)) return null;
+  return { name: String(r.container || 'Water bottle').trim().slice(0, 50), ml: Math.round(oz * 29.5735), fill: isFinite(+r.fill) ? clamp(+r.fill, 0, 1) : 1 };
+}
+async function aiWaterPhoto(blob) {
+  const s = await getAIImages(); if (!s) return { state: 'off' };
+  try {
+    const res = await s.json('This photo was taken in a fitness app to log water. Work out what container it shows and how much it holds. Reply with only a JSON object: ' + WATER_SHAPE + 'If it does not show a drink container at all, reply {"kind": "other"}.', { images: [blob], modelTier: 'quick' });
+    const w = res && res.kind !== 'other' ? shapeWater(res) : null;
+    return w ? { state: 'ok', water: w } : { state: 'no' };
+  } catch (e) { const c = aiFail(e); return { state: c === 'rate_limited' ? 'busy' : 'error' }; }
+}
 const MEAL_FORMAT = 'Reply with only a JSON object like {"food": true, "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "water_ml": 0, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. ' + WATER_ASK +
   'Use whole numbers. "name" is a short plain name for the whole meal. "items" lists up to 6 parts, and their calories add up to the total. "confidence" is low, medium or high. If it is not food or drink, reply {"food": false}.';
 function shapeMeal(res) {
@@ -2513,10 +2533,11 @@ async function aiSnap(blob) {
       'This photo was just taken in a fitness app that has one camera button for everything. Work out what it shows so the app can file it. Reply with only a JSON object, in one of three shapes. ' +
       'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "lift": {"exercise": "Squat", "weight": 225, "unit": "lb"}, "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. "lift" is only for when the photo clearly shows one exercise and you can read its weight (count barbell plates on both sides plus the bar, read the number on a dumbbell, or where the pin sits on a machine stack); otherwise "lift": null. ' +
       'If it shows food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "water_ml": 0, "items": [{"name": "rice", "calories": 210}], "confidence": "medium", "screen": false}. ' + WATER_ASK + 'Use whole numbers, judge portion sizes from the plate and what surrounds it, list up to 6 parts in "items" whose calories add up to the total, and set "confidence" to low, medium or high. ' + mealContext('') +
+      'If it shows a water bottle, a glass of water or another container of plain water (not coffee, tea, juice, milk, soda or a shake): ' + WATER_SHAPE +
       'If it is neither, such as an unrelated scene: {"kind": "other", "screen": false}. ' + SCREEN_ASK,
       { images: [blob], modelTier: 'quick' });
-    const kind = res && ['gym', 'food', 'other'].includes(res.kind) ? res.kind : 'other';
-    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '', lift: res.lift && typeof liftFromAI === 'function' ? liftFromAI(res.lift) : null } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null };
+    const kind = res && ['gym', 'food', 'water', 'other'].includes(res.kind) ? res.kind : 'other';
+    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '', lift: res.lift && typeof liftFromAI === 'function' ? liftFromAI(res.lift) : null } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null, water: kind === 'water' ? shapeWater(res) : null };
   } catch (e) { return { state: aiFail(e) === 'rate_limited' ? 'busy' : 'off' }; }
 }
 async function aiMealPhoto(blob, hint) {
@@ -2581,16 +2602,16 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
-  const title = intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
-  const sub = intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const title = intent === 'water' ? 'Snap your water bottle' : intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
-  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
+  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : intent === 'water' ? 'Adds to today\'s water' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
-  const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
-  const right = intent === 'lift' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
+  const left = intent === 'water' ? (S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="gym"><span class="b">' + ic('drop', 24) + '</span>Try a sample</button>') : intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
+  const right = intent === 'lift' || intent === 'water' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
-  const sayAlt = intent === 'progress' || intent === 'lift' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
+  const sayAlt = intent === 'progress' || intent === 'lift' || intent === 'water' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
@@ -2670,6 +2691,7 @@ function gotPhoto(ph, sampleKind) {
   const intent = D.camIntent;
   if (intent === 'progress' || sampleKind === 'progress') { D.snap = null; startProgress(ph); return; }
   if (intent === 'lift') { D.snap = null; startLiftPhoto(ph); return; }
+  if (intent === 'water') { D.snap = null; startWaterPhoto(ph); return; }
   const out = !intent && !!D.camOutside; D.camOutside = false;
   const s = D.snap = { ph: ph, sample: !ph, sampleKind: sampleKind || 'gym', kind: null, state: 'working', gym: null, meal: null, manual: false, screen: false, outside: out };
   // An outside photo skips the gym-or-food look; startCheckin checks it is plausibly a gym's entrance instead.
@@ -2680,7 +2702,8 @@ function gotPhoto(ph, sampleKind) {
   aiSnap(ph.blob).then(r => {
     if (D.snap !== s || s.kind) return;
     s.screen = !!r.screen;
-    if (r.state === 'ok' && r.kind !== 'other') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
+    if (r.state === 'ok' && r.kind === 'water' && r.water) { D.snap = null; closeSheet(); startWaterPhoto(ph, r.water); }
+    else if (r.state === 'ok' && r.kind !== 'other' && r.kind !== 'water') { s.kind = r.kind; s.gym = r.gym; s.meal = r.meal; s.state = 'ai'; snapRoute(); }
     else if (r.state !== 'ok' && intent === 'meal') { s.kind = 'food'; s.state = r.state; snapRoute(); }
     else { s.state = r.state === 'ok' ? 'unsure' : r.state; drawSheets(false); }
   });
@@ -3898,7 +3921,7 @@ function sansRev(c) { const o = Object.assign({}, c); delete o.rev; return o; }
 function coreOf() {
   const cut = now() - KEEP_MEALS, gone = {};
   Object.keys(S.gone || {}).forEach(k => { if (S.gone[k] > now() - 60 * DAY) gone[k] = S.gone[k]; });
-  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, body: S.body || null, weights: (S.weights || []).slice(-120), water: (S.water || []).filter(w => w.ts > now() - 60 * DAY), settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
+  return { v: 1, epoch: S.epoch || 0, me: S.me, checkins: S.checkins.slice(-KEEP_CHECKINS), meals: S.meals.filter(m => m.ts > cut), goals: S.goals, body: S.body || null, weights: (S.weights || []).slice(-120), water: (S.water || []).filter(w => w.ts > now() - 60 * DAY), bottles: S.bottles || [], settings: S.settings, badges: S.badges, lifts: S.lifts, progress: S.progress, weekNote: S.weekNote || null, conn: S.conn, squads: S.squads, gone: gone, ui: { showKcal: S.ui.showKcal !== false, recapSeen: S.ui.recapSeen || '' } };
 }
 // Called on every save: notes the moment your own data last changed. Waits while the account is still being read.
 function syncStamp() {
@@ -3951,7 +3974,7 @@ function applyCore(c, keepOlder) {
   const mine = real && keepOlder ? { ci: S.checkins.slice(0, -KEEP_CHECKINS), ml: S.meals.filter(m => m.ts <= cut) } : { ci: [], ml: [] };
   base.me = Object.assign({}, c.me, { id: 'me' });
   base.checkins = join(c.checkins || [], S.checkins.length > KEEP_CHECKINS ? mine.ci : []); base.meals = join(c.meals || [], mine.ml); base.progress = (c.progress || []).slice();
-  ['goals', 'body', 'weights', 'water', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
+  ['goals', 'body', 'weights', 'water', 'bottles', 'settings', 'badges', 'lifts', 'conn', 'squads'].forEach(k => { if (c[k]) base[k] = c[k]; });
   base.weekNote = c.weekNote || null; base.gone = gone; base.epoch = c.epoch || 0; if (c.ui) Object.assign(base.ui, c.ui);
   base.mode = 'real'; base.offset = 0; base.rev = c.rev || 0; base.ui.coach = false;
   S = base; upgradeState(); ensureMyPosts(); _dp = null; _lz = null;
@@ -5382,7 +5405,7 @@ function waterCard(fd) {
   return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
     (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' +
     '<div class="wc-drops" aria-label="' + Math.round(frac * 100) + '% of your water goal">' + drops + '</div>' +
-    (today ? '<div class="wc-add">' + WATER_ADD().slice(0, 2).map(x => '<button class="btn btn-soft btn-s" data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + x[2] + ' <small>' + x[1] + '</small></button>').join('') +
+    (today ? '<div class="wc-add"><button class="btn btn-soft btn-s wc-cam" data-a="openWaterCam" aria-label="Snap a bottle">' + ic('camera', 16) + '</button>' + bottleButtons(1).map(x => '<button class="btn btn-soft btn-s" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + esc(x[2]) + ' <small>' + x[1] + '</small></button>').join('') + WATER_ADD().slice(0, bottleButtons(1).length ? 1 : 2).map(x => '<button class="btn btn-soft btn-s" data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + x[2] + ' <small>' + x[1] + '</small></button>').join('') +
       (w.list.length ? '<button class="btn btn-soft btn-s wc-undo" data-a="waterUndo" aria-label="Undo the last water">' + ic('x', 15) + '</button>' : '') + '</div>' : '') +
     (w.meals.length ? '<p class="mute wc-note">' + ic('bowl', 14) + ' Includes ' + waterFmt(w.meals.reduce((a, m) => a + m.ml, 0)) + ' from ' + listNames(w.meals.map(m => m.name.toLowerCase()).slice(0, 3)) + '.</p>' : '') + '</div>';
 }
@@ -5402,6 +5425,8 @@ A.openWater = () => {
   openSheet(() => {
     const w = waterDay(), g = waterGoal(), u = waterUnit();
     return sheetHead('Water') + '<div class="sh-b"><div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + u + '</span><span class="mh-t">of ' + waterFmt(g) + ' today</span></div>' + bar(w.ml / g, 'var(--water)') + '</div>' +
+      '<button class="btn btn-go btn-w" data-a="capGo" data-to="openWaterCam">' + ic('camera', 20) + 'Snap a bottle or glass</button>' +
+      ((S.bottles || []).length ? '<div class="field"><span class="lbl">Your bottles</span><div class="rows wc-bottles">' + bottleButtons(6).map(x => '<div class="row"><button class="grow" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 18) + '<b>' + esc(x[2]) + '</b><small>' + x[1] + '</small></button><button class="rm" data-a="bottleDel" data-id="' + x[3] + '" aria-label="Forget this bottle">' + ic('x', 16) + '</button></div>').join('') + '</div></div>' : '') +
       '<div class="wc-big">' + WATER_ADD().map(x => '<button data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 24) + '<b>' + x[2] + '</b><small>' + x[1] + '</small></button>').join('') + '</div>' +
       '<div class="field"><label for="wt-amt">Another amount, ' + u + '</label><div class="send"><input class="input" id="wt-amt" type="number" inputmode="decimal" data-m="wt.amt" data-enter="waterCustom" placeholder="' + (waterUS() ? '12' : '330') + '"><button class="btn btn-ink wide" data-a="waterCustom">Add</button></div></div>' +
       (w.list.length || w.meals.length ? '<div class="card" style="padding:4px 16px"><div class="rows">' + w.list.slice().reverse().map(x => '<div class="row" style="padding:10px 0">' + ic('drop', 18) + '<div class="grow">Water, ' + clock(x.ts) + '</div><b>' + waterFmt(x.ml) + '</b><button class="rm" data-a="waterDel" data-id="' + x.id + '" aria-label="Remove">' + ic('x', 16) + '</button></div>').join('') +
@@ -5432,6 +5457,61 @@ function waterFromText(text) {
   if (rest.length) return null;
   return Math.round(ml || 250);
 }
+
+/* ---- water from a photo ----
+   Snap any bottle or glass: Claude names it and says how much it holds. You pick how
+   much of it you drank, and the bottle is remembered as a one-tap button. */
+function startWaterPhoto(ph, seen) {
+  D.wp = { photo: ph ? ph.key : null, state: ph ? (seen ? 'ok' : 'reading') : 'sample', bottle: seen || null, part: 1, keep: true };
+  const W = D.wp;
+  if (!ph) W.bottle = { name: 'Stanley Quencher 40 oz (sample)', ml: Math.round(40 * ML_OZ), fill: 1 };
+  if (W.bottle) W.part = waterPart(W.bottle.fill);
+  closeAll(); if (S.ui.tab === 'cam') A.camClose();
+  openSheet(waterPhotoSheet, { cls: 'full', onClose: () => { if (D.wp === W) D.wp = null; } });
+  if (ph && !seen) aiWaterPhoto(ph.blob).then(r => {
+    if (D.wp !== W) return;
+    W.state = r.state; if (r.water) { W.bottle = r.water; W.part = waterPart(r.water.fill); }
+    drawSheets(false);
+  });
+}
+// How much of it to log: the whole bottle unless it looks partly drunk already.
+function waterPart(fill) { return fill >= .85 ? 1 : fill >= .6 ? .75 : fill >= .35 ? .5 : .25; }
+function waterPhotoSheet() {
+  const W = D.wp; if (!W) return '';
+  const b = W.bottle, src = W.photo ? PHOTOS[W.photo] : null;
+  const st = { reading: ['', '<span class="spin"></span>Working out what it holds'], no: [' no', ic('info', 18) + '<span>Could not see a bottle or a glass in this photo. Retake it, or add water by hand.</span>'],
+    busy: [' no', ic('info', 18) + '<span>Claude is busy. Try again in a moment, or add water by hand.</span>'], error: [' no', ic('info', 18) + '<span>Could not read the photo just now. Add water by hand.</span>'],
+    off: ['', ic('info', 18) + '<span>Reading bottles from photos needs Claude switched on. Add water by hand.</span>'] }[W.state];
+  let h = sheetHead('Add water', { back: true }) + '<div class="sh-b">' + (src ? '<div class="prev sq"><img src="' + src + '" alt="Your bottle"></div>' : '');
+  if (!b || st) return h + '<div class="aicheck' + (st ? st[0] : '') + '">' + (st ? st[1] : '') + '</div>' + (W.state !== 'reading' ? '<button class="btn btn-ink btn-w" data-a="openWater">' + ic('drop', 18) + 'Add water by hand</button>' : '') + '</div>';
+  const parts = [[1, 'All of it'], [.75, '¾'], [.5, 'Half'], [.25, '¼']];
+  h += '<div class="aicheck ok">' + ic('drop', 18) + '<span><b>' + esc(b.name) + '</b>, holds ' + waterFmt(b.ml) + (b.fill < .85 ? '. Looks about ' + Math.round(b.fill * 100) + '% full.' : '.') + '</span></div>' +
+    '<div class="field"><span class="lbl">How much did you drink?</span><div class="seg">' + parts.map(p => '<button data-a="wpPart" data-v="' + p[0] + '" aria-pressed="' + (W.part === p[0]) + '">' + p[1] + '</button>').join('') + '</div></div>' +
+    '<div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + waterFmt(b.ml * W.part, true) + '</b>' + waterUnit() + '</span><span class="mh-t">to today\'s water</span></div></div>' +
+    '<div class="setrow"><div class="grow"><div class="t">Save this bottle</div><div class="s">One tap next time, no photo needed.</div></div>' + sw(W.keep, 'wpKeep') + '</div>';
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="wpSave">Add ' + waterFmt(b.ml * W.part) + ' water</button></div>';
+}
+A.wpPart = el => { D.wp.part = +el.dataset.v; drawSheets(false); };
+A.wpKeep = () => { D.wp.keep = !D.wp.keep; drawSheets(false); };
+A.wpSave = () => {
+  const W = D.wp; if (!W || !W.bottle) return;
+  const ml = Math.round(W.bottle.ml * W.part);
+  if (W.keep) {
+    const list = S.bottles || (S.bottles = []), name = W.bottle.name.replace(/\s*\(sample\)$/, '');
+    const same = list.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (same) { same.ml = W.bottle.ml; same.used = now(); } else list.unshift({ id: uid(), name: name, ml: W.bottle.ml, used: now() });
+    if (list.length > 6) list.length = 6;
+  }
+  D.wp = null; closeAll();
+  A.waterAdd({ dataset: { ml: ml } });
+};
+// Saved bottles, most recently used first, become add buttons.
+function bottleButtons(max) {
+  return (S.bottles || []).slice().sort((a, b) => (b.used || 0) - (a.used || 0)).slice(0, max).map(x => [x.ml, waterFmt(x.ml), x.name.replace(/\s+\d+(\.\d+)?\s*(oz|ml|l)$/i, ''), x.id]);
+}
+A.bottleUse = el => { const b = (S.bottles || []).find(x => x.id === el.dataset.id); if (b) b.used = now(); A.waterAdd(el); };
+A.bottleDel = el => { S.bottles = (S.bottles || []).filter(x => x.id !== el.dataset.id); save(); drawSheets(false); render(); };
+A.openWaterCam = (el, e) => openCam('water', e);
 
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */
