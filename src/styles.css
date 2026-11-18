@@ -1000,3 +1000,9 @@ body{overscroll-behavior:none}
 .wc-bottles .row>button.grow{display:flex;align-items:center;gap:8px;text-align:left}
 .wc-bottles small{color:var(--mute);font-weight:600}
 .wc-add{flex-wrap:nowrap;overflow-x:auto}.wc-add .btn{flex:none;white-space:nowrap}
+/* My gym */
+.gy-now{display:flex;align-items:center;gap:12px}
+.gy-now b{display:block;font-weight:800}
+.gy-now .mute{display:block;font-size:13.5px}
+.gy-dot{width:12px;height:12px;border-radius:50%;background:#C3C8D6;flex:none}
+.gy-dot.on{background:#18B26B;box-shadow:0 0 0 5px rgba(24,178,107,.18)}

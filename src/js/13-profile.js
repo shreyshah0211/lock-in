@@ -86,6 +86,7 @@ VIEWS.you = () => {
   h += '<div class="menu" style="margin-top:26px">' +
     menuRow('openPlan', 'sparkle', 'Plan my next 3 sessions', 'Built from what you have trained lately') +
     menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
+    menuRow('openMyGym', 'pin', 'My gym location', S.gymLoc ? esc(S.gymLoc.name) + (typeof GYM !== 'undefined' && GYM.inside ? ', you are there now' : ', times your visits') : 'Notice when you arrive and leave, and time your workout') +
     menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health, Health Connect, your calendar') +
     menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
     menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours, rest passes and comebacks') + '</div>';

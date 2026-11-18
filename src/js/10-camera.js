@@ -183,6 +183,9 @@ function startCheckin(ph, opts) {
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
     noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : !ph ? (out ? 'outside' : 'sample') : seen && !out ? 'ok' : 'checking', note: seen ? seen.note : '', blob: ph ? ph.blob : null };
+  // Time at the gym from the phone's location fills in how long it was.
+  const gt = !only && !det && typeof gymToday === 'function' ? gymToday() : null;
+  if (gt && gt.mins >= 10) { D.ci.mins = clamp(Math.round(gt.mins / 5) * 5, 10, 180); D.ci.gymTime = gt; }
   if (D.pendingLift) { D.ci.lifts = [D.pendingLift]; D.ci.more = true; D.pendingLift = null; }
   else if (seen && seen.lift && seen.lift.w !== '') { D.ci.lifts = [{ name: seen.lift.name, w: seen.lift.w, reps: '', sets: '' }]; D.ci.more = true; D.ci.liftRead = seen.lift; }
   const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
@@ -233,6 +236,7 @@ function aiRow(d) {
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
+    (d.gymTime ? '<div class="aicheck ok">' + ic('pin', 18) + '<span>' + (d.gymTime.inside ? 'At ' + esc(S.gymLoc ? S.gymLoc.name : 'your gym') + ' for ' + fmtMins(d.gymTime.mins) + ' so far' : fmtMins(d.gymTime.mins) + ' at ' + esc(S.gymLoc ? S.gymLoc.name : 'your gym') + ' today') + ', from your phone\'s location. Time filled in.</span></div>' : '') +
     (d.liftRead ? '<div class="aicheck ok">' + ic('dumbbell', 18) + '<span>Read ' + esc(d.liftRead.name) + ', ' + d.liftRead.w + ' ' + S.settings.units + (d.liftRead.how ? ' (' + esc(d.liftRead.how) + ')' : '') + ' from the photo. Add your reps below.</span></div>' : '') +
     (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
     (d.screen && d.ai !== 'checking' && d.ai !== 'no' ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen or a screenshot, so it cannot count. Take the photo with your camera at the gym.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '') +

@@ -5,7 +5,9 @@
 	<key>ClaudeAPIKey</key>
 	<string>$(CLAUDE_API_KEY)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lock In shows where you are on the gym map. Your location is never shared.</string>
+	<string>Lock In shows where you are on the gym map and notes when you arrive at your gym. Your location stays on your phone.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>So Lock In can note when you arrive at and leave your gym, even when the app is closed, and time your workout. Your location stays on your phone.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Lock In uses the camera for your gym check-in and meal photos.</string>
 	<key>NSMicrophoneUsageDescription</key>

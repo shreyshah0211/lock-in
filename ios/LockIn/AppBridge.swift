@@ -40,6 +40,20 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             Reminders.schedule(on: on, deadline: deadline, days: days) { granted in replyHandler(granted, nil) }
         case "listen":
             SpeechInput.shared.start(web: message.webView) { err in replyHandler(err == nil, err) }
+        case "gymHere":
+            GymWatcher.shared.here { loc in replyHandler(loc.map { ["lat": $0.coordinate.latitude, "lon": $0.coordinate.longitude, "acc": $0.horizontalAccuracy] }, loc == nil ? "no_location" : nil) }
+        case "gymSearch":
+            GymWatcher.shared.search(body["q"] as? String ?? "gym") { replyHandler($0, nil) }
+        case "gymWatch":
+            guard let lat = body["lat"] as? Double, let lon = body["lon"] as? Double else { replyHandler(nil, "bad_request"); return }
+            GymWatcher.shared.watch(name: body["name"] as? String ?? "My gym", lat: lat, lon: lon, radius: body["radius"] as? Double ?? 150) { replyHandler($0, nil) }
+        case "gymStop":
+            GymWatcher.shared.stop(); replyHandler(true, nil)
+        case "gymVisits":
+            let w = GymWatcher.shared
+            replyHandler(["visits": w.visits, "inside": w.inside, "status": w.statusName, "watching": w.gym != nil], nil)
+        case "gymMap":
+            GymWatcher.shared.showMap(); replyHandler(true, nil)
         case "listenStop":
             SpeechInput.shared.finish(); replyHandler(true, nil)
         default:
