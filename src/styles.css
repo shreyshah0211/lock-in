@@ -60,9 +60,9 @@ h1,h2,h3{text-wrap:balance}
 #view::-webkit-scrollbar,.sheet::-webkit-scrollbar,.hscroll::-webkit-scrollbar,.frow::-webkit-scrollbar,#rail::-webkit-scrollbar{display:none}
 #phone.cam-on #view{padding-bottom:0}
 
-/* ---------- bottom bar: four places, and the camera in the middle ---------- */
-#tabs{position:absolute;left:12px;right:12px;bottom:12px;height:66px;z-index:5;pointer-events:none}
-.tabbar{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 80px 1fr 1fr;align-items:center;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 14px 34px -10px rgba(18,22,43,.34),0 0 0 1px rgba(18,22,43,.06),inset 0 1px 0 rgba(255,255,255,.8);pointer-events:auto}
+/* ---------- bottom bar: Home, the camera, You ---------- */
+#tabs{position:absolute;left:50%;width:min(300px,calc(100% - 24px));transform:translateX(-50%);bottom:12px;height:66px;z-index:5;pointer-events:none}
+.tabbar{position:absolute;inset:0;display:grid;grid-template-columns:1fr 96px 1fr;align-items:center;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 14px 34px -10px rgba(18,22,43,.34),0 0 0 1px rgba(18,22,43,.06),inset 0 1px 0 rgba(255,255,255,.8);pointer-events:auto}
 .tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:54px;font-size:11px;font-weight:700;color:var(--faint);border-radius:999px;transition:color .15s,background .15s}
 .tabbar button[aria-current="page"]{color:var(--iron);background:rgba(18,22,43,.07)}
 .snap-lbl{align-self:end;text-align:center;font-size:11px;font-weight:800;color:var(--iron);padding-bottom:8px;white-space:nowrap;pointer-events:none}
@@ -273,6 +273,7 @@ textarea.input{resize:none;min-height:84px}
 .post-c{padding:8px 6px 0;font-size:14.5px}
 .post-c b{font-weight:700}
 .post-pr{margin:10px 6px 0;display:inline-flex}
+.feed{padding-top:14px}
 .feed-end{padding:26px var(--pad) 30px;text-align:center;color:var(--mute);font-size:13.5px}
 .feed-h{padding:26px var(--pad) 4px;font-size:19px;font-weight:800;letter-spacing:-.015em}
 
@@ -433,7 +434,7 @@ textarea.input{resize:none;min-height:84px}
 .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .mgrid .field label{font-size:12px;color:var(--mute)}
 .mgrid .input{padding:10px 8px;text-align:center;font-weight:700;min-height:50px}
-.daynav{display:flex;align-items:center;gap:2px;background:var(--mist);border-radius:999px;padding:3px}
+.daynav{display:inline-flex;align-items:center;gap:2px;background:var(--mist);border-radius:999px;padding:3px}
 .daynav b{min-width:5.6em;text-align:center;font-size:13.5px}
 .daynav button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
 .daynav button[disabled]{opacity:.3}
@@ -459,7 +460,7 @@ textarea.input{resize:none;min-height:84px}
 .miles div i{display:block;height:8px;border-radius:99px;background:#E1E4EC;margin-bottom:6px;overflow:hidden}
 .miles div i b{display:block;height:100%;border-radius:99px;background:var(--flame)}
 .miles div.on{color:var(--iron)}
-.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.heat{display:grid;grid-template-rows:repeat(7,auto);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
 .heat button,.heat span{aspect-ratio:1;border-radius:4px;background:#E1E4EC;display:block;min-width:0}
 .heat .l1{background:var(--h1)} .heat .l2{background:var(--h2)} .heat .l3{background:var(--h3)} .heat .l4{background:var(--h4)}
 .heat .fut{background:transparent}
@@ -919,7 +920,7 @@ body{overscroll-behavior:none}
 .cap-s b{font-weight:700}
 .cap-nophoto{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mute);align-self:center}
 /* Today card */
-.today{margin:14px 16px 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card.today{margin:14px 16px 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .td-h{display:flex;align-items:center;justify-content:space-between}
 .td-h .link{display:inline-flex;align-items:center;gap:5px;font-weight:700}
 .td-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border-radius:18px;background:var(--mist)}

@@ -1,3 +1,4 @@
+const onFood = () => S.ui.tab === 'you' && (S.ui.youSeg || 'food') === 'food';
 /* The friendlier layer: one capture button with a menu, a Today card on Home,
    next-weight suggestions, a weight log, and Coach. Nothing here removes a feature;
    it puts the ones that were already there where they are easier to reach. */
@@ -11,12 +12,12 @@ A.openCapture = () => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
     return sheetHead('Log something') + '<div class="sh-b capture">' +
       (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      (S.ui.tab === 'food' ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
-      opt('goCam', '', 'camera', S.ui.tab === 'food' ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : S.ui.tab === 'food' ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', S.ui.tab === 'food' ? '' : ' main') +
+      (onFood() ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
+      opt('goCam', '', 'camera', onFood() ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : onFood() ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', onFood() ? '' : ' main') +
       opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
-      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (S.ui.tab === 'food' ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
+      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (onFood() ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openWater">' + ic('drop', 22) + '<b>Water</b></button>' +
       '<button class="cap-s" data-a="capProgress">' + ic('lock', 22) + '<b>Progress</b></button>' +
       '<button class="cap-s" data-a="openWeigh">' + ic('trend', 22) + '<b>Weight</b></button></div>' +
@@ -28,24 +29,12 @@ A.capProgress = (el, e) => openCam('progress', e);
 A.capGo = (el, e) => { const fn = A[el.dataset.to]; closeAll(); if (fn) fn(el, e); };
 
 /* ---- Today, on Home ---- */
+// Today on Home: one line, trained or not. Food lives on You.
 function todayCard() {
-  const t = dayTotals(foodDay(now())), g = S.goals, today = dayNum(now()), done = S.checkins.filter(c => dayNum(c.ts) === today).pop();
-  const si = snapInfo(), ws = weekStats(), pGap = Math.max(0, Math.round(g.p - t.p)), kLeft = Math.round(g.kcal - t.kcal), hr = new Date(now()).getHours();
-  const gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
-  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) + (gt.inside ? ' so far' : ' at the gym') : '') + ((done.lifts || []).length ? ', ' + plural(done.lifts.length, 'lift') : '') + '</small></span><span class="btn btn-line btn-s">' + ic('plus', 15) + 'Lift</span>'
-    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far. Check in when you are ready' : si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span>';
-  let next;
-  if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', null, null];
-  else if (!done && ws.n < ws.goal) next = ['target', (ws.goal - ws.n) + ' more ' + (ws.goal - ws.n === 1 ? 'session' : 'sessions') + ' to hit ' + ws.goal + ' this week.', null, null];
-  else if (pGap >= 25 && hr >= 14) next = ['sparkle', pGap + ' g protein to go today.', 'openCoach', 'Ideas'];
-  else next = ['check', done ? 'Training done. Eat well and recover.' : 'On track today.', null, null];
-  return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2></div>' +
-    '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
-    '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
-    '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +
-    '<span class="td-m"><b>' + waterFmt(waterDay().ml, true) + '<small>' + waterUnit() + '</small></b><span>Water</span>' + bar(waterDay().ml / waterGoal(), 'var(--water)') + '</span>' +
-    '<span class="td-m"><b>' + ws.n + '<small>/' + ws.goal + '</small></b><span>This week</span>' + bar(ws.n / ws.goal, 'var(--go)') + '</span></span></button>' +
-    '<div class="td-next">' + ic(next[0], 16) + '<span class="grow">' + next[1] + '</span>' + (next[2] ? '<button class="link" data-a="' + next[2] + '">' + next[3] + '</button>' : '') + '</div></div>';
+  const done = todayCheckin(), si = snapInfo(), gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
+  const row = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) : '') + '</small></span>'
+    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far' : 'Tap to check in') + '</small></span>';
+  return '<div class="card today"><button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button></div>';
 }
 
 /* ---- next weight ----

@@ -136,7 +136,6 @@ function loadState() {
 // Things added after the first builds. State saved by an older build picks them up here.
 function upgradeState() {
   if (!S.meets) S.meets = seedMeets();
-  if (!S.league) S.league = seedLeague();
   if (S.conn && S.conn.strava) delete S.conn.strava;   // Strava now arrives through Apple Health or Health Connect
   S.posts.forEach(p => { if (p.uid === 'me' && !p.by) p.by = following().slice(0, Math.min(9, p.rx.fire + p.rx.flex + p.rx.clap)).map(f => f.id); });
   if (S.ui.recapSeen === undefined) S.ui.recapSeen = '';

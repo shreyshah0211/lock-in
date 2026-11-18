@@ -75,7 +75,7 @@ function myBadgeState() {
   const cs = S.checkins, m = S.me;
   return {
     first: cs.length >= 1, week: Math.max(m.best, pDays(m)) >= 7, month: Math.max(m.best, pDays(m)) >= 30, hundred: Math.max(m.best, pDays(m)) >= 100,
-    fifty: cs.length >= 50, pr: cs.some(c => c.pr), squad: S.squads.length > 0, saved: !!m.usedPass
+    fifty: cs.length >= 50, pr: cs.some(c => c.pr), saved: !!m.usedPass
   };
 }
 function checkBadges() {
@@ -182,11 +182,8 @@ function doCheckin(o) {
     post = { id: uid(), uid: 'me', ts: t, type: c.type, mins: c.mins, effort: c.effort, caption: c.caption, scene: c.scene, photo: c.photo, gym: m.gym, day: after, rx: { fire: 0, flex: 0, clap: 0 }, mine: null, comments: [], pr: pr, verified: c.verified, cid: c.id, aud: o.audience, proof: c.proof, screen: !!c.screen, tag: c.tag || '', by: [] };
     S.posts.unshift(post);
   }
-  S.squads.forEach(sq => { sq.goal.have = Math.min(sq.goal.need, sq.goal.have + 1); });
-  leagueBump();
   checkBadges().forEach(b => earned.push({ icon: 'trophy', text: b.n + ' badge' }));
   save();
-  if (post) friendsReact(post.id);
   return { c: c, before: before, after: after, earned: earned, had: had || repaired, repaired: repaired, pts: c.pts };
 }
 // Sample friends give props to a new post over the next minute so the feed feels alive.

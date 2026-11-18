@@ -82,6 +82,5 @@ const BADGES = [
   { k: 'hundred', n: '100 day streak', icon: 'flame', c: '#2F7BFF', sh: 'shield', d: 'One hundred days without missing a window.' },
   { k: 'fifty', n: '50 check-ins', icon: 'dumbbell', c: '#12162B', sh: 'hex', d: 'Fifty photos, fifty sessions.' },
   { k: 'pr', n: 'New best', icon: 'trend', c: '#E23B32', sh: 'star', d: 'Beat one of your lift records.' },
-  { k: 'squad', n: 'Squad up', icon: 'users', c: '#0E8F8F', sh: 'circle', d: 'Join a squad.' },
   { k: 'saved', n: 'Saved by a pass', icon: 'pass', c: '#12996B', sh: 'hex', d: 'Let a rest pass rescue your streak.' }
 ];

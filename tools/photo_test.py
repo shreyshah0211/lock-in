@@ -68,7 +68,7 @@ def go(pw, mock):
         vis(pg, '[data-a="mealNums"]'); pg.fill('#ml-kcal', '700'); pg.wait_for_timeout(100)
         check(tag, 'typed numbers become yours', ev("[D.meal.kcal, document.querySelector('.mh-t').textContent]"), [700, 'Your numbers'])
         vis(pg, '[data-a="mealLog"]'); pg.wait_for_timeout(500); shot('3-food-tab')
-        check(tag, 'meal logged, Food tab opens', ev("[S.ui.tab, dayTotals(foodDay(now())).kcal - %d, sheets.length, S.meals[S.meals.length - 1].fib, S.meals[S.meals.length - 1].est]" % before), ['food', 700, 0, 6, False])
+        check(tag, 'meal logged, Food tab opens', ev("[S.ui.tab, dayTotals(foodDay(now())).kcal - %d, sheets.length, S.meals[S.meals.length - 1].fib, S.meals[S.meals.length - 1].est]" % before), ['you', 700, 0, 6, False])
         check(tag, 'log again adds the same numbers', ev("(() => { const b = document.querySelector('[data-a=mealAgain]'), m = S.meals.find(x => x.id === b.dataset.id), k0 = dayTotals(foodDay(now())).kcal; b.click(); return [dayTotals(foodDay(now())).kcal - k0 === m.kcal, S.meals[S.meals.length - 1].src]; })()"), [True, 'again'])
         # a photo of a screen cannot be posted: it asks for a retake
         ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__snapKind='gym'; window.__screen=true; window.__calls=[]"); snap(); shot('3b-screen')
@@ -89,10 +89,10 @@ def go(pw, mock):
         check(tag, 'progress photo saved', ev("[S.progress.length - %d, S.ui.tab]" % n), [1, 'you'])
         ev("closeAll()")
         # typed meal, plan
-        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-to="openSay"]'); pg.fill('#say-text','two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(900)
+        vis(pg, '.tabbar [data-tab="you"]'); vis(pg, '[data-a="youSeg"][data-k="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-to="openSay"]'); pg.fill('#say-text','two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(900)
         check(tag, 'typed meal estimated, no switcher', ev("[D.meal && D.meal.state, D.snap, !!document.querySelector('.kind')]"), ['ai', None, False]); ev("closeAll()")
         vis(pg, '.tabbar [data-tab="you"]'); ev("A.openPlan()"); pg.wait_for_timeout(900); check(tag, 'plan', ev("D.plan && D.plan.state"), 'ai'); shot('5-plan'); ev("closeAll()")
-        vis(pg, '[data-a="weekNote"]'); pg.wait_for_timeout(900)
+        ev("A.openCharts()"); pg.wait_for_timeout(300); vis(pg, '[data-a="weekNote"]'); pg.wait_for_timeout(900)
         check(tag, 'weekly note is written on request', ev("[S.weekNote && S.weekNote.text.slice(0, 17), !!document.querySelector('.wnote')]"), ['Four days running', True]); shot('5b-note')
         ev("window.__calFail='server_not_connected'; A.openConnections()"); vis(pg, '[data-a="openConn"][data-k="gcal"]'); vis(pg, '[data-a="calGo"]'); pg.wait_for_timeout(500)
         check(tag, 'calendar failure falls back to a link', ev("!!document.querySelector('.sheet a[href*=\"calendar.google.com\"]')"), True); ev("closeAll()")
@@ -105,7 +105,7 @@ def go(pw, mock):
         check(tag, 'posted, unverified', ev("[S.posts[0].uid, S.posts[0].verified, S.posts[0].proof]"), ['me', None, 'photo'])
         check(tag, 'calendar link offered', (pg.get_attribute('.done-links a', 'href') or '')[:44], 'https://calendar.google.com/calendar/render?')
         vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(300)
-        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-a="scanMeal"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1300); shot('2-meal')
+        vis(pg, '.tabbar [data-tab="you"]'); vis(pg, '[data-a="youSeg"][data-k="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-a="scanMeal"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1300); shot('2-meal')
         check(tag, 'from Food, no Claude: straight to the meal form', ev("[D.snap.kind, D.meal && D.meal.state]"), ['food', 'off']); ev("closeAll()")
     # proof that needs no photo inside the gym
     n0 = ev("window.__calls ? window.__calls.length : 0")
@@ -113,7 +113,7 @@ def go(pw, mock):
     pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900); shot('6-outside')
     check(tag, 'outside photo gets an outside check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['ok', True, 1] if mock else ['off', True, 0])
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600)
-    check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof, document.querySelector('#p-' + S.posts[0].id + ' .proof').textContent]"), ['outside', 'outside', 'Outside photo'])
+    check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof]"), ['outside', 'outside'])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     if mock:
         ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__outsideOk = false"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
@@ -127,21 +127,17 @@ def go(pw, mock):
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600); shot('8-newbest')
     check(tag, 'workout-only check-in: label, tag, new best banner', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].tag, S.detected, (document.querySelector('.pr-banner b') || {}).textContent, S.posts[0].pr.prev]"), ['workout', 'Exam week', None, 'New best: Squat 270 lb', 255])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
-    check(tag, 'league counts the check-ins', ev("S.league.rows.find(r => r.sq === 'cse').total"), 110)
     # a comeback after a lost streak earns the bonus
     ev("S.settings.autoPass = false; skipTime(80)"); pg.wait_for_timeout(200)
     check(tag, 'streak lost', ev("[pAlive(S.me), !!S.me.lost]"), [False, True])
     vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1200); pts = ev("ciPts(D.ci)"); vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1500)
     check(tag, 'comeback bonus', ev("[S.checkins[S.checkins.length - 1].bonus, S.checkins[S.checkins.length - 1].pts - %d]" % pts), [20, 20])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
-    # plans, props, duo pause
-    vis(pg, '[data-a="newMeet"]'); vis(pg, '[data-a="nmPost"]'); pg.wait_for_timeout(300)
-    check(tag, 'plan posted', ev("[S.meets.filter(m => m.uid === 'me').length, !!document.querySelector('[data-a=meetCancel]')]"), [1, True])
-    check(tag, 'props: one kind, counted once', ev("(() => { const p = S.posts.find(x => x.uid !== 'me' && !x.mine), n = propsN(p); A.react({dataset:{id:p.id}}); const up = propsN(p) - n; A.react({dataset:{id:p.id}}); return [up, propsN(p) - n]; })()"), [1, 0])
+    # duo pause
     check(tag, 'duo pause holds the number', ev("(() => { const f = person('maya'), d = f.duo; A.duoPause({dataset:{id:'maya'}}); const p = !!f.duoPaused; A.duoPause({dataset:{id:'maya'}}); return [p, f.duo === d, !!f.duoPaused]; })()"), [True, True, False])
     # empty states say what unlocks them
     saved = ev("JSON.stringify(S.checkins)")
-    check(tag, 'empty charts state their threshold', ev("(() => { const keep = S.checkins; S.checkins = []; S.ui.tab = 'you'; S.ui.youSeg = 'progress'; render(); let n = document.querySelectorAll('#view .thresh').length; S.ui.youSeg = 'lifts'; render(); n += document.querySelectorAll('#view .thresh').length; S.ui.youSeg = 'progress'; S.checkins = keep; render(); return n; })()"), 3)
+    check(tag, 'empty charts state their threshold', ev("(() => { const keep = S.checkins; S.checkins = []; const k = S.ui.youSeg; S.ui.tab = 'you'; S.ui.youSeg = 'training'; render(); let n = document.querySelectorAll('#view .thresh').length; A.openCharts(); n += document.querySelectorAll('.sheet .thresh').length; closeAll(); S.ui.youSeg = k; S.checkins = keep; render(); return n; })()"), 3)
     ev("A.openProgress()"); vis(pg, '.sheet [data-a="addProgress"]'); pg.wait_for_timeout(200); pg.set_input_files('#pick-input', IMG); pg.wait_for_timeout(900)
     check(tag, 'progress photo from the library skips recognition', ev("[!!D.pg, D.snap, !!document.querySelector('.kind')]"), [True, None, False]); vis(pg, '[data-a="pgSave"]'); pg.wait_for_timeout(500)
     pg.reload(); pg.wait_for_timeout(700)

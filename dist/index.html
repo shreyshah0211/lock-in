@@ -74,9 +74,9 @@ h1,h2,h3{text-wrap:balance}
 #view::-webkit-scrollbar,.sheet::-webkit-scrollbar,.hscroll::-webkit-scrollbar,.frow::-webkit-scrollbar,#rail::-webkit-scrollbar{display:none}
 #phone.cam-on #view{padding-bottom:0}
 
-/* ---------- bottom bar: four places, and the camera in the middle ---------- */
-#tabs{position:absolute;left:12px;right:12px;bottom:12px;height:66px;z-index:5;pointer-events:none}
-.tabbar{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 80px 1fr 1fr;align-items:center;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 14px 34px -10px rgba(18,22,43,.34),0 0 0 1px rgba(18,22,43,.06),inset 0 1px 0 rgba(255,255,255,.8);pointer-events:auto}
+/* ---------- bottom bar: Home, the camera, You ---------- */
+#tabs{position:absolute;left:50%;width:min(300px,calc(100% - 24px));transform:translateX(-50%);bottom:12px;height:66px;z-index:5;pointer-events:none}
+.tabbar{position:absolute;inset:0;display:grid;grid-template-columns:1fr 96px 1fr;align-items:center;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 14px 34px -10px rgba(18,22,43,.34),0 0 0 1px rgba(18,22,43,.06),inset 0 1px 0 rgba(255,255,255,.8);pointer-events:auto}
 .tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:54px;font-size:11px;font-weight:700;color:var(--faint);border-radius:999px;transition:color .15s,background .15s}
 .tabbar button[aria-current="page"]{color:var(--iron);background:rgba(18,22,43,.07)}
 .snap-lbl{align-self:end;text-align:center;font-size:11px;font-weight:800;color:var(--iron);padding-bottom:8px;white-space:nowrap;pointer-events:none}
@@ -287,6 +287,7 @@ textarea.input{resize:none;min-height:84px}
 .post-c{padding:8px 6px 0;font-size:14.5px}
 .post-c b{font-weight:700}
 .post-pr{margin:10px 6px 0;display:inline-flex}
+.feed{padding-top:14px}
 .feed-end{padding:26px var(--pad) 30px;text-align:center;color:var(--mute);font-size:13.5px}
 .feed-h{padding:26px var(--pad) 4px;font-size:19px;font-weight:800;letter-spacing:-.015em}
 
@@ -447,7 +448,7 @@ textarea.input{resize:none;min-height:84px}
 .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .mgrid .field label{font-size:12px;color:var(--mute)}
 .mgrid .input{padding:10px 8px;text-align:center;font-weight:700;min-height:50px}
-.daynav{display:flex;align-items:center;gap:2px;background:var(--mist);border-radius:999px;padding:3px}
+.daynav{display:inline-flex;align-items:center;gap:2px;background:var(--mist);border-radius:999px;padding:3px}
 .daynav b{min-width:5.6em;text-align:center;font-size:13.5px}
 .daynav button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
 .daynav button[disabled]{opacity:.3}
@@ -473,7 +474,7 @@ textarea.input{resize:none;min-height:84px}
 .miles div i{display:block;height:8px;border-radius:99px;background:#E1E4EC;margin-bottom:6px;overflow:hidden}
 .miles div i b{display:block;height:100%;border-radius:99px;background:var(--flame)}
 .miles div.on{color:var(--iron)}
-.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.heat{display:grid;grid-template-rows:repeat(7,auto);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
 .heat button,.heat span{aspect-ratio:1;border-radius:4px;background:#E1E4EC;display:block;min-width:0}
 .heat .l1{background:var(--h1)} .heat .l2{background:var(--h2)} .heat .l3{background:var(--h3)} .heat .l4{background:var(--h4)}
 .heat .fut{background:transparent}
@@ -933,7 +934,7 @@ body{overscroll-behavior:none}
 .cap-s b{font-weight:700}
 .cap-nophoto{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mute);align-self:center}
 /* Today card */
-.today{margin:14px 16px 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card.today{margin:14px 16px 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .td-h{display:flex;align-items:center;justify-content:space-between}
 .td-h .link{display:inline-flex;align-items:center;gap:5px;font-weight:700}
 .td-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border-radius:18px;background:var(--mist)}
@@ -1559,7 +1560,6 @@ const BADGES = [
   { k: 'hundred', n: '100 day streak', icon: 'flame', c: '#2F7BFF', sh: 'shield', d: 'One hundred days without missing a window.' },
   { k: 'fifty', n: '50 check-ins', icon: 'dumbbell', c: '#12162B', sh: 'hex', d: 'Fifty photos, fifty sessions.' },
   { k: 'pr', n: 'New best', icon: 'trend', c: '#E23B32', sh: 'star', d: 'Beat one of your lift records.' },
-  { k: 'squad', n: 'Squad up', icon: 'users', c: '#0E8F8F', sh: 'circle', d: 'Join a squad.' },
   { k: 'saved', n: 'Saved by a pass', icon: 'pass', c: '#12996B', sh: 'hex', d: 'Let a rest pass rescue your streak.' }
 ];
 
@@ -1701,7 +1701,6 @@ function loadState() {
 // Things added after the first builds. State saved by an older build picks them up here.
 function upgradeState() {
   if (!S.meets) S.meets = seedMeets();
-  if (!S.league) S.league = seedLeague();
   if (S.conn && S.conn.strava) delete S.conn.strava;   // Strava now arrives through Apple Health or Health Connect
   S.posts.forEach(p => { if (p.uid === 'me' && !p.by) p.by = following().slice(0, Math.min(9, p.rx.fire + p.rx.flex + p.rx.clap)).map(f => f.id); });
   if (S.ui.recapSeen === undefined) S.ui.recapSeen = '';
@@ -1824,7 +1823,7 @@ function myBadgeState() {
   const cs = S.checkins, m = S.me;
   return {
     first: cs.length >= 1, week: Math.max(m.best, pDays(m)) >= 7, month: Math.max(m.best, pDays(m)) >= 30, hundred: Math.max(m.best, pDays(m)) >= 100,
-    fifty: cs.length >= 50, pr: cs.some(c => c.pr), squad: S.squads.length > 0, saved: !!m.usedPass
+    fifty: cs.length >= 50, pr: cs.some(c => c.pr), saved: !!m.usedPass
   };
 }
 function checkBadges() {
@@ -1931,11 +1930,8 @@ function doCheckin(o) {
     post = { id: uid(), uid: 'me', ts: t, type: c.type, mins: c.mins, effort: c.effort, caption: c.caption, scene: c.scene, photo: c.photo, gym: m.gym, day: after, rx: { fire: 0, flex: 0, clap: 0 }, mine: null, comments: [], pr: pr, verified: c.verified, cid: c.id, aud: o.audience, proof: c.proof, screen: !!c.screen, tag: c.tag || '', by: [] };
     S.posts.unshift(post);
   }
-  S.squads.forEach(sq => { sq.goal.have = Math.min(sq.goal.need, sq.goal.have + 1); });
-  leagueBump();
   checkBadges().forEach(b => earned.push({ icon: 'trophy', text: b.n + ' badge' }));
   save();
-  if (post) friendsReact(post.id);
   return { c: c, before: before, after: after, earned: earned, had: had || repaired, repaired: repaired, pts: c.pts };
 }
 // Sample friends give props to a new post over the next minute so the feed feels alive.
@@ -1972,6 +1968,8 @@ let curTab = null;
 function render() {
   const v = $('#view');
   if (curTab) scrollPos[curTab] = v.scrollTop;
+  if (S.ui.tab === 'food') { S.ui.tab = 'you'; S.ui.youSeg = 'food'; }   // Food lives inside You now
+  if (!VIEWS[S.ui.tab]) S.ui.tab = 'home';
   const tab = S.ui.tab;
   $('#phone').classList.toggle('cam-on', tab === 'cam');
   v.innerHTML = (VIEWS[tab] || VIEWS.home)();
@@ -1988,12 +1986,12 @@ function snapInfo() {
   return { alive: alive, left: left, urgent: urgent, rep: rep, frac: alive ? clamp(left / WINDOW, 0, 1) : 0, color: alive ? timeColor(left) : rep ? '#E8321F' : '#B4B9C9',
     label: urgent ? fmtLeftShort(left) + ' left' : rep ? 'Save streak' : 'Snap' };
 }
-const NAV = [['home', 'home', 'Home'], ['ch', 'trophy', 'Compete'], ['food', 'bowl', 'Food'], ['you', 'user', 'You']];
+const NAV = [['home', 'home', 'Home'], ['you', 'user', 'You']];
 function renderTabs() {
-  const t = S.ui.tab, si = snapInfo(), C = 2 * Math.PI * 34, unread = S.activity.some(a => !a.read);
+  const t = S.ui.tab, si = snapInfo(), C = 2 * Math.PI * 34;
   const tabBtn = it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 23) + '<span>' + it[2] + '</span></button>';
-  // phone: four labelled tabs with the camera in the middle
-  $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + tabBtn(NAV[1]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[2]) + tabBtn(NAV[3]) + '</div>' +
+  // phone: Home, the camera, You
+  $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[1]) + '</div>' +
     '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="openCapture" aria-label="Log something: photo, barcode, say it">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
     '<span class="snap-core">' + ic('camera', 28) + '</span></button>' ;
@@ -2005,7 +2003,7 @@ function renderTabs() {
     '<button class="btn btn-go side-snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam">' + ic('camera', 22) + 'Snap a photo</button>' +
     '<button class="btn btn-line side-say" data-a="openSay" data-k="auto">' + ic('mic', 20) + 'Say it</button>' +
     '<p class="side-clock"><span class="dot" style="background:' + si.color + '"></span>' + (si.alive ? '<span><b data-live="left">' + fmtLeft(si.left) + '</b> left on your clock</span>' : si.rep ? '<span>Snap a gym photo to save your streak</span>' : '<span>Snap a gym photo to start a streak</span>') + '</p>' +
-    '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openActivity">' + ic('bell', 20) + '<span>Activity</span>' + (unread ? '<i class="ndot"></i>' : '') + '</button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
+    '<div class="side-foot"><button data-a="openFriends">' + ic('users', 20) + '<span>Friends</span></button><button data-a="openSettings">' + ic('gear', 20) + '<span>Settings</span></button>' +
     '<div class="side-me">' + av(m, 38, { plain: true }) + '<span><b>' + esc(m.name) + '</b><small>' + flameTxt(days) + '</small></span></div></div>';
 }
 function flameTxt(days) { return days > 0 ? days + ' day streak' : 'No streak yet'; }
@@ -2136,29 +2134,23 @@ function leftClock(ms) {
 }
 function repairLeft() { return canRepair() ? S.me.lost.at + DAY - now() : 0; }
 function heroPanel() {
-  const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep), unread = S.activity.some(a => !a.read);
+  const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep);
   const state = alive ? timeState(left) : rep > 0 ? 'crit' : 'out';
-  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
+  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '</div>';
   const mid = alive ? '<b data-live="clock">' + lc[0] + '</b><span data-live="clocklbl">' + lc[1] + '</span>' : rep > 0 ? '<b data-live="clock">' + lc[0] + '</b><span>to save your streak</span>' : '<b>0:00</b><span>on your clock</span>';
   h += '<div class="hero-dial">' + dial(204, alive ? left : rep, days, { id: 'me-dial', mid: mid, color: !alive && rep > 0 ? '#FF5347' : null }) + '</div>';
-  if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button><button class="pill" data-a="openPasses">' + ic('pass', 13) + plural(m.passes, 'pass') + '</button></div><p class="hero-sub">' + (left < 6 * HOUR ? 'Check in by ' + whenBy(deadline()) + ' or it ends.' : 'Next photo due ' + whenBy(deadline()) + '.') + '</p>';
-  else if (rep > 0) h += '<div class="hero-line"><span>Your ' + m.lost.days + ' day streak ran out</span></div><p class="hero-sub">Check in before the clock above hits zero and you get it back. One comeback a month.</p>';
-  else h += '<div class="hero-line"><span>' + (m.lost ? 'Your streak ended at ' + plural(m.lost.days, 'day') : 'No streak yet') + '</span></div><p class="hero-sub">One gym photo starts a new one' + (m.best ? '. Your best is ' + plural(m.best, 'day') : '') + '.</p>';
+  if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button></div><p class="hero-sub">Check in by ' + whenBy(deadline()) + '</p>';
+  else if (rep > 0) h += '<div class="hero-line"><span>Your ' + m.lost.days + ' day streak ran out</span></div><p class="hero-sub">Check in now to get it back.</p>';
+  else h += '<div class="hero-line"><span>' + (m.lost ? 'Streak ended at ' + plural(m.lost.days, 'day') : 'No streak yet') + '</span></div><p class="hero-sub">One gym photo starts it.</p>';
   return h + '</section>';
 }
+// A friend's latest photo: who, which day, when. Nothing to tap but their name.
 function postHTML(p, gated) {
   const u = person(p.uid); if (!u) return '';
-  const mine = p.uid === 'me', days = p.day || 1, pf = PROOF[proofKey(p)];
-  // Props are for the effort, and there is one kind. Nothing here rates how anyone looks.
-  const props = '<button class="react" data-a="' + (mine ? 'openNoticed' : 'react') + '" data-id="' + p.id + '" aria-pressed="' + (!mine && !!p.mine) + '" aria-label="' + (mine ? 'See who gave you props' : 'Give props') + '"><span class="e">👏</span>Props<span class="n">' + propsN(p) + '</span></button>';
-  const note = p.verified === false ? 'Not verified' : TYPE[p.type].v + ' at ' + p.gym;
+  const mine = p.uid === 'me', days = p.day || 1;
   if (gated) return '<article class="post"><div class="shot gated"><img src="' + imgOf(p) + '" alt=""><div class="gate">' + avPlain(u.name, u.color, 54) + '<b>' + esc(first(u.name)) + ' checked in ' + ago(p.ts) + '</b><span>Check in to see it.</span></div></div></article>';
-  return '<article class="post" id="p-' + p.id + '"><div class="shot" data-a="shotTap" data-id="' + p.id + '"><img src="' + imgOf(p) + '" alt="' + esc((mine ? 'Your' : first(u.name) + '\'s') + ' check-in') + '" loading="lazy">' +
-    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 44, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : u.name) + (p.verified === true ? ' ' + ic('check', 14) : '') + '</b><span>' + esc(note) + '</span></span></button><time>' + ago(p.ts) + '</time></div>' +
-    '<div class="tags"><span class="stick">' + flame(17, tierColor(days)) + 'Day <span class="num" style="font-size:19px">' + days + '</span></span><span class="stick">' + p.mins + ' min, ' + EFFORT[p.effort].toLowerCase() + '</span></div></div>' +
-    '<div class="post-a">' + props + '<button class="proof" data-a="openProof" data-k="' + proofKey(p) + '">' + ic(pf[1], 15) + pf[0] + '</button><button class="cbtn" data-a="openComments" data-id="' + p.id + '" aria-label="Comments">' + ic('comment', 20) + p.comments.length + '</button></div>' +
-    (p.pr ? '<span class="pill hot post-pr">' + ic('trend', 15) + 'New best: ' + esc(p.pr.lift) + ' ' + p.pr.w + ' ' + S.settings.units + '</span>' : '') +
-    (p.caption ? '<p class="post-c"><b>' + esc(mine ? 'You' : first(u.name)) + '</b> ' + esc(p.caption) + '</p>' : '') + '</article>';
+  return '<article class="post" id="p-' + p.id + '"><div class="shot"><img src="' + imgOf(p) + '" alt="' + esc((mine ? 'Your' : first(u.name) + '\'s') + ' check-in') + '" loading="lazy">' +
+    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 40, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : first(u.name)) + '</b><span>Day ' + days + '</span></span></button><time>' + ago(p.ts) + '</time></div></div></article>';
 }
 // One photo per person: their latest check-in from the last 48 hours.
 function feedPosts() {
@@ -2166,33 +2158,15 @@ function feedPosts() {
   S.posts.forEach(p => { if (seen[p.uid] || p.ts < cut) return; const u = person(p.uid); if (!u || (p.uid !== 'me' && !u.fol)) return; seen[p.uid] = 1; out.push(p); });
   return out;
 }
-// Home shows at most one card between your clock and the feed. First match wins: a workout
-// your phone recorded, last month's recap (once), a friend about to run out, the offer to connect.
-function homeCard() {
-  const off = syncOfferCard(); if (off) return off;
-  const det = detectedCard(); if (det) return det;
-  const rc = recapCard(); if (rc) return rc;
-  const close = following().filter(f => pAlive(f) && pLeft(f) < 6 * HOUR).sort((a, b) => pLeft(a) - pLeft(b))[0];
-  if (close) return '<div class="nudge">' + av(close, 44) + '<div class="grow"><b>' + esc(first(close.name)) + '</b> has ' + fmtLeftShort(pLeft(close)) + ' left on a ' + pDays(close) + ' day streak.</div><button class="btn btn-ink btn-s" data-a="nudge" data-id="' + close.id + '"' + (close.nudged ? ' disabled' : '') + '>' + (close.nudged ? 'Nudged' : ic('bolt', 16) + 'Nudge') + '</button></div>';
-  if (!connCount() && S.ui.connHint !== false) return '<div class="hint"><p>Let a recorded workout remind you to check in.</p><button data-a="openConnections">Connect</button><button data-a="hideConnHint" aria-label="Dismiss">' + ic('x', 18) + '</button></div>';
-  return '';
-}
-// Food and workouts at a glance. Each opens the full page.
-function todayTiles() {
-  const t = dayTotals(foodDay(now())), g = S.goals, kc = S.ui.showKcal !== false, have = Math.round(kc ? t.kcal : t.p), goal = kc ? g.kcal : g.p, ws = weekStats();
-  return '<div class="glance"><button class="tile" data-a="openFood"><span class="k">' + ic('bowl', 16) + 'Food today</span><span class="v">' + fmtN(have) + '<small>of ' + fmtN(goal) + (kc ? ' kcal' : ' g protein') + '</small></span>' + bar(have / goal, 'var(--iron)') + '<span class="d">' + Math.round(t.p) + ' g protein so far</span></button>' +
-    '<button class="tile" data-a="tab" data-tab="you"><span class="k">' + ic('dumbbell', 16) + 'Gym this week</span><span class="v">' + ws.n + '<small>of ' + ws.goal + ' check-ins</small></span>' + bar(ws.n / ws.goal, 'var(--go)') + '<span class="d">' + ws.pts + ' effort points</span></button></div>';
-}
+// Home shows a card only when something needs you: a workout your phone recorded,
+// or your own data waiting on this device.
+function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
-  const fr = following(), alive = pAlive(S.me);
-  let h = heroPanel() + todayCard() + homeCard() + noticedStrip();
-  const order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin);
-  h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All ' + fr.length + '</button></div></div><div class="frow">' +
-    order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') +
-    '<button data-a="openFriends" data-seg="find"><span class="av plain" style="--s:60px;--c:#676D85"><i>' + ic('plus', 24) + '</i></span><span class="nm">Find</span><span class="streak" style="visibility:hidden">0</span></button></div>';
-  h += globeCard() + meetsSection();
-  const posts = feedPosts();
-  h += '<h2 class="feed-h">Last 48 hours</h2>' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">Nobody has checked in yet. Be the first.</p>') + '<p class="feed-end">One photo per friend, their latest.<br>Friends and their posts are sample data.</p>';
+  const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
+  let h = heroPanel() + todayCard() + homeCard();
+  h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
+    order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
+  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">No photos yet.</p>') + '</div>';
   return h;
 };
 
@@ -2292,7 +2266,7 @@ function heatGrid(levelAt, weeks, interactive, missAt) {
       else cells += interactive ? '<button class="l' + lv + (lv === 0 && missAt && missAt(d) ? ' miss' : '') + (S.ui.heatSel === d ? ' sel' : '') + (d === today ? ' today' : '') + '" data-a="heatSel" data-d="' + d + '" aria-label="' + dateLong(dayStart(d)) + '"></button>' : '<span class="l' + lv + '"></span>';
     }
   }
-  return '<div class="heat-m">' + months + '</div><div class="heat">' + cells + '</div>';
+  return '<div class="heat-m">' + months + '</div><div class="heat" style="grid-template-columns:repeat(' + weeks + ',minmax(0,1fr))">' + cells + '</div>';
 }
 const heatLegend = '<span class="legend">Less<i style="background:var(--h0);margin-left:4px"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4);margin-right:4px"></i>More effort</span>';
 A.openProfile = el => {
@@ -2851,9 +2825,8 @@ function checkinSheet() {
   const more = d.more ? '<div class="field"><span class="lbl">How long?</span><div class="stepper"><button data-a="ciMins" data-d="-5" aria-label="5 minutes less">' + ic('minus') + '</button><span class="v" id="ci-mins">' + d.mins + '</span><button data-a="ciMins" data-d="5" aria-label="5 minutes more">' + ic('plus') + '</button><span class="u">minutes</span></div></div>' +
     '<div class="field"><span class="lbl">Lifts</span>' + lifts + '<div id="ci-hints">' + liftHints(d) + '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-line btn-s" data-a="ciLiftAdd">' + ic('plus', 16) + 'Add a lift</button>' + '</div></div>' +
     '<div class="field"><span class="lbl">Anything to note about today?</span><div class="chips">' + TAGS.map(t => '<button class="chip" data-a="ciTag" data-k="' + t + '" aria-pressed="' + (d.tag === t) + '">' + t + '</button>').join('') + '</div></div>' +
-    '<div class="field"><label for="ci-cap">Caption</label><input class="input" id="ci-cap" placeholder="Say something about today" maxlength="120" data-m="ci.caption" value="' + esc(d.caption) + '" autocomplete="off"></div>' +
-    '<div class="field"><span class="lbl">Who can see it</span><div class="seg">' + [['friends', 'Friends'], ['squads', 'My squads'], ['me', 'Only me']].map(x => '<button data-a="ciAud" data-k="' + x[0] + '" aria-pressed="' + (d.audience === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>'
-    : '<button class="btn btn-line btn-w" data-a="ciMore">' + ic('plus', 18) + 'Add time, lifts, a note or a caption</button>';
+    '<div class="field"><span class="lbl">Who can see it</span><div class="seg">' + [['friends', 'Friends'], ['me', 'Only me']].map(x => '<button data-a="ciAud" data-k="' + x[0] + '" aria-pressed="' + (d.audience === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>'
+    : '<button class="btn btn-line btn-w" data-a="ciMore">' + ic('plus', 18) + 'Add time, lifts or a note</button>';
   return sheetHead('New check-in', { back: true }) + '<div class="sh-b">' + kindSwitch() +
     '<div class="prev"><img src="' + src + '" alt="' + (d.noPhoto ? 'Your recorded workout' : 'Your check-in photo') + '"><div class="tags"><span class="stick">' + flame(17, '#FF8A1E') + '<span style="color:#fff">Day <span class="num" style="font-size:19px">' + day + '</span></span></span><span class="stick">' + clock(now()) + ' at ' + esc(m.gym) + '</span></div></div>' +
     '<div class="proofs" id="ci-proof">' + aiRow(d) + '</div>' +
@@ -3085,7 +3058,7 @@ A.mealLog = () => {
     slot: d.slot, art: d.art || { kind: 'bowl', seed: 3 }, photo: d.photo, src: d.state, est: est, ml: b.ml ? Math.round(b.ml * k) : 0 });
   checkBadges();
   const added = S.meals[S.meals.length - 1];
-  D.meal = null; D.snap = null; D.camIntent = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
+  D.meal = null; D.snap = null; D.camIntent = null; S.ui.foodOff = 0; S.ui.tab = 'you'; S.ui.youSeg = 'food'; scrollPos.you = 0; closeAll(); save(); render();
   toast((est ? 'About ' : '') + fmtN(added.kcal) + ' kcal and ' + added.p + ' g protein added to today', 'check');
 };
 // Meals logged before, most often first. One tap logs one again with the numbers it had last time.
@@ -3101,170 +3074,7 @@ A.mealAgain = el => {
   toast(m.name + ' logged again: ' + fmtN(m.kcal) + ' kcal, ' + m.p + ' g protein', 'check');
 };
 
-/* Compete: where you stand among friends this week, the squads you share a streak with,
-   how those squads rank in the league, and the rewards mock-up. */
-function ordinal(n) { const v = n % 100, s = ['th', 'st', 'nd', 'rd']; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function goalEnds(g) {
-  // squad goals always have an end: the date they carry, or the end of this week or month
-  if (g.ends) return g.ends;
-  const d = new Date(now());
-  return /week/i.test(g.title) ? weekStart(now()) + 7 * DAY : new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-}
-function goalLeft(g) { const ms = goalEnds(g) - now(), d = Math.ceil(ms / DAY); return ms <= 0 ? 'ended' : d <= 1 ? 'ends today' : d + ' days left'; }
-function rankCard(rows, me) {
-  const above = rows[me.rk - 2], below = rows[me.rk];
-  const line = above ? (above.pts - me.pts + 1) + ' more points puts you ahead of ' + esc(first(above.p.name)) + '.' : below ? 'You lead ' + esc(first(below.p.name)) + ' by ' + (me.pts - below.pts) + ' points.' : 'Follow a few friends to get a leaderboard.';
-  return '<section class="rank"><div><span class="rk-l">Last 7 days</span><div class="rk-n"><span class="num">' + ordinal(me.rk) + '</span><span>of ' + rows.length + '</span></div></div><div class="rk-r"><span class="num">' + me.pts + '</span><span>effort points</span></div><p>' + line + '</p></section>';
-}
-function squadStreak(sq) {
-  const ms = sq.members.map(person).filter(Boolean), down = ms.filter(p => !pAlive(p)), risk = ms.filter(p => pAlive(p) && pLeft(p) < 6 * HOUR);
-  return { members: ms, down: down, risk: risk, days: down.length ? 0 : dayNum(now()) - dayNum(sq.since) + 1 };
-}
-function squadCard(sq) {
-  const st = squadStreak(sq), d0 = st.down[0], r0 = st.risk[0];
-  const line = d0 ? (d0.id === 'me' ? 'Your' : esc(first(d0.name)) + '\'s') + ' clock ran out, so the squad streak reset.' : r0 ? (r0.id === 'me' ? 'You have ' : esc(first(r0.name)) + ' has ') + fmtLeftShort(pLeft(r0)) + ' left. The squad streak is at risk.' : 'Everyone is on the clock.';
-  return '<button class="squad" data-a="openSquad" data-id="' + sq.id + '"><span style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:17px">' + esc(sq.name) + '</b>' + streakChip(st.days, 20) + '</span>' +
-    '<span style="display:flex;align-items:center;gap:12px"><span class="stack">' + st.members.map(p => av(p, 40, { nowarn: true })).join('') + '</span></span><span class="' + (st.risk.length || st.down.length ? 'down' : 'mute') + '" style="font-size:13.5px;font-weight:600">' + line + '</span>' +
-    '<span class="ch" style="padding:0;border:0"><span class="grow"><span class="s" style="display:flex;justify-content:space-between;gap:10px"><span>' + esc(sq.goal.title) + '</span><span>' + goalLeft(sq.goal) + '</span></span><span class="prog">' + bar(sq.goal.have / sq.goal.need, 'var(--go)') + '<span>' + sq.goal.have + '/' + sq.goal.need + '</span></span></span></span></button>';
-}
-function lbRows() { return following().map(f => ({ p: f, pts: f.weekPts })).concat([{ p: S.me, pts: myWeekPts(), me: true }]).sort((a, b) => b.pts - a.pts).map((r, i) => Object.assign(r, { rk: i + 1 })); }
-function lbRow(r) {
-  return '<button data-a="openProfile" data-id="' + r.p.id + '" class="row' + (r.me ? ' me' : '') + '"><span class="rk">' + r.rk + '</span>' + av(r.p, 42, { nowarn: true }) + '<span class="grow"><span class="t" style="display:block">' + esc(r.me ? 'You' : r.p.name) + '</span>' + streakChip(pDays(r.p)) + '</span><span class="pts">' + r.pts + '<small>points</small></span></button>';
-}
-VIEWS.ch = () => {
-  const rows = lbRows(), me = rows.find(r => r.me), top = rows.slice(0, 3), show = me.rk <= 3 ? top : top.concat([me]);
-  let h = '<header class="top"><h1>Compete</h1></header>' + rankCard(rows, me);
-  h += '<div class="sec" style="padding-top:18px"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openBoard">All ' + rows.length + '</button></div><div class="rows lb">' + show.map(lbRow).join('') + '</div></div>';
-  h += '<div class="sec"><div class="sec-h"><h2 class="h2">Squads</h2><button class="link" data-a="newSquad">New squad</button></div><div style="display:flex;flex-direction:column;gap:12px">' + (S.squads.length ? S.squads.map(squadCard).join('') : '<p class="empty">No squads yet. Start one with a few friends.</p>') + '</div></div>';
-  h += leagueSection() + rewardsSection();
-  h += '<p class="pad mute" style="font-size:13px;margin-top:18px">A squad shares one streak, and it only grows while everyone stays on the clock. Points come from how long and how hard you train, never from how you look.</p>';
-  return h;
-};
-A.openBoard = () => openSheet(() => sheetHead('Friends, last 7 days', { back: true }) + '<div class="sh-b"><div class="rows lb">' + lbRows().map(lbRow).join('') + '</div></div>', { cls: 'full' });
-A.newSquad = () => {
-  D.ns = { name: '', invite: {} };
-  openSheet(() => sheetHead('Start a squad') + '<div class="sh-b"><p class="mute">A squad shares one streak. It only grows while every member stays on the clock.</p><div class="field"><label for="ns-name">Squad name</label><input class="input" id="ns-name" data-m="ns.name" value="' + esc(D.ns.name) + '" placeholder="6 AM crew" maxlength="30" autocomplete="off"></div>' +
-    '<div class="field"><span class="lbl">Who is in</span><div class="chips">' + following().map(f => '<button class="chip" data-a="nsInvite" data-id="' + f.id + '" aria-pressed="' + !!D.ns.invite[f.id] + '">' + esc(first(f.name)) + '</button>').join('') + '</div></div><button class="btn btn-go btn-w" data-a="nsCreate">Start squad</button></div>');
-};
-A.nsInvite = el => { D.ns.invite[el.dataset.id] = !D.ns.invite[el.dataset.id]; drawSheets(false); };
-A.nsCreate = () => {
-  const ids = Object.keys(D.ns.invite).filter(k => D.ns.invite[k]);
-  if (!ids.length) { toast('Pick at least one friend for your squad.'); return; }
-  S.squads.push({ id: 's' + uid(), name: D.ns.name.trim() || 'New squad', members: ['me'].concat(ids), since: now(), goal: { title: '20 check-ins together this month', have: 0, need: 20, ends: now() + 30 * DAY }, chat: [] });
-  save(); closeSheet(); render(); toast('Squad started', 'check');
-};
-A.openSquad = el => {
-  const id = el.dataset.id; D.sq = '';
-  openSheet(() => {
-    const sq = S.squads.find(x => x.id === id); if (!sq) return '';
-    const st = squadStreak(sq);
-    return sheetHead(sq.name, { back: true }) + '<div class="sh-b"><div class="card" style="display:flex;align-items:center;gap:14px"><div style="flex:1"><div class="mute" style="font-size:13px;font-weight:600">Squad streak</div><div class="num" style="font-size:54px">' + st.days + '<span style="font-size:20px;color:var(--mute)"> days</span></div></div><div style="flex:1.2"><div class="mute" style="font-size:13px;font-weight:600;margin-bottom:6px">' + esc(sq.goal.title) + '</div>' + bar(sq.goal.have / sq.goal.need, 'var(--go)') + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px"><span class="num" style="font-size:18px">' + sq.goal.have + '/' + sq.goal.need + '</span><span class="mute" style="font-size:12.5px;font-weight:600">' + goalLeft(sq.goal) + '</span></div></div></div>' +
-      '<div><h3 class="h2" style="margin-bottom:4px">Members</h3><div class="rows">' + st.members.map(p => {
-        const alive = pAlive(p), left = pLeft(p);
-        return '<div class="row">' + av(p, 44) + '<div class="grow"><div class="t">' + esc(p.id === 'me' ? 'You' : p.name) + '</div><div class="s">' + (alive ? fmtLeft(left) + ' left' : 'Clock ran out') + '</div></div>' + streakChip(pDays(p)) + (p.id !== 'me' && alive && left < 12 * HOUR ? '<button class="btn btn-ink btn-s" data-a="nudge" data-id="' + p.id + '"' + (p.nudged ? ' disabled' : '') + '>' + (p.nudged ? 'Nudged' : 'Nudge') + '</button>' : '') + '</div>';
-      }).join('') + '</div></div>' +
-      '<div><h3 class="h2" style="margin-bottom:10px">Chat</h3><div class="chat">' + (sq.chat.length ? sq.chat.map(c => { const cu = person(c.uid) || S.me, me = c.uid === 'me'; return '<div class="msg' + (me ? ' mine' : '') + '">' + (me ? '' : avPlain(cu.name, cu.color, 28)) + '<p>' + (me ? '' : '<small>' + esc(first(cu.name)) + '</small>') + esc(c.text) + '</p></div>'; }).join('') : '<p class="mute">Nobody has said anything yet.</p>') + '</div>' +
-      '<div class="send" style="margin-top:12px"><input class="input" id="sq-input" placeholder="Message the squad" data-m="sq" data-enter="sqSend" data-id="' + id + '" value="' + esc(D.sq || '') + '" autocomplete="off"><button class="btn btn-ink" data-a="sqSend" data-id="' + id + '" aria-label="Send">' + ic('send', 20) + '</button></div></div></div>';
-  }, { cls: 'full' });
-};
-A.sqSend = el => {
-  const sq = S.squads.find(x => x.id === el.dataset.id), text = (D.sq || '').trim(); if (!sq || !text) return;
-  sq.chat.push({ uid: 'me', text: text, ts: now() }); D.sq = ''; save(); drawSheets(false);
-  const i = $('#sq-input'); if (i) i.focus();
-  const others = sq.members.filter(m => m !== 'me');
-  if (others.length) setTimeout(() => { sq.chat.push({ uid: pick(Math.random, others), text: pick(Math.random, ['On it.', 'Say less.', 'See you there.', 'Someone hold me to this.', 'Count me in.']), ts: now() }); save(); if (sheets.length && document.activeElement && document.activeElement.id === 'sq-input') { const v = $('#sq-input').value; drawSheets(false); const n = $('#sq-input'); if (n) { n.value = v; n.focus(); } } else softRefresh(); }, 2600);
-};
-
-/* The squad league and the rewards that could sit on top of it.
-   Squads are ranked on check-ins per member, so a big squad cannot win on size,
-   and only showing up counts: never weight lifted, never looks. The other squads
-   are sample data. Rewards are a mock-up: nothing is real and nobody pays to enter. */
-const LEAGUE_SEED = [['6 AM crew', 6, 3.9, '#C2610C'], ['Fourth floor west', 8, 3.4, '#2D6BE0'], ['Climbing club', 11, 3.1, '#17936A'], ['Row house', 9, 3.6, '#8C6FD6'], ['Intramural hoops', 7, 2.8, '#E0527A'], ['Chem study group', 5, 2.5, '#0E8F8F'], ['Late shift lifters', 4, 3.2, '#3B4A8A'], ['Greek Row runners', 12, 2.9, '#B03A8C'], ['Club swim', 10, 3.3, '#2AA7E8'], ['Commuter lot crew', 6, 2.2, '#6B7280']];
-function seedLeague() {
-  const t = now(), start = weekStart(t) - 6 * 7 * DAY;   // the quarter is in its seventh week
-  const rows = LEAGUE_SEED.map((x, i) => ({ id: 'lg' + i, name: x[0], n: x[1], rate: x[2], color: x[3], total: Math.round(x[1] * x[2] * 6.45), week: Math.round(x[1] * x[2] * .45) }));
-  rows.push({ id: 'lgcse', sq: 'cse', total: 107, week: 8 }, { id: 'lgf7', sq: 'f7', total: 68, week: 5 });
-  return { start: start, weeks: 11, weekOf: weekStart(t), rows: rows };
-}
-function leagueName() { const m = new Date(S.league.start + 21 * DAY).getMonth(); return (m >= 8 ? 'Autumn' : m <= 2 ? 'Winter' : m <= 5 ? 'Spring' : 'Summer') + ' quarter'; }
-function leagueWeek() { return clamp(Math.floor((now() - S.league.start) / (7 * DAY)) + 1, 1, S.league.weeks); }
-// Standings, with your own squads kept in step with the squads you actually have.
-function leagueRows(byWeek) {
-  const L = S.league, wk = weekStart(now());
-  if (wk > L.weekOf) {   // Monday: weekly standings start again
-    L.rows.forEach(r => { if (!r.sq) { r.total += Math.round(r.n * r.rate * .55); r.week = Math.round(r.n * r.rate * .1); } else r.week = 0; });
-    L.weekOf = wk; save();
-  }
-  S.squads.forEach(sq => { if (!L.rows.some(r => r.sq === sq.id)) L.rows.push({ id: 'lg' + sq.id, sq: sq.id, total: 0, week: 0 }); });
-  return L.rows.map(r => {
-    const sq = r.sq ? S.squads.find(x => x.id === r.sq) : null; if (r.sq && !sq) return null;
-    const n = sq ? sq.members.length : r.n, v = (byWeek ? r.week : r.total) / n;
-    return { r: r, name: sq ? sq.name : r.name, n: n, mine: !!sq, color: sq ? '#FF5A1F' : r.color, v: v };
-  }).filter(Boolean).sort((a, b) => b.v - a.v).map((x, i) => Object.assign(x, { rk: i + 1 }));
-}
-function leagueBump() { S.league.rows.forEach(r => { const sq = r.sq && S.squads.find(x => x.id === r.sq); if (sq && sq.members.includes('me')) { r.total++; r.week++; } }); }
-function leagueRow(x) {
-  const inner = '<span class="rk">' + x.rk + '</span>' + avPlain(x.name, x.color, 42) + '<span class="grow"><span class="t" style="display:block">' + esc(x.name) + '</span><span class="mute" style="font-size:12.5px;font-weight:600">' + x.n + ' members' + (x.mine ? ', your squad' : '') + '</span></span><span class="pts">' + x.v.toFixed(1) + '<small>per member</small></span>';
-  return x.mine ? '<button class="row me" data-a="openSquad" data-id="' + x.r.sq + '">' + inner + '</button>' : '<div class="row">' + inner + '</div>';
-}
-function leagueSeg() { const w = !!S.ui.lgWeek; return '<div class="seg" style="margin-bottom:6px"><button data-a="lgSeg" data-w="0" aria-pressed="' + !w + '">This quarter</button><button data-a="lgSeg" data-w="1" aria-pressed="' + w + '">This week</button></div>'; }
-function leagueSection() {
-  const rows = leagueRows(!!S.ui.lgWeek), top = rows.slice(0, 3), mine = rows.filter(x => x.mine && x.rk > 3), best = rows.find(x => x.mine);
-  const above = best && best.rk > 1 ? rows[best.rk - 2] : null, need = above ? Math.ceil((above.v - best.v) * best.n + .001) : 0;
-  return '<div class="sec"><div class="sec-h"><h2 class="h2">Squad league</h2><button class="link" data-a="openLeague">All ' + rows.length + ' squads</button></div>' +
-    '<p class="sec-sub">' + leagueName() + ', week ' + leagueWeek() + ' of ' + S.league.weeks + '. Ranked on check-ins per member, so a big squad cannot win on size.</p>' + leagueSeg() +
-    '<div class="rows lb">' + top.concat(mine).map(leagueRow).join('') + '</div>' +
-    (best ? '<p class="lg-line">' + (above ? plural(need, 'more check-in') + ' from ' + esc(best.name) + ' and you pass ' + esc(above.name) + '.' : esc(best.name) + ' leads the league.') + '</p>' : '<p class="lg-line">Start or join a squad to enter the league.</p>') + '</div>';
-}
-A.lgSeg = el => { S.ui.lgWeek = el.dataset.w === '1'; save(); refresh(); };
-A.openLeague = () => openSheet(() => {
-  const rows = leagueRows(!!S.ui.lgWeek), end = S.league.start + S.league.weeks * 7 * DAY;
-  return sheetHead('Squad league', { back: true }) + '<div class="sh-b"><p class="mute">' + leagueName() + ', week ' + leagueWeek() + ' of ' + S.league.weeks + '. It ends ' + dateLong(end - DAY) + '.</p>' + leagueSeg() +
-    '<div class="rows lb">' + rows.map(leagueRow).join('') + '</div>' +
-    '<div class="card"><div class="card-k">How the league is scored</div><p style="font-size:14px">A squad\'s score is its check-ins divided by its members. Every kind of check-in counts the same. Weight lifted, effort points and photos play no part, and the board shows squads, never individual people. Weekly standings start again each Monday.</p></div>' +
-    '<p class="mute" style="font-size:13px">Your squads are real. The other squads are sample data.</p></div>';
-}, { cls: 'full' });
-
-/* ---- rewards, as a mock-up ---- */
-const PERKS = { 7: 'a free coffee', 30: 'a free smoothie', 100: 'a Lock In shirt', 365: 'a year of free smoothies' };
-function drawEntries() {
-  // one entry for each week of the quarter in which you reached your weekly goal
-  let n = 0; const L = S.league;
-  for (let w = 0; w < leagueWeek(); w++) { const a = L.start + w * 7 * DAY, b = a + 7 * DAY; if (S.checkins.filter(c => c.ts >= a && c.ts < b).length >= S.me.goalPerWeek) n++; }
-  return n;
-}
-function rewardList() {
-  const m = S.me, days = pDays(m), best = Math.max(m.best || 0, days), nx = nextMilestone(days), got = MILESTONES.filter(x => best >= x), pot = S.league.rows.reduce((a, r) => a + r.total, 0), en = drawEntries();
-  return [
-    { k: 'comeback', icon: 'bolt', t: 'Comeback bonus', v: '+' + COMEBACK_PTS, s: m.lost && !pAlive(m) ? 'Ready now. Your next check-in earns ' + COMEBACK_PTS + ' extra points.' : 'If a streak ends, your first check-in back earns ' + COMEBACK_PTS + ' extra points.',
-      d: 'Missing a window is when people quit for good. The first check-in after a streak ends earns ' + COMEBACK_PTS + ' extra effort points, so coming back is worth more than staying away. This one already works in the prototype.' },
-    { k: 'perk', icon: 'crown', t: 'Milestone perks', v: got.length + ' of ' + MILESTONES.length, s: nx ? plural(nx - days, 'day') + ' to ' + PERKS[nx] + ' at ' + nx + ' days.' : 'Every milestone reached.',
-      d: 'A streak milestone unlocks a small perk from a business near campus, shown as a code at the counter.' },
-    { k: 'draw', icon: 'target', t: 'Quarterly draw', v: en + (en === 1 ? ' entry' : ' entries'), s: 'Free to enter. Every week you hit your goal adds an entry.',
-      d: 'One prize is drawn when the quarter ends, paid for by a sponsor. Entry is free and automatic: each week you reach your own weekly goal adds one entry, so a beginner aiming for 2 sessions has the same chance as someone aiming for 6.' },
-    { k: 'cause', icon: 'heart', t: 'Squad cause', v: '$' + fmtN(pot), s: 'A sponsor gives $1 for every squad check-in. The winning squad picks the cause.',
-      d: 'Every check-in by a squad member adds $1 from a sponsor to one shared total. When the quarter ends, the squad at the top of the league chooses the campus cause it goes to. Members never pay in and never get paid out.' }
-  ];
-}
-// One row on Compete; the list opens on its own sheet.
-function rewardsSection() {
-  return '<div class="sec"><div class="menu" style="margin:0">' + menuRow('openRewards', 'crown', 'Rewards', 'Sample: how prizes could work') + '</div></div>';
-}
-A.openRewards = () => openSheet(() => sheetHead('Rewards') + '<div class="sh-b"><p class="mute">How prizes could work. None of it is real yet, and nobody ever pays to enter.</p>' + rewardsList() + '</div>', { cls: 'full' });
-function rewardsList() {
-  return '<div class="conn-list">' +
-    rewardList().map(r => '<button class="conn" data-a="openReward" data-k="' + r.k + '"><span class="conn-ic">' + ic(r.icon, 22) + '</span><span class="grow"><b>' + r.t + '</b><span>' + r.s + '</span></span><span class="rw-v">' + r.v + '</span></button>').join('') + '</div>';
-}
-A.openReward = el => openSheet(() => {
-  const r = rewardList().find(x => x.k === el.dataset.k), best = Math.max(S.me.best || 0, pDays(S.me));
-  let extra = '';
-  if (r.k === 'perk') extra = '<div class="card" style="padding:6px 16px"><div class="rows">' + MILESTONES.map(n => '<div class="row" style="padding:12px 0"><div class="grow"><div class="t" style="font-weight:700">' + n + ' days</div><div class="s mute" style="font-size:13px">' + PERKS[n].replace(/^a /, 'A ') + '</div></div>' + (best >= n ? '<span class="pill ok">' + ic('check', 13) + 'Code SAMPLE-' + n + '</span>' : '<span class="pill">' + ic('lock', 12) + 'Locked</span>') + '</div>').join('') + '</div></div>';
-  if (r.k === 'draw') extra = '<div class="two"><div class="tile"><div class="k">Your entries</div><div class="v">' + drawEntries() + '</div><div class="d">Weeks you hit your goal of ' + S.me.goalPerWeek + '.</div></div><div class="tile"><div class="k">Drawn</div><div class="v" style="font-size:26px;line-height:1.15">' + dateLong(S.league.start + S.league.weeks * 7 * DAY - DAY) + '</div><div class="d">When the quarter ends.</div></div></div>';
-  if (r.k === 'cause') extra = '<div class="card"><div class="mute" style="font-size:13px;font-weight:600">Raised so far this quarter</div><div class="num" style="font-size:54px;margin-top:8px">' + r.v + '</div><div class="mute" style="font-size:13.5px;margin-top:4px">Across ' + S.league.rows.length + ' squads.</div></div>';
-  return sheetHead(r.t) + '<div class="sh-b"><p>' + r.d + '</p>' + extra + '<div class="aicheck">' + ic('info', 18) + '<span>Sample. No sponsor has agreed to anything, no money moves in this prototype, and the real thing would need official rules and legal review first.</span></div></div>';
-});
-
-/* Food: its own tab, led by the nutrition bar. Private by default.
+/* Food: the first part of You, led by the nutrition bar. Private by default.
    The bar stays on top. Everything more detailed sits under it or one tap down,
    and going over a target is stated plainly, never coloured as a failure. */
 // The nutrition bar: how much of today's goal is eaten, with the three macros under it.
@@ -3298,33 +3108,28 @@ function foodWeekCard(fd) {
 }
 function foodBody() {
   const off = S.ui.foodOff || 0, today = foodDay(now()), fd = today + off, t = dayTotals(fd), run = proteinRun(), kc = S.ui.showKcal !== false;
-  let h = '<div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + kc + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + !kc + '">Protein only</button></div>';
-  h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
+  let h = '';
+  h += '<div class="card">' + nutritionBar(fd, true) + '</div>';
   h += waterCard(fd);
   if (off === 0) {
     const rec = recentMeals();
-    if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
+    if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
   }
   const viaHealth = conn().health || conn().hconnect;
   h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2>' + (off === 0 ? '<button class="link" data-a="openCapture">' + ic('plus', 15) + 'Add</button>' : '') + '</div>' +
     (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
       '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? fmtN(m.kcal) + '<i>kcal</i>' : m.p + '<i>g</i>') + '<small>' + (kc ? m.p + ' g protein' : 'protein') + '</small></span></button></div>').join('') + '</div>' + (off === 0 && t.meals.length && !S.ui.swipeSeen ? '<p class="mute sw-tip">' + ic('info', 14) + 'Swipe a meal left to edit or delete it.</p>' : '')
-      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Tap Snap, or Add above, to log your first meal.' : 'on this day.') + '</p>') + '</div>';
-  h += '<div><div class="sec-h"><h2 class="h2">Last 7 days</h2></div>' + foodWeekCard(fd) + '</div>';
+      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today.' : 'on this day.') + '</p>') + '</div>';
   h += '<div class="menu" style="margin:0">' + menuRow('openGoals', 'target', 'Daily goals', S.body ? fmtN(S.goals.kcal) + ' kcal, ' + S.goals.p + ' g protein' : 'Set them from your body in 30 seconds') +
+    menuRow('openFoodWeek', 'trend', 'Last 7 days', 'Your week of eating') +
     menuRow('openNutrients', 'drop', 'Fibre and sodium', (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates') + '</div>';
-  h += '<p class="mute" style="font-size:13px;display:flex;gap:8px;align-items:flex-start">' + ic('lock', 16) + '<span>Only you can see your food.' + (viaHealth ? ' Meals logged in other apps come in through ' + (conn().health ? 'Apple Health' : 'Health Connect') + '.' : '') + '</span></p>';
   return h;
 }
-VIEWS.food = () => {
-  const off = S.ui.foodOff || 0;
-  return '<header class="top"><h1>Food</h1><div class="daynav"><button data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 18) + '</button><b>' + dayLabel(foodDay(now()) + off) + '</b><button data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 18) + '</button></div></header>' +
-    '<div class="pad vstack">' + foodBody() + '</div>';
-};
-A.openFood = () => { S.ui.tab = 'food'; S.ui.foodOff = 0; closeAll(); scrollPos.food = 0; render(); save(); };
+A.openFoodWeek = () => openSheet(() => sheetHead('Last 7 days', { back: true }) + '<div class="sh-b">' + foodWeekCard(foodDay(now()) + (S.ui.foodOff || 0)) + '</div>');
+A.openFood = () => { S.ui.tab = 'you'; S.ui.youSeg = 'food'; S.ui.foodOff = 0; closeAll(); scrollPos.you = 0; render(); save(); };
 A.foodDay = el => { S.ui.foodOff = clamp((S.ui.foodOff || 0) + (+el.dataset.d), -6, 0); render(); };
-A.foodGo = el => { S.ui.foodOff = +el.dataset.off; render(); $('#view').scrollTop = 0; };
+A.foodGo = el => { S.ui.foodOff = +el.dataset.off; closeAll(); render(); $('#view').scrollTop = 0; };
 A.foodMode = el => { S.ui.showKcal = el.dataset.k === '1'; save(); refresh(); };
 A.scanMeal = (el, e) => openCam('meal', e);
 A.openMeal = el => {
@@ -3354,7 +3159,7 @@ A.openGoals = () => {
   D.goals = Object.assign({}, S.goals);
   openSheet(() => {
     const f = (k, label, unit) => '<div class="field"><label for="gl-' + k + '">' + label + '</label><input class="input" id="gl-' + k + '" type="number" inputmode="numeric" min="0" data-m="goals.' + k + '" value="' + esc(D.goals[k]) + '" placeholder="' + unit + '"></div>';
-    return sheetHead('Daily goals') + '<div class="sh-b"><button class="btn btn-go btn-w" data-a="openBodyGoals">' + ic('target', 19) + (S.body ? 'Work them out again from my body' : 'Work them out from my body') + '</button><p class="mute" style="font-size:13px">Or type your own:</p><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
+    return sheetHead('Daily goals') + '<div class="sh-b"><div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + (S.ui.showKcal !== false) + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + (S.ui.showKcal === false) + '">Protein only</button></div><button class="btn btn-go btn-w" data-a="openBodyGoals">' + ic('target', 19) + (S.body ? 'Work them out again from my body' : 'Work them out from my body') + '</button><p class="mute" style="font-size:13px">Or type your own:</p><div class="two">' + f('p', 'Protein, g', 'g') + f('kcal', 'Calories', 'kcal') + f('c', 'Carbs, g', 'g') + f('f', 'Fat, g', 'g') + '</div><button class="btn btn-ink btn-w" data-a="saveGoals">Save goals</button></div>';
   });
 };
 A.saveGoals = () => {
@@ -3427,37 +3232,43 @@ function liftRows(names) {
 }
 function myLifts() { return Object.keys(S.lifts).filter(n => S.lifts[n].length); }
 function badgeBtn(b) { const on = !!S.badges[b.k]; return '<button class="bdg' + (on ? '' : ' off') + '" data-a="openBadge" data-k="' + b.k + '"><span class="m">' + badgeShape(b.sh, on ? b.c : '#E4E6EE') + '<span class="gl">' + (b.icon === 'flame' ? flame(24, on ? '#fff' : '#B4B9C9') : ic(b.icon, 24)) + '</span></span>' + b.n + '</button>'; }
+// You: Food, Training, Body. Everything else sits behind the gear.
 VIEWS.you = () => {
-  const m = S.me, dp = dayPts(), lz = lapseDays(), n26 = checkinsSince(now() - 182 * DAY).length, hl = healthToday(), got = BADGES.filter(b => S.badges[b.k]).length, nc = connCount(), ws = weekStats(), lifts = myLifts();
-  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), bd = BADGES.slice().sort((a, b) => (S.badges[b.k] ? 1 : 0) - (S.badges[a.k] ? 1 : 0)).slice(0, 4);
-  const sec = (title, link, body, sub) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + (sub ? '<p class="sec-sub">' + sub + '</p>' : '') + body + '</div>';
-  const seg = S.ui.youSeg || 'progress', g = S.goals, b = S.body;
-  let h = '<header class="top"><h1>You</h1><div style="display:flex;gap:8px"><button class="btn btn-soft btn-s" data-a="openCoach">' + ic('sparkle', 17) + 'Coach</button><button class="btn btn-soft btn-s" data-a="openSettings">' + ic('gear', 17) + 'Settings</button></div></header>' + userCard(m);
-  h += '<div class="pad"><div class="seg you-seg">' + [['progress', 'Progress'], ['lifts', 'Lifts'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
-  if (seg === 'lifts') {
-    h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Add a lift when you check in and it shows up here.</p>') + '</div>', 'Your best on each lift, in ' + S.settings.units + ', and what to try next time. Tap one for its chart.');
-    h += sec('What you train', '', '<div class="vstack" style="gap:10px">' + splitCard() + bodyCard() + '</div>');
-  } else if (seg === 'body') {
-    h += sec('Weight', '', weightCard());
-    h += sec('Daily goals', '<button class="link" data-a="openGoals">Edit</button>', '<div class="card"><div class="mmac" style="justify-content:space-between"><span><b>' + fmtN(g.kcal) + '</b>kcal</span><span><b>' + g.p + ' g</b>protein</span><span><b>' + g.c + ' g</b>carbs</span><span><b>' + g.f + ' g</b>fat</span></div>' +
-      '<button class="btn btn-line btn-w" style="margin-top:12px" data-a="openBodyGoals">' + ic('target', 18) + (b ? 'Work them out again' : 'Work them out from my body') + '</button></div>', b ? 'Set from your body to ' + ({ lose: 'lose fat', keep: 'stay the same', gain: 'build muscle' })[b.goal] + '. They follow your weight as you log it.' : '');
-    h += sec('Progress photos', '<button class="link" data-a="openProgress">All ' + S.progress.length + '</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
-      '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add photo</b></button></div>', 'Private. Only you ever see these.');
-    if (hl) h += sec('Today, from ' + esc(hl.src), '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
+  const dp = dayPts(), lz = lapseDays(), ws = weekStats(), lifts = myLifts(), seg = S.ui.youSeg || 'food';
+  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), hl = healthToday(), off = S.ui.foodOff || 0;
+  const sec = (title, link, body) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + body + '</div>';
+  let h = '<header class="top"><h1>You</h1><button class="icon-btn" data-a="openMore" aria-label="More and settings">' + ic('gear', 22) + '</button></header>';
+  h += '<div class="pad"><div class="seg you-seg">' + [['food', 'Food'], ['training', 'Training'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
+  if (seg === 'food') {
+    h += '<div class="pad food-day"><div class="daynav"><button data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 18) + '</button><b>' + dayLabel(foodDay(now()) + off) + '</b><button data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 18) + '</button></div></div>';
+    h += '<div class="pad vstack">' + foodBody() + '</div>';
+  } else if (seg === 'training') {
+    h += sec('This week', '', progressTiles(ws));
+    h += sec('Last 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + dayDetail() + '</div>');
+    h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Lifts you log show up here.</p>') + '</div>');
+    h += '<div class="menu" style="margin-top:22px">' + menuRow('openCharts', 'trend', 'Charts', 'Weekly effort and what you train') + menuRow('openBadges', 'trophy', 'Milestones', BADGES.filter(b => S.badges[b.k]).length + ' of ' + BADGES.length) + '</div>';
   } else {
-  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + '</div>');
-  h += sec(n26 + ' check-ins in 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + '<div class="heat-f"><span class="legend"><i style="background:#C3C8D6"></i>&nbsp;Streak ended</span>' + heatLegend + '</div>' + dayDetail() + '</div>', 'One square a day. Darker means more effort. Tap a square to see that day.');
-  h += sec('Milestones', '<button class="link" data-a="openBadges">' + got + ' of ' + BADGES.length + '</button>', '<div class="card"><div class="badges">' + bd.map(badgeBtn).join('') + '</div></div>');
+    h += sec('Weight', '', weightCard());
+    h += sec('Progress photos', '<button class="link" data-a="openProgress">All</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
+      '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add</b></button></div>');
+    if (hl) h += sec('Today', '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
   }
-  h += '<div class="menu" style="margin-top:26px">' +
-    menuRow('openPlan', 'sparkle', 'Plan my next 3 sessions', 'Built from what you have trained lately') +
+  return h + '<div style="height:24px"></div>';
+};
+// The charts that used to fill Training, one tap down.
+A.openCharts = () => openSheet(() => { const ws = weekStats(); return sheetHead('Charts', { back: true }) + '<div class="sh-b">' + weekNoteCard() + weekBars(ws) + splitCard() + bodyCard() + '</div>'; }, { cls: 'full' });
+// The gear: your profile, the tools, and settings.
+A.openMore = () => {
+  const nc = connCount();
+  openSheet(() => sheetHead('More') + '<div class="sh-b">' + userCard(S.me) + '<div class="menu" style="margin:0">' +
+    menuRow('openCoach', 'sparkle', 'Coach', 'Ask about training or food') +
+    menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') +
     menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
-    menuRow('openMyGym', 'pin', 'My gym location', S.gymLoc ? esc(S.gymLoc.name) + (typeof GYM !== 'undefined' && GYM.inside ? ', you are there now' : ', times your visits') : 'Notice when you arrive and leave, and time your workout') +
-    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health, Health Connect, your calendar') +
+    menuRow('openMyGym', 'pin', 'My gym', S.gymLoc ? esc(S.gymLoc.name) : 'Notice when you arrive and leave') +
+    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health and more') +
     menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
-    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours, rest passes and comebacks') + '</div>';
-  h += '<p class="pad mute" style="font-size:13px;margin:22px 0 10px">This is a prototype. Friends and their posts are sample data. What you do here stays in this browser.</p>';
-  return h;
+    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +
+    menuRow('openSettings', 'gear', 'Settings', 'Profile, privacy, your data') + '</div></div>', { cls: 'full' });
 };
 A.youSeg = el => { S.ui.youSeg = el.dataset.k; save(); render(); $('#view').scrollTop = Math.min($('#view').scrollTop, 330); };
 A.heatSel = el => { const d = +el.dataset.d; S.ui.heatSel = S.ui.heatSel === d ? null : d; render(); };
@@ -4914,7 +4725,7 @@ A.bcLog = () => {
   S.meals.push({ id: uid(), ts: now(), name: name.slice(0, 60), kcal: t.kcal, p: Math.round(t.p), c: Math.round(t.c), f: Math.round(t.f), fib: t.fib == null ? null : Math.round(t.fib), na: t.na == null ? null : round10(t.na),
     slot: d.slot, art: { kind: 'bowl', seed: 3 }, photo: null, img: p.img, src: 'barcode', est: false, code: p.code, amt: amt, ml: p.unit === 'ml' ? Math.round(amt) : 0 });
   checkBadges();
-  D.bc = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
+  D.bc = null; S.ui.foodOff = 0; S.ui.tab = 'you'; S.ui.youSeg = 'food'; scrollPos.you = 0; closeAll(); save(); render();
   toast(fmtN(t.kcal) + ' kcal and ' + Math.round(t.p) + ' g protein added to today', 'check');
 };
 
@@ -5055,6 +4866,7 @@ function nativeDictation() {
   };
 }
 
+const onFood = () => S.ui.tab === 'you' && (S.ui.youSeg || 'food') === 'food';
 /* The friendlier layer: one capture button with a menu, a Today card on Home,
    next-weight suggestions, a weight log, and Coach. Nothing here removes a feature;
    it puts the ones that were already there where they are easier to reach. */
@@ -5068,12 +4880,12 @@ A.openCapture = () => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
     return sheetHead('Log something') + '<div class="sh-b capture">' +
       (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      (S.ui.tab === 'food' ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
-      opt('goCam', '', 'camera', S.ui.tab === 'food' ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : S.ui.tab === 'food' ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', S.ui.tab === 'food' ? '' : ' main') +
+      (onFood() ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
+      opt('goCam', '', 'camera', onFood() ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : onFood() ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', onFood() ? '' : ' main') +
       opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
-      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (S.ui.tab === 'food' ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
+      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (onFood() ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openWater">' + ic('drop', 22) + '<b>Water</b></button>' +
       '<button class="cap-s" data-a="capProgress">' + ic('lock', 22) + '<b>Progress</b></button>' +
       '<button class="cap-s" data-a="openWeigh">' + ic('trend', 22) + '<b>Weight</b></button></div>' +
@@ -5085,24 +4897,12 @@ A.capProgress = (el, e) => openCam('progress', e);
 A.capGo = (el, e) => { const fn = A[el.dataset.to]; closeAll(); if (fn) fn(el, e); };
 
 /* ---- Today, on Home ---- */
+// Today on Home: one line, trained or not. Food lives on You.
 function todayCard() {
-  const t = dayTotals(foodDay(now())), g = S.goals, today = dayNum(now()), done = S.checkins.filter(c => dayNum(c.ts) === today).pop();
-  const si = snapInfo(), ws = weekStats(), pGap = Math.max(0, Math.round(g.p - t.p)), kLeft = Math.round(g.kcal - t.kcal), hr = new Date(now()).getHours();
-  const gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
-  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) + (gt.inside ? ' so far' : ' at the gym') : '') + ((done.lifts || []).length ? ', ' + plural(done.lifts.length, 'lift') : '') + '</small></span><span class="btn btn-line btn-s">' + ic('plus', 15) + 'Lift</span>'
-    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far. Check in when you are ready' : si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span>';
-  let next;
-  if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', null, null];
-  else if (!done && ws.n < ws.goal) next = ['target', (ws.goal - ws.n) + ' more ' + (ws.goal - ws.n === 1 ? 'session' : 'sessions') + ' to hit ' + ws.goal + ' this week.', null, null];
-  else if (pGap >= 25 && hr >= 14) next = ['sparkle', pGap + ' g protein to go today.', 'openCoach', 'Ideas'];
-  else next = ['check', done ? 'Training done. Eat well and recover.' : 'On track today.', null, null];
-  return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2></div>' +
-    '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
-    '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
-    '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +
-    '<span class="td-m"><b>' + waterFmt(waterDay().ml, true) + '<small>' + waterUnit() + '</small></b><span>Water</span>' + bar(waterDay().ml / waterGoal(), 'var(--water)') + '</span>' +
-    '<span class="td-m"><b>' + ws.n + '<small>/' + ws.goal + '</small></b><span>This week</span>' + bar(ws.n / ws.goal, 'var(--go)') + '</span></span></button>' +
-    '<div class="td-next">' + ic(next[0], 16) + '<span class="grow">' + next[1] + '</span>' + (next[2] ? '<button class="link" data-a="' + next[2] + '">' + next[3] + '</button>' : '') + '</div></div>';
+  const done = todayCheckin(), si = snapInfo(), gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
+  const row = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) : '') + '</small></span>'
+    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far' : 'Tap to check in') + '</small></span>';
+  return '<div class="card today"><button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button></div>';
 }
 
 /* ---- next weight ----

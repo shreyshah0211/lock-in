@@ -62,37 +62,43 @@ function liftRows(names) {
 }
 function myLifts() { return Object.keys(S.lifts).filter(n => S.lifts[n].length); }
 function badgeBtn(b) { const on = !!S.badges[b.k]; return '<button class="bdg' + (on ? '' : ' off') + '" data-a="openBadge" data-k="' + b.k + '"><span class="m">' + badgeShape(b.sh, on ? b.c : '#E4E6EE') + '<span class="gl">' + (b.icon === 'flame' ? flame(24, on ? '#fff' : '#B4B9C9') : ic(b.icon, 24)) + '</span></span>' + b.n + '</button>'; }
+// You: Food, Training, Body. Everything else sits behind the gear.
 VIEWS.you = () => {
-  const m = S.me, dp = dayPts(), lz = lapseDays(), n26 = checkinsSince(now() - 182 * DAY).length, hl = healthToday(), got = BADGES.filter(b => S.badges[b.k]).length, nc = connCount(), ws = weekStats(), lifts = myLifts();
-  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), bd = BADGES.slice().sort((a, b) => (S.badges[b.k] ? 1 : 0) - (S.badges[a.k] ? 1 : 0)).slice(0, 4);
-  const sec = (title, link, body, sub) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + (sub ? '<p class="sec-sub">' + sub + '</p>' : '') + body + '</div>';
-  const seg = S.ui.youSeg || 'progress', g = S.goals, b = S.body;
-  let h = '<header class="top"><h1>You</h1><div style="display:flex;gap:8px"><button class="btn btn-soft btn-s" data-a="openCoach">' + ic('sparkle', 17) + 'Coach</button><button class="btn btn-soft btn-s" data-a="openSettings">' + ic('gear', 17) + 'Settings</button></div></header>' + userCard(m);
-  h += '<div class="pad"><div class="seg you-seg">' + [['progress', 'Progress'], ['lifts', 'Lifts'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
-  if (seg === 'lifts') {
-    h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Add a lift when you check in and it shows up here.</p>') + '</div>', 'Your best on each lift, in ' + S.settings.units + ', and what to try next time. Tap one for its chart.');
-    h += sec('What you train', '', '<div class="vstack" style="gap:10px">' + splitCard() + bodyCard() + '</div>');
-  } else if (seg === 'body') {
-    h += sec('Weight', '', weightCard());
-    h += sec('Daily goals', '<button class="link" data-a="openGoals">Edit</button>', '<div class="card"><div class="mmac" style="justify-content:space-between"><span><b>' + fmtN(g.kcal) + '</b>kcal</span><span><b>' + g.p + ' g</b>protein</span><span><b>' + g.c + ' g</b>carbs</span><span><b>' + g.f + ' g</b>fat</span></div>' +
-      '<button class="btn btn-line btn-w" style="margin-top:12px" data-a="openBodyGoals">' + ic('target', 18) + (b ? 'Work them out again' : 'Work them out from my body') + '</button></div>', b ? 'Set from your body to ' + ({ lose: 'lose fat', keep: 'stay the same', gain: 'build muscle' })[b.goal] + '. They follow your weight as you log it.' : '');
-    h += sec('Progress photos', '<button class="link" data-a="openProgress">All ' + S.progress.length + '</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
-      '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add photo</b></button></div>', 'Private. Only you ever see these.');
-    if (hl) h += sec('Today, from ' + esc(hl.src), '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
+  const dp = dayPts(), lz = lapseDays(), ws = weekStats(), lifts = myLifts(), seg = S.ui.youSeg || 'food';
+  const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), hl = healthToday(), off = S.ui.foodOff || 0;
+  const sec = (title, link, body) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + body + '</div>';
+  let h = '<header class="top"><h1>You</h1><button class="icon-btn" data-a="openMore" aria-label="More and settings">' + ic('gear', 22) + '</button></header>';
+  h += '<div class="pad"><div class="seg you-seg">' + [['food', 'Food'], ['training', 'Training'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
+  if (seg === 'food') {
+    h += '<div class="pad food-day"><div class="daynav"><button data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 18) + '</button><b>' + dayLabel(foodDay(now()) + off) + '</b><button data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 18) + '</button></div></div>';
+    h += '<div class="pad vstack">' + foodBody() + '</div>';
+  } else if (seg === 'training') {
+    h += sec('This week', '', progressTiles(ws));
+    h += sec('Last 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + dayDetail() + '</div>');
+    h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Lifts you log show up here.</p>') + '</div>');
+    h += '<div class="menu" style="margin-top:22px">' + menuRow('openCharts', 'trend', 'Charts', 'Weekly effort and what you train') + menuRow('openBadges', 'trophy', 'Milestones', BADGES.filter(b => S.badges[b.k]).length + ' of ' + BADGES.length) + '</div>';
   } else {
-  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + '</div>');
-  h += sec(n26 + ' check-ins in 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + '<div class="heat-f"><span class="legend"><i style="background:#C3C8D6"></i>&nbsp;Streak ended</span>' + heatLegend + '</div>' + dayDetail() + '</div>', 'One square a day. Darker means more effort. Tap a square to see that day.');
-  h += sec('Milestones', '<button class="link" data-a="openBadges">' + got + ' of ' + BADGES.length + '</button>', '<div class="card"><div class="badges">' + bd.map(badgeBtn).join('') + '</div></div>');
+    h += sec('Weight', '', weightCard());
+    h += sec('Progress photos', '<button class="link" data-a="openProgress">All</button>', '<div class="pgrid four">' + pg.map(p => '<button data-a="openProgress"><img src="' + pgSrc(p) + '" alt="' + esc(p.tag) + ' progress photo"><span>' + MO[new Date(p.ts).getMonth()] + ' ' + new Date(p.ts).getDate() + '</span></button>').join('') +
+      '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add</b></button></div>');
+    if (hl) h += sec('Today', '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
   }
-  h += '<div class="menu" style="margin-top:26px">' +
-    menuRow('openPlan', 'sparkle', 'Plan my next 3 sessions', 'Built from what you have trained lately') +
+  return h + '<div style="height:24px"></div>';
+};
+// The charts that used to fill Training, one tap down.
+A.openCharts = () => openSheet(() => { const ws = weekStats(); return sheetHead('Charts', { back: true }) + '<div class="sh-b">' + weekNoteCard() + weekBars(ws) + splitCard() + bodyCard() + '</div>'; }, { cls: 'full' });
+// The gear: your profile, the tools, and settings.
+A.openMore = () => {
+  const nc = connCount();
+  openSheet(() => sheetHead('More') + '<div class="sh-b">' + userCard(S.me) + '<div class="menu" style="margin:0">' +
+    menuRow('openCoach', 'sparkle', 'Coach', 'Ask about training or food') +
+    menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') +
     menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
-    menuRow('openMyGym', 'pin', 'My gym location', S.gymLoc ? esc(S.gymLoc.name) + (typeof GYM !== 'undefined' && GYM.inside ? ', you are there now' : ', times your visits') : 'Notice when you arrive and leave, and time your workout') +
-    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health, Health Connect, your calendar') +
+    menuRow('openMyGym', 'pin', 'My gym', S.gymLoc ? esc(S.gymLoc.name) : 'Notice when you arrive and leave') +
+    menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health and more') +
     menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
-    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours, rest passes and comebacks') + '</div>';
-  h += '<p class="pad mute" style="font-size:13px;margin:22px 0 10px">This is a prototype. Friends and their posts are sample data. What you do here stays in this browser.</p>';
-  return h;
+    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +
+    menuRow('openSettings', 'gear', 'Settings', 'Profile, privacy, your data') + '</div></div>', { cls: 'full' });
 };
 A.youSeg = el => { S.ui.youSeg = el.dataset.k; save(); render(); $('#view').scrollTop = Math.min($('#view').scrollTop, 330); };
 A.heatSel = el => { const d = +el.dataset.d; S.ui.heatSel = S.ui.heatSel === d ? null : d; render(); };

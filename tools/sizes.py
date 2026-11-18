@@ -21,14 +21,14 @@ with sync_playwright() as pw:
         if ov[0] or ov[1]: bad += 1; print(w, 'composer overflow', ov)
         vis(pg,'[data-a="ciPost"]'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/f'shots/sz-{w}-4done.png'))
         vis(pg,'.done [data-a="closeSheet"]')
-        for t in ['home','ch','food','you']:
+        for t in ['home','you']:
             vis(pg, f'.tabbar [data-tab="{t}"]'); pg.wait_for_timeout(150)
             if t in ('food','you'): pg.screenshot(path=str(root/f'shots/sz-{w}-5{t}.png'))
             ov = pg.evaluate(OV % '#view')
             if ov[0] or ov[1]: bad += 1; print(w, t, 'overflow', ov)
         tb = pg.evaluate("(() => { const b=document.querySelector('.tabbar').getBoundingClientRect(), s=document.querySelector('.snap').getBoundingClientRect(); return [Math.round(s.left+s.width/2 - (b.left+b.width/2)), [...document.querySelectorAll('.tabbar button span')].every(e => e.scrollWidth <= e.clientWidth + 1)]; })()")
         if tb != [0, True]: bad += 1; print(w, 'tab bar: camera off-centre or labels clipped', tb)
-        for a in ['A.openConnections()','A.openWidgets()','A.openTiers()','A.openEffort()','A.openFriends()','A.openSettings()','A.openProgress()','A.openBadges()','A.openGoals()','A.openIntro()','A.openIntro();D.intro=3;drawSheets(false)','A.openNoPhoto()','A.newMeet()','A.openLeague()',"A.openReward({dataset:{k:'perk'}})","A.openReward({dataset:{k:'draw'}})",'A.openEffortInfo()','A.openSessions({dataset:{}})','A.openSession({dataset:{id:S.checkins[S.checkins.length-1].id}})','A.openRecap()','A.openNutrients()',"A.openProof({dataset:{k:'photo'}})","A.openNoticed({dataset:{id:S.posts.find(p=>p.uid==='me').id}})","A.openProfile({dataset:{id:'maya'}})","A.openSay({dataset:{k:'auto'}})","A.openSay({dataset:{k:'workout'}})","A.openMap()"]:
+        for a in ['A.openConnections()','A.openWidgets()','A.openTiers()','A.openEffort()','A.openFriends()','A.openSettings()','A.openProgress()','A.openBadges()','A.openGoals()','A.openIntro()','A.openIntro();D.intro=3;drawSheets(false)','A.openNoPhoto()','A.openMore()','A.openCharts()','A.openFoodWeek()','A.openEffortInfo()','A.openSessions({dataset:{}})','A.openSession({dataset:{id:S.checkins[S.checkins.length-1].id}})','A.openRecap()','A.openNutrients()',"A.openProof({dataset:{k:'photo'}})","A.openNoticed({dataset:{id:S.posts.find(p=>p.uid==='me').id}})","A.openProfile({dataset:{id:'maya'}})","A.openSay({dataset:{k:'auto'}})","A.openSay({dataset:{k:'workout'}})","A.openMap()"]:
             pg.evaluate('closeAll();'+a); pg.wait_for_timeout(200)
             ov = pg.evaluate(OV % '#layer .sheet:last-of-type')
             if ov[0] or ov[1]: bad += 1; print(w, a, 'overflow', ov)
@@ -41,7 +41,7 @@ with sync_playwright() as pw:
         pg.goto(url); pg.wait_for_timeout(500); pg.evaluate('closeAll()')
         g = pg.evaluate("(() => { const r=s=>{const e=document.querySelector(s); const c=getComputedStyle(e); if(c.display==='none') return null; const b=e.getBoundingClientRect(); return [Math.round(b.left),Math.round(b.right)]}; return {side:r('#side'), phone:r('#phone'), rail:r('#rail'), tabs:r('#tabs'), docW: document.documentElement.scrollWidth, winW: innerWidth, docH: document.documentElement.scrollHeight, winH: innerHeight}; })()")
         ok = g['side'] and g['phone'] and g['tabs'] is None and g['side'][1] <= g['phone'][0] + 1 and (g['rail'] is None or g['phone'][1] <= g['rail'][0] + 1) and g['docW'] <= g['winW'] and g['docH'] <= g['winH'] and (g['rail'] is not None) == (w >= 1240)
-        for t in ['home','ch','food','you']:
+        for t in ['home','you']:
             vis(pg, f'#side [data-tab="{t}"]'); pg.wait_for_timeout(150)
             for sel in ['#view','#side','#rail'] if g['rail'] else ['#view','#side']:
                 ov = pg.evaluate(OV % sel)

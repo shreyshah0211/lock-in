@@ -63,7 +63,7 @@ with sync_playwright() as pw:
     check('stopping works it out with no extra tap: a meal draft opens', [ev('!!D.meal'), ev('D.say'), ev('D.meal && D.meal.name'), ev('D.meal && +D.meal.kcal'), ev('D.meal && D.meal.state')], [True, None, 'Dal, rice and two rotis', 610, 'ai'])
     check('Claude was asked once, with what was said', [ev('__asked.length'), ev("__asked[0].includes('I had dal, rice and two rotis')")], [1, True])
     vis(pg, '[data-a="mealLog"]'); pg.wait_for_timeout(400)
-    check('logging it adds the meal to today', [ev('S.meals.length') - meals0, ev('S.meals[S.meals.length-1].name'), ev('S.meals[S.meals.length-1].p'), ev('S.ui.tab')], [1, 'Dal, rice and two rotis', 24, 'food'])
+    check('logging it adds the meal to today', [ev('S.meals.length') - meals0, ev('S.meals[S.meals.length-1].name'), ev('S.meals[S.meals.length-1].p'), ev('S.ui.tab + S.ui.youSeg')], [1, 'Dal, rice and two rotis', 24, 'youfood'])
 
     # a workout said from Home: it waits for the photo, then fills the check-in
     ev("S.offset += 24 * HOUR; tick(); render()");
@@ -114,7 +114,7 @@ with sync_playwright() as pw:
     vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); vis(pg, '#say-mic'); pg.wait_for_timeout(120); pg.keyboard.press('Escape'); pg.wait_for_timeout(250)
     check('closing the sheet stops listening', [ev('sheets.length'), ev('__dict.state'), ev('D.say')], [0, 'idle', None])
     # the Food tab
-    vis(pg, '.tabbar [data-tab="food"]'); pg.wait_for_timeout(200)
+    vis(pg, '.tabbar [data-tab="you"]'); vis(pg, '[data-a="youSeg"][data-k="food"]'); pg.wait_for_timeout(200)
     check('Food has one Add button, no repeated Snap row', [pg.locator('.food-acts').count(), pg.locator('#view [data-a="openCapture"]').count()], [0, 1])
     vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300)
     check('from Food it opens in meal mode', [ev('D.say.mode'), pg.locator('.sheet').last.locator('h2').inner_text()], ['meal', 'Say what you ate'])

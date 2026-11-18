@@ -184,6 +184,6 @@ A.bcLog = () => {
   S.meals.push({ id: uid(), ts: now(), name: name.slice(0, 60), kcal: t.kcal, p: Math.round(t.p), c: Math.round(t.c), f: Math.round(t.f), fib: t.fib == null ? null : Math.round(t.fib), na: t.na == null ? null : round10(t.na),
     slot: d.slot, art: { kind: 'bowl', seed: 3 }, photo: null, img: p.img, src: 'barcode', est: false, code: p.code, amt: amt, ml: p.unit === 'ml' ? Math.round(amt) : 0 });
   checkBadges();
-  D.bc = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
+  D.bc = null; S.ui.foodOff = 0; S.ui.tab = 'you'; S.ui.youSeg = 'food'; scrollPos.you = 0; closeAll(); save(); render();
   toast(fmtN(t.kcal) + ' kcal and ' + Math.round(t.p) + ' g protein added to today', 'check');
 };

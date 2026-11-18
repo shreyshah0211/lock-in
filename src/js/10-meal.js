@@ -138,7 +138,7 @@ A.mealLog = () => {
     slot: d.slot, art: d.art || { kind: 'bowl', seed: 3 }, photo: d.photo, src: d.state, est: est, ml: b.ml ? Math.round(b.ml * k) : 0 });
   checkBadges();
   const added = S.meals[S.meals.length - 1];
-  D.meal = null; D.snap = null; D.camIntent = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
+  D.meal = null; D.snap = null; D.camIntent = null; S.ui.foodOff = 0; S.ui.tab = 'you'; S.ui.youSeg = 'food'; scrollPos.you = 0; closeAll(); save(); render();
   toast((est ? 'About ' : '') + fmtN(added.kcal) + ' kcal and ' + added.p + ' g protein added to today', 'check');
 };
 // Meals logged before, most often first. One tap logs one again with the numbers it had last time.
