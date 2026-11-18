@@ -23,9 +23,10 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
         switch op {
         case "map":
             let places = (body["places"] as? [[String: Any]] ?? []).compactMap(GymPlace.init)
-            guard !places.isEmpty, let host = Self.topViewController() else { replyHandler(false, nil); return }
+            let mine = (body["mine"] as? [String: Any]).flatMap(GymPlace.init)
+            guard !places.isEmpty || mine != nil, let host = Self.topViewController() else { replyHandler(false, nil); return }
             let focus = body["focus"] as? String
-            let view = GymMapView(places: places, focus: places.first { $0.name == focus } ?? places[0]) {
+            let view = GymMapView(places: places, mine: mine, focus: focus) {
                 host.presentedViewController?.dismiss(animated: true)
             }
             let vc = UIHostingController(rootView: view)
@@ -204,68 +205,124 @@ enum Reminders {
 // MARK: Apple Maps
 
 struct GymPlace: Identifiable, Hashable {
-    let name: String, city: String, lat: Double, lon: Double, count: Int
+    let name: String, city: String, lat: Double, lon: Double, count: Int, people: [String], radius: Double
     var id: String { name }
     var coord: CLLocationCoordinate2D { .init(latitude: lat, longitude: lon) }
 
     init?(_ d: [String: Any]) {
         guard let name = d["name"] as? String, let lat = d["lat"] as? Double, let lon = d["lon"] as? Double else { return nil }
-        self.name = name; self.city = d["city"] as? String ?? ""; self.lat = lat; self.lon = lon; self.count = d["count"] as? Int ?? 0
+        self.name = name; self.city = d["city"] as? String ?? ""; self.lat = lat; self.lon = lon
+        self.people = d["people"] as? [String] ?? []; self.count = d["count"] as? Int ?? people.count
+        self.radius = d["radius"] as? Double ?? 150
+    }
+
+    var who: String {
+        let n = people.filter { $0 != "You" }, me = people.contains("You")
+        let names = n.count <= 2 ? n.joined(separator: " and ") : "\(n[0]), \(n[1]) and \(n.count - 2) more"
+        if names.isEmpty { return me ? "You trained here" : "Nobody in the last 48 hours" }
+        return (me ? "You, " : "") + names
     }
 }
 
+// The real Apple map, so zooming in shows streets, buildings and places. Friends' gyms are
+// orange pins with how many trained there; your own gym has its circle. Tap a pin or a chip
+// at the bottom to fly to it and get directions.
 struct GymMapView: View {
     let places: [GymPlace]
+    let mine: GymPlace?
     let onClose: () -> Void
     @State private var position: MapCameraPosition
     @State private var selected: String?
+    private let orange = Color(red: 1, green: 0.353, blue: 0.122)
 
-    init(places: [GymPlace], focus: GymPlace, onClose: @escaping () -> Void) {
-        self.places = places; self.onClose = onClose
-        _position = State(initialValue: .region(MKCoordinateRegion(center: focus.coord, latitudinalMeters: 2500, longitudinalMeters: 2500)))
-        _selected = State(initialValue: focus.name)
+    init(places: [GymPlace], mine: GymPlace?, focus: String?, onClose: @escaping () -> Void) {
+        self.places = places; self.mine = mine; self.onClose = onClose
+        let all = places + (mine.map { [$0] } ?? [])
+        if let f = all.first(where: { $0.name == focus }) {
+            _position = State(initialValue: .region(MKCoordinateRegion(center: f.coord, latitudinalMeters: 1500, longitudinalMeters: 1500)))
+            _selected = State(initialValue: f.name)
+        } else {
+            _position = State(initialValue: .rect(Self.fit(all)))
+            _selected = State(initialValue: nil)
+        }
     }
 
-    private var current: GymPlace? { places.first { $0.name == selected } }
+    static func fit(_ ps: [GymPlace]) -> MKMapRect {
+        var r = MKMapRect.null
+        for p in ps { let pt = MKMapPoint(p.coord); r = r.union(MKMapRect(x: pt.x, y: pt.y, width: 0, height: 0)) }
+        let pad = max(r.width, r.height, 4000) * 0.35
+        return r.insetBy(dx: -pad, dy: -pad)
+    }
+
+    private var all: [GymPlace] { places + (mine.flatMap { m in places.contains { $0.name == m.name } ? nil : m }.map { [$0] } ?? []) }
+    private var current: GymPlace? { all.first { $0.name == selected } }
+
+    private func fly(_ p: GymPlace) {
+        selected = p.name
+        withAnimation(.easeInOut(duration: 0.6)) { position = .region(MKCoordinateRegion(center: p.coord, latitudinalMeters: 1200, longitudinalMeters: 1200)) }
+    }
 
     var body: some View {
         NavigationStack {
             Map(position: $position, selection: $selected) {
-                ForEach(places) { p in
-                    Marker("\(p.name) · \(p.count)", systemImage: "dumbbell.fill", coordinate: p.coord)
-                        .tint(Color(red: 1, green: 0.353, blue: 0.122))
+                if let m = mine {
+                    MapCircle(center: m.coord, radius: m.radius).foregroundStyle(orange.opacity(0.15)).stroke(orange, lineWidth: 2)
+                }
+                ForEach(all) { p in
+                    Marker(p.count > 0 ? "\(p.name) · \(p.count)" : p.name, systemImage: p.name == mine?.name ? "star.fill" : "dumbbell.fill", coordinate: p.coord)
+                        .tint(orange)
                         .tag(p.name)
                 }
                 UserAnnotation()
             }
-            .mapStyle(.standard(pointsOfInterest: .including([.fitnessCenter, .university, .park])))
-            .mapControls { MapCompass(); MapScaleView() }
+            .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .all))
+            .mapControls { MapUserLocationButton(); MapCompass(); MapPitchToggle(); MapScaleView() }
+            .onChange(of: selected) { _, n in if let p = all.first(where: { $0.name == n }) { fly(p) } }
             .safeAreaInset(edge: .bottom) {
-                if let p = current {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(p.name).font(.headline)
-                            Text("\(p.count) \(p.count == 1 ? "person" : "people") checked in here, last 48 hours").font(.subheadline).foregroundStyle(.secondary)
+                VStack(spacing: 10) {
+                    if let p = current {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(p.name).font(.headline).lineLimit(1)
+                                Text(p.who).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                            }
+                            Spacer(minLength: 8)
+                            Button {
+                                let q = p.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                                if let url = URL(string: "https://maps.apple.com/?daddr=\(p.lat),\(p.lon)&q=\(q)") { UIApplication.shared.open(url) }
+                            } label: { Label("Go", systemImage: "arrow.triangle.turn.up.right.diamond.fill") }
+                            .buttonStyle(.borderedProminent).tint(orange)
                         }
-                        Spacer()
-                        Button {
-                            let q = p.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-                            if let url = URL(string: "https://maps.apple.com/?daddr=\(p.lat),\(p.lon)&q=\(q)") { UIApplication.shared.open(url) }
-                        } label: {
-                            Label("Directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color(red: 1, green: 0.353, blue: 0.122))
+                        .padding(16)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
+                        .padding(.horizontal, 12)
                     }
-                    .padding(16)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
+                    if all.count > 1 {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(all) { p in
+                                    Button { fly(p) } label: {
+                                        Text(p.count > 0 ? "\(p.name) · \(p.count)" : p.name).font(.subheadline.weight(.semibold)).lineLimit(1)
+                                            .padding(.horizontal, 14).padding(.vertical, 9)
+                                            .background(p.name == selected ? AnyShapeStyle(orange) : AnyShapeStyle(.regularMaterial), in: Capsule())
+                                            .foregroundStyle(p.name == selected ? .white : .primary)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                        }
+                    }
                 }
+                .padding(.bottom, 8)
             }
             .navigationTitle("Where friends trained")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onClose) } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { selected = nil; withAnimation { position = .rect(Self.fit(all)) } } label: { Image(systemName: "map") }.accessibilityLabel("Show all gyms")
+                }
+                ToolbarItem(placement: .confirmationAction) { Button("Done", action: onClose) }
+            }
         }
     }
 }

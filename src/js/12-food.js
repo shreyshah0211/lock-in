@@ -36,19 +36,18 @@ function foodBody() {
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
   h += waterCard(fd);
   if (off === 0) {
-    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="scanBarcode">' + ic('scan', 19) + 'Barcode</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
-    if (!S.body) h += '<button class="card bg-nudge" data-a="openBodyGoals"><span class="mi">' + ic('target', 22) + '</span><span class="grow"><b>Set your goals from your body</b><span class="mute">Height, weight and what you want. Takes 30 seconds.</span></span>' + ic('chevR', 18) + '</button>';
     const rec = recentMeals();
     if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
   }
   const viaHealth = conn().health || conn().hconnect;
-  h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2><button class="link" data-a="openGoals">Change goals</button></div>' +
+  h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2>' + (off === 0 ? '<button class="link" data-a="openCapture">' + ic('plus', 15) + 'Add</button>' : '') + '</div>' +
     (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
       '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? fmtN(m.kcal) + '<i>kcal</i>' : m.p + '<i>g</i>') + '<small>' + (kc ? m.p + ' g protein' : 'protein') + '</small></span></button></div>').join('') + '</div>' + (off === 0 && t.meals.length && !S.ui.swipeSeen ? '<p class="mute sw-tip">' + ic('info', 14) + 'Swipe a meal left to edit or delete it.</p>' : '')
-      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Snap your first meal.' : 'on this day.') + '</p>') + '</div>';
+      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Tap Snap, or Add above, to log your first meal.' : 'on this day.') + '</p>') + '</div>';
   h += '<div><div class="sec-h"><h2 class="h2">Last 7 days</h2></div>' + foodWeekCard(fd) + '</div>';
-  h += '<div class="menu" style="margin:0"><button data-a="openNutrients"><span class="mi">' + ic('drop', 20) + '</span><span class="g"><b>Fibre and sodium</b><span>' + (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates</span></span><span class="chev">' + ic('chevR', 18) + '</span></button></div>';
+  h += '<div class="menu" style="margin:0">' + menuRow('openGoals', 'target', 'Daily goals', S.body ? fmtN(S.goals.kcal) + ' kcal, ' + S.goals.p + ' g protein' : 'Set them from your body in 30 seconds') +
+    menuRow('openNutrients', 'drop', 'Fibre and sodium', (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates') + '</div>';
   h += '<p class="mute" style="font-size:13px;display:flex;gap:8px;align-items:flex-start">' + ic('lock', 16) + '<span>Only you can see your food.' + (viaHealth ? ' Meals logged in other apps come in through ' + (conn().health ? 'Apple Health' : 'Health Connect') + '.' : '') + '</span></p>';
   return h;
 }

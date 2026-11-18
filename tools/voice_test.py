@@ -115,8 +115,8 @@ with sync_playwright() as pw:
     check('closing the sheet stops listening', [ev('sheets.length'), ev('__dict.state'), ev('D.say')], [0, 'idle', None])
     # the Food tab
     vis(pg, '.tabbar [data-tab="food"]'); pg.wait_for_timeout(200)
-    check('Food has Say it next to Snap a meal', pg.locator('.food-acts [data-a="openSay"]').inner_text(), 'Say it')
-    vis(pg, '.food-acts [data-a="openSay"]'); pg.wait_for_timeout(300)
+    check('Food has one Add button, no repeated Snap row', [pg.locator('.food-acts').count(), pg.locator('#view [data-a="openCapture"]').count()], [0, 1])
+    vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300)
     check('from Food it opens in meal mode', [ev('D.say.mode'), pg.locator('.sheet').last.locator('h2').inner_text()], ['meal', 'Say what you ate'])
     check('no errors with dictation', pg.errs, []); b.close()
 

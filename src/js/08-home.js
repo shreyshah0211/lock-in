@@ -8,7 +8,7 @@ function repairLeft() { return canRepair() ? S.me.lost.at + DAY - now() : 0; }
 function heroPanel() {
   const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep), unread = S.activity.some(a => !a.read);
   const state = alive ? timeState(left) : rep > 0 ? 'crit' : 'out';
-  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openFriends">' + ic('users', 18) + 'Friends</button><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
+  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
   const mid = alive ? '<b data-live="clock">' + lc[0] + '</b><span data-live="clocklbl">' + lc[1] + '</span>' : rep > 0 ? '<b data-live="clock">' + lc[0] + '</b><span>to save your streak</span>' : '<b>0:00</b><span>on your clock</span>';
   h += '<div class="hero-dial">' + dial(204, alive ? left : rep, days, { id: 'me-dial', mid: mid, color: !alive && rep > 0 ? '#FF5347' : null }) + '</div>';
   if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button><button class="pill" data-a="openPasses">' + ic('pass', 13) + plural(m.passes, 'pass') + '</button></div><p class="hero-sub">' + (left < 6 * HOUR ? 'Check in by ' + whenBy(deadline()) + ' or it ends.' : 'Next photo due ' + whenBy(deadline()) + '.') + '</p>';

@@ -3,11 +3,19 @@
    In a browser the map falls back to the Apple Maps website and reminders are off. */
 function appNative() { try { return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.app || null; } catch (e) { return null; } }
 
-// Apple Maps, centred on one gym, with every gym friends trained at as a pin.
+// Apple Maps for every gym friends trained at: full map detail at any zoom, who was
+// there, you, and your own gym's circle. A focus centres one gym; without one it fits them all.
 A.mapApple = el => {
-  const focus = el && el.dataset.n, places = mapPlaces(), h = appNative();
-  const p = places.find(x => x.name === focus) || places[0]; if (!p) return;
-  if (h) { h.postMessage({ op: 'map', focus: p.name, places: places.map(x => ({ name: x.name, city: x.city, lat: x.lat, lon: x.lon, count: x.people.length })) }).catch(() => { }); return; }
+  const focus = el && el.dataset && el.dataset.n, places = mapPlaces(), h = appNative();
+  const p = places.find(x => x.name === focus) || places[0];
+  const first = id => { const q = person(id); return q ? (id === 'me' ? 'You' : String(q.name || '').split(' ')[0]) : ''; };
+  if (h) {
+    const g = S.gymLoc;
+    h.postMessage({ op: 'map', focus: focus || null, places: places.map(x => ({ name: x.name, city: x.city, lat: x.lat, lon: x.lon, count: x.people.length, people: x.people.map(first).filter(Boolean) })),
+      mine: g ? { name: g.name, lat: g.lat, lon: g.lon, radius: g.radius || 150 } : null }).catch(() => { });
+    return;
+  }
+  if (!p) return;
   window.open('https://maps.apple.com/?ll=' + p.lat + ',' + p.lon + '&q=' + encodeURIComponent(p.name) + '&z=16', '_blank');
 };
 

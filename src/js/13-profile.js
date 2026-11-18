@@ -71,6 +71,7 @@ VIEWS.you = () => {
   h += '<div class="pad"><div class="seg you-seg">' + [['progress', 'Progress'], ['lifts', 'Lifts'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
   if (seg === 'lifts') {
     h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Add a lift when you check in and it shows up here.</p>') + '</div>', 'Your best on each lift, in ' + S.settings.units + ', and what to try next time. Tap one for its chart.');
+    h += sec('What you train', '', '<div class="vstack" style="gap:10px">' + splitCard() + bodyCard() + '</div>');
   } else if (seg === 'body') {
     h += sec('Weight', '', weightCard());
     h += sec('Daily goals', '<button class="link" data-a="openGoals">Edit</button>', '<div class="card"><div class="mmac" style="justify-content:space-between"><span><b>' + fmtN(g.kcal) + '</b>kcal</span><span><b>' + g.p + ' g</b>protein</span><span><b>' + g.c + ' g</b>carbs</span><span><b>' + g.f + ' g</b>fat</span></div>' +
@@ -79,7 +80,7 @@ VIEWS.you = () => {
       '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add photo</b></button></div>', 'Private. Only you ever see these.');
     if (hl) h += sec('Today, from ' + esc(hl.src), '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
   } else {
-  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + splitCard() + bodyCard() + '</div>');
+  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + '</div>');
   h += sec(n26 + ' check-ins in 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + '<div class="heat-f"><span class="legend"><i style="background:#C3C8D6"></i>&nbsp;Streak ended</span>' + heatLegend + '</div>' + dayDetail() + '</div>', 'One square a day. Darker means more effort. Tap a square to see that day.');
   h += sec('Milestones', '<button class="link" data-a="openBadges">' + got + ' of ' + BADGES.length + '</button>', '<div class="card"><div class="badges">' + bd.map(badgeBtn).join('') + '</div></div>');
   }

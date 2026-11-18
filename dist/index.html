@@ -1034,6 +1034,9 @@ body{overscroll-behavior:none}
 .gy-dot{width:12px;height:12px;border-radius:50%;background:#C3C8D6;flex:none}
 .gy-dot.on{background:#18B26B;box-shadow:0 0 0 5px rgba(24,178,107,.18)}
 
+.td-go{margin-left:auto;color:var(--faint);display:grid;place-items:center}
+.td-row .grow{flex:1}
+
 </style>
 </head>
 <body>
@@ -2135,7 +2138,7 @@ function repairLeft() { return canRepair() ? S.me.lost.at + DAY - now() : 0; }
 function heroPanel() {
   const m = S.me, alive = pAlive(m), left = leftMs(), days = pDays(m), rep = repairLeft(), lc = leftClock(alive ? left : rep), unread = S.activity.some(a => !a.read);
   const state = alive ? timeState(left) : rep > 0 ? 'crit' : 'out';
-  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openFriends">' + ic('users', 18) + 'Friends</button><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
+  let h = '<section class="hero s-' + state + '"><div class="hero-top">' + wordmark() + '<div class="acts"><button class="hero-btn" data-a="openActivity">' + ic('bell', 18) + 'Activity' + (unread ? '<span class="dot"></span>' : '') + '</button></div></div>';
   const mid = alive ? '<b data-live="clock">' + lc[0] + '</b><span data-live="clocklbl">' + lc[1] + '</span>' : rep > 0 ? '<b data-live="clock">' + lc[0] + '</b><span>to save your streak</span>' : '<b>0:00</b><span>on your clock</span>';
   h += '<div class="hero-dial">' + dial(204, alive ? left : rep, days, { id: 'me-dial', mid: mid, color: !alive && rep > 0 ? '#FF5347' : null }) + '</div>';
   if (alive) h += '<div class="hero-line"><button class="hero-streak" data-a="openTiers">' + flame(22, '#FF8A1E') + '<b>' + days + '</b> day streak</button><button class="pill" data-a="openPasses">' + ic('pass', 13) + plural(m.passes, 'pass') + '</button></div><p class="hero-sub">' + (left < 6 * HOUR ? 'Check in by ' + whenBy(deadline()) + ' or it ends.' : 'Next photo due ' + whenBy(deadline()) + '.') + '</p>';
@@ -3243,9 +3246,14 @@ function rewardList() {
       d: 'Every check-in by a squad member adds $1 from a sponsor to one shared total. When the quarter ends, the squad at the top of the league chooses the campus cause it goes to. Members never pay in and never get paid out.' }
   ];
 }
+// One row on Compete; the list opens on its own sheet.
 function rewardsSection() {
-  return '<div class="sec"><div class="sec-h"><h2 class="h2">Rewards</h2><span class="pill">Sample</span></div><p class="sec-sub">How prizes could work. None of it is real yet, and nobody ever pays to enter.</p><div class="conn-list">' +
-    rewardList().map(r => '<button class="conn" data-a="openReward" data-k="' + r.k + '"><span class="conn-ic">' + ic(r.icon, 22) + '</span><span class="grow"><b>' + r.t + '</b><span>' + r.s + '</span></span><span class="rw-v">' + r.v + '</span></button>').join('') + '</div></div>';
+  return '<div class="sec"><div class="menu" style="margin:0">' + menuRow('openRewards', 'crown', 'Rewards', 'Sample: how prizes could work') + '</div></div>';
+}
+A.openRewards = () => openSheet(() => sheetHead('Rewards') + '<div class="sh-b"><p class="mute">How prizes could work. None of it is real yet, and nobody ever pays to enter.</p>' + rewardsList() + '</div>', { cls: 'full' });
+function rewardsList() {
+  return '<div class="conn-list">' +
+    rewardList().map(r => '<button class="conn" data-a="openReward" data-k="' + r.k + '"><span class="conn-ic">' + ic(r.icon, 22) + '</span><span class="grow"><b>' + r.t + '</b><span>' + r.s + '</span></span><span class="rw-v">' + r.v + '</span></button>').join('') + '</div>';
 }
 A.openReward = el => openSheet(() => {
   const r = rewardList().find(x => x.k === el.dataset.k), best = Math.max(S.me.best || 0, pDays(S.me));
@@ -3294,19 +3302,18 @@ function foodBody() {
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
   h += waterCard(fd);
   if (off === 0) {
-    h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="scanBarcode">' + ic('scan', 19) + 'Barcode</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
-    if (!S.body) h += '<button class="card bg-nudge" data-a="openBodyGoals"><span class="mi">' + ic('target', 22) + '</span><span class="grow"><b>Set your goals from your body</b><span class="mute">Height, weight and what you want. Takes 30 seconds.</span></span>' + ic('chevR', 18) + '</button>';
     const rec = recentMeals();
     if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2><span class="mute" style="font-size:13px;font-weight:600">one tap, same numbers</span></div><div class="again hscroll">' +
       rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
   }
   const viaHealth = conn().health || conn().hconnect;
-  h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2><button class="link" data-a="openGoals">Change goals</button></div>' +
+  h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2>' + (off === 0 ? '<button class="link" data-a="openCapture">' + ic('plus', 15) + 'Add</button>' : '') + '</div>' +
     (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
       '<button class="meal" data-a="openMeal" data-id="' + m.id + '"><img src="' + mealImg(m) + '" alt=""><span class="grow"><span class="t" style="display:block;font-weight:700">' + esc(m.name) + '</span><span class="mute" style="font-size:13px">' + SLOTS.find(s => s[0] === m.slot)[1] + ', ' + clock(m.ts) + (m.est ? ', estimate' : '') + '</span></span><span class="k">' + (kc ? fmtN(m.kcal) + '<i>kcal</i>' : m.p + '<i>g</i>') + '<small>' + (kc ? m.p + ' g protein' : 'protein') + '</small></span></button></div>').join('') + '</div>' + (off === 0 && t.meals.length && !S.ui.swipeSeen ? '<p class="mute sw-tip">' + ic('info', 14) + 'Swipe a meal left to edit or delete it.</p>' : '')
-      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Snap your first meal.' : 'on this day.') + '</p>') + '</div>';
+      : '<p class="empty" style="padding:18px 0">Nothing logged ' + (off === 0 ? 'yet today. Tap Snap, or Add above, to log your first meal.' : 'on this day.') + '</p>') + '</div>';
   h += '<div><div class="sec-h"><h2 class="h2">Last 7 days</h2></div>' + foodWeekCard(fd) + '</div>';
-  h += '<div class="menu" style="margin:0"><button data-a="openNutrients"><span class="mi">' + ic('drop', 20) + '</span><span class="g"><b>Fibre and sodium</b><span>' + (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates</span></span><span class="chev">' + ic('chevR', 18) + '</span></button></div>';
+  h += '<div class="menu" style="margin:0">' + menuRow('openGoals', 'target', 'Daily goals', S.body ? fmtN(S.goals.kcal) + ' kcal, ' + S.goals.p + ' g protein' : 'Set them from your body in 30 seconds') +
+    menuRow('openNutrients', 'drop', 'Fibre and sodium', (off === 0 ? 'Today' : dayLabel(fd)) + ', as rough estimates') + '</div>';
   h += '<p class="mute" style="font-size:13px;display:flex;gap:8px;align-items:flex-start">' + ic('lock', 16) + '<span>Only you can see your food.' + (viaHealth ? ' Meals logged in other apps come in through ' + (conn().health ? 'Apple Health' : 'Health Connect') + '.' : '') + '</span></p>';
   return h;
 }
@@ -3429,6 +3436,7 @@ VIEWS.you = () => {
   h += '<div class="pad"><div class="seg you-seg">' + [['progress', 'Progress'], ['lifts', 'Lifts'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
   if (seg === 'lifts') {
     h += sec('Lifts', '', '<div class="card" style="padding:4px 18px">' + (lifts.length ? liftRows(lifts) : '<p class="empty">Add a lift when you check in and it shows up here.</p>') + '</div>', 'Your best on each lift, in ' + S.settings.units + ', and what to try next time. Tap one for its chart.');
+    h += sec('What you train', '', '<div class="vstack" style="gap:10px">' + splitCard() + bodyCard() + '</div>');
   } else if (seg === 'body') {
     h += sec('Weight', '', weightCard());
     h += sec('Daily goals', '<button class="link" data-a="openGoals">Edit</button>', '<div class="card"><div class="mmac" style="justify-content:space-between"><span><b>' + fmtN(g.kcal) + '</b>kcal</span><span><b>' + g.p + ' g</b>protein</span><span><b>' + g.c + ' g</b>carbs</span><span><b>' + g.f + ' g</b>fat</span></div>' +
@@ -3437,7 +3445,7 @@ VIEWS.you = () => {
       '<button data-a="addProgress" class="pg-add">' + ic('plus', 22) + '<b>Add photo</b></button></div>', 'Private. Only you ever see these.');
     if (hl) h += sec('Today, from ' + esc(hl.src), '', '<div class="health"><div><b>' + fmtN(hl.steps) + '</b><span>steps</span></div><div><b>' + hl.kcal + '</b><span>active kcal</span></div><div><b>' + Math.floor(hl.sleep) + 'h ' + pad2(Math.round(hl.sleep % 1 * 60)) + 'm</b><span>sleep</span></div></div>');
   } else {
-  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + splitCard() + bodyCard() + '</div>');
+  h += sec('Workout progress', '<span class="mute" style="font-size:13px;font-weight:600">last 7 days</span>', '<div class="vstack" style="gap:10px">' + weekNoteCard() + progressTiles(ws) + weekBars(ws) + '</div>');
   h += sec(n26 + ' check-ins in 6 months', '', '<div class="card">' + heatGrid(d => level(dp[d] || 0), 26, true, d => lz[d]) + '<div class="heat-f"><span class="legend"><i style="background:#C3C8D6"></i>&nbsp;Streak ended</span>' + heatLegend + '</div>' + dayDetail() + '</div>', 'One square a day. Darker means more effort. Tap a square to see that day.');
   h += sec('Milestones', '<button class="link" data-a="openBadges">' + got + ' of ' + BADGES.length + '</button>', '<div class="card"><div class="badges">' + bd.map(badgeBtn).join('') + '</div></div>');
   }
@@ -4396,6 +4404,7 @@ function mapSheet() {
     '<div id="map-card">' + mapCardHTML() + '</div></div></div>';
 }
 A.openMap = () => {
+  if (appNative()) { closeAll(); A.mapApple(); return; }   // in the iPhone app the map is Apple Maps itself
   if (S.ui.tab !== 'home') { S.ui.tab = 'home'; render(); }
   const mini = $('#mini-globe'), ph = $('#phone').getBoundingClientRect(), now0 = performance.now(), v = miniView(noMotion() ? 0 : now0);
   if (mini && mini.clientWidth) { const r = mini.getBoundingClientRect(); M.from = { x: r.left - ph.left + r.width * MINI.cx, y: r.top - ph.top + r.height * MINI.cy, r: r.height * MINI.r }; } else M.from = null;
@@ -5004,11 +5013,19 @@ A.bodySave = () => {
    In a browser the map falls back to the Apple Maps website and reminders are off. */
 function appNative() { try { return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.app || null; } catch (e) { return null; } }
 
-// Apple Maps, centred on one gym, with every gym friends trained at as a pin.
+// Apple Maps for every gym friends trained at: full map detail at any zoom, who was
+// there, you, and your own gym's circle. A focus centres one gym; without one it fits them all.
 A.mapApple = el => {
-  const focus = el && el.dataset.n, places = mapPlaces(), h = appNative();
-  const p = places.find(x => x.name === focus) || places[0]; if (!p) return;
-  if (h) { h.postMessage({ op: 'map', focus: p.name, places: places.map(x => ({ name: x.name, city: x.city, lat: x.lat, lon: x.lon, count: x.people.length })) }).catch(() => { }); return; }
+  const focus = el && el.dataset && el.dataset.n, places = mapPlaces(), h = appNative();
+  const p = places.find(x => x.name === focus) || places[0];
+  const first = id => { const q = person(id); return q ? (id === 'me' ? 'You' : String(q.name || '').split(' ')[0]) : ''; };
+  if (h) {
+    const g = S.gymLoc;
+    h.postMessage({ op: 'map', focus: focus || null, places: places.map(x => ({ name: x.name, city: x.city, lat: x.lat, lon: x.lon, count: x.people.length, people: x.people.map(first).filter(Boolean) })),
+      mine: g ? { name: g.name, lat: g.lat, lon: g.lon, radius: g.radius || 150 } : null }).catch(() => { });
+    return;
+  }
+  if (!p) return;
   window.open('https://maps.apple.com/?ll=' + p.lat + ',' + p.lon + '&q=' + encodeURIComponent(p.name) + '&z=16', '_blank');
 };
 
@@ -5051,11 +5068,12 @@ A.openCapture = () => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
     return sheetHead('Log something') + '<div class="sh-b capture">' +
       (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      opt('goCam', '', 'camera', 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : 'Gym check-in or a meal. Lock In works out which.', ' main') +
+      (S.ui.tab === 'food' ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
+      opt('goCam', '', 'camera', S.ui.tab === 'food' ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : S.ui.tab === 'food' ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', S.ui.tab === 'food' ? '' : ' main') +
       opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
-      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="auto">' + ic('mic', 22) + '<b>Say it</b></button>' +
+      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (S.ui.tab === 'food' ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openWater">' + ic('drop', 22) + '<b>Water</b></button>' +
       '<button class="cap-s" data-a="capProgress">' + ic('lock', 22) + '<b>Progress</b></button>' +
       '<button class="cap-s" data-a="openWeigh">' + ic('trend', 22) + '<b>Weight</b></button></div>' +
@@ -5072,13 +5090,13 @@ function todayCard() {
   const si = snapInfo(), ws = weekStats(), pGap = Math.max(0, Math.round(g.p - t.p)), kLeft = Math.round(g.kcal - t.kcal), hr = new Date(now()).getHours();
   const gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
   const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) + (gt.inside ? ' so far' : ' at the gym') : '') + ((done.lifts || []).length ? ', ' + plural(done.lifts.length, 'lift') : '') + '</small></span><span class="btn btn-line btn-s">' + ic('plus', 15) + 'Lift</span>'
-    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far. Check in when you are ready' : si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="btn btn-go btn-s">Check in</span>';
+    : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far. Check in when you are ready' : si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span>';
   let next;
-  if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', 'openCapture', 'Check in'];
+  if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', null, null];
   else if (!done && ws.n < ws.goal) next = ['target', (ws.goal - ws.n) + ' more ' + (ws.goal - ws.n === 1 ? 'session' : 'sessions') + ' to hit ' + ws.goal + ' this week.', null, null];
   else if (pGap >= 25 && hr >= 14) next = ['sparkle', pGap + ' g protein to go today.', 'openCoach', 'Ideas'];
   else next = ['check', done ? 'Training done. Eat well and recover.' : 'On track today.', null, null];
-  return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2><button class="link" data-a="openCoach">' + ic('sparkle', 15) + 'Ask Coach</button></div>' +
+  return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2></div>' +
     '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
     '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
     '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +

@@ -257,6 +257,7 @@ function mapSheet() {
     '<div id="map-card">' + mapCardHTML() + '</div></div></div>';
 }
 A.openMap = () => {
+  if (appNative()) { closeAll(); A.mapApple(); return; }   // in the iPhone app the map is Apple Maps itself
   if (S.ui.tab !== 'home') { S.ui.tab = 'home'; render(); }
   const mini = $('#mini-globe'), ph = $('#phone').getBoundingClientRect(), now0 = performance.now(), v = miniView(noMotion() ? 0 : now0);
   if (mini && mini.clientWidth) { const r = mini.getBoundingClientRect(); M.from = { x: r.left - ph.left + r.width * MINI.cx, y: r.top - ph.top + r.height * MINI.cy, r: r.height * MINI.r }; } else M.from = null;

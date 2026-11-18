@@ -69,9 +69,14 @@ function rewardList() {
       d: 'Every check-in by a squad member adds $1 from a sponsor to one shared total. When the quarter ends, the squad at the top of the league chooses the campus cause it goes to. Members never pay in and never get paid out.' }
   ];
 }
+// One row on Compete; the list opens on its own sheet.
 function rewardsSection() {
-  return '<div class="sec"><div class="sec-h"><h2 class="h2">Rewards</h2><span class="pill">Sample</span></div><p class="sec-sub">How prizes could work. None of it is real yet, and nobody ever pays to enter.</p><div class="conn-list">' +
-    rewardList().map(r => '<button class="conn" data-a="openReward" data-k="' + r.k + '"><span class="conn-ic">' + ic(r.icon, 22) + '</span><span class="grow"><b>' + r.t + '</b><span>' + r.s + '</span></span><span class="rw-v">' + r.v + '</span></button>').join('') + '</div></div>';
+  return '<div class="sec"><div class="menu" style="margin:0">' + menuRow('openRewards', 'crown', 'Rewards', 'Sample: how prizes could work') + '</div></div>';
+}
+A.openRewards = () => openSheet(() => sheetHead('Rewards') + '<div class="sh-b"><p class="mute">How prizes could work. None of it is real yet, and nobody ever pays to enter.</p>' + rewardsList() + '</div>', { cls: 'full' });
+function rewardsList() {
+  return '<div class="conn-list">' +
+    rewardList().map(r => '<button class="conn" data-a="openReward" data-k="' + r.k + '"><span class="conn-ic">' + ic(r.icon, 22) + '</span><span class="grow"><b>' + r.t + '</b><span>' + r.s + '</span></span><span class="rw-v">' + r.v + '</span></button>').join('') + '</div>';
 }
 A.openReward = el => openSheet(() => {
   const r = rewardList().find(x => x.k === el.dataset.k), best = Math.max(S.me.best || 0, pDays(S.me));

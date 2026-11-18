@@ -89,7 +89,7 @@ def go(pw, mock):
         check(tag, 'progress photo saved', ev("[S.progress.length - %d, S.ui.tab]" % n), [1, 'you'])
         ev("closeAll()")
         # typed meal, plan
-        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '.food-acts [data-a="openSay"]'); pg.fill('#say-text','two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(900)
+        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-to="openSay"]'); pg.fill('#say-text','two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(900)
         check(tag, 'typed meal estimated, no switcher', ev("[D.meal && D.meal.state, D.snap, !!document.querySelector('.kind')]"), ['ai', None, False]); ev("closeAll()")
         vis(pg, '.tabbar [data-tab="you"]'); ev("A.openPlan()"); pg.wait_for_timeout(900); check(tag, 'plan', ev("D.plan && D.plan.state"), 'ai'); shot('5-plan'); ev("closeAll()")
         vis(pg, '[data-a="weekNote"]'); pg.wait_for_timeout(900)
@@ -105,7 +105,7 @@ def go(pw, mock):
         check(tag, 'posted, unverified', ev("[S.posts[0].uid, S.posts[0].verified, S.posts[0].proof]"), ['me', None, 'photo'])
         check(tag, 'calendar link offered', (pg.get_attribute('.done-links a', 'href') or '')[:44], 'https://calendar.google.com/calendar/render?')
         vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(300)
-        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '[data-a="scanMeal"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1300); shot('2-meal')
+        vis(pg, '.tabbar [data-tab="food"]'); vis(pg, '#view [data-a="openCapture"]'); pg.wait_for_timeout(250); vis(pg, '.capture [data-a="scanMeal"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1300); shot('2-meal')
         check(tag, 'from Food, no Claude: straight to the meal form', ev("[D.snap.kind, D.meal && D.meal.state]"), ['food', 'off']); ev("closeAll()")
     # proof that needs no photo inside the gym
     n0 = ev("window.__calls ? window.__calls.length : 0")
@@ -141,7 +141,7 @@ def go(pw, mock):
     check(tag, 'duo pause holds the number', ev("(() => { const f = person('maya'), d = f.duo; A.duoPause({dataset:{id:'maya'}}); const p = !!f.duoPaused; A.duoPause({dataset:{id:'maya'}}); return [p, f.duo === d, !!f.duoPaused]; })()"), [True, True, False])
     # empty states say what unlocks them
     saved = ev("JSON.stringify(S.checkins)")
-    check(tag, 'empty charts state their threshold', ev("(() => { const keep = S.checkins; S.checkins = []; S.ui.tab = 'you'; render(); const n = document.querySelectorAll('#view .thresh').length; S.checkins = keep; render(); return n; })()"), 3)
+    check(tag, 'empty charts state their threshold', ev("(() => { const keep = S.checkins; S.checkins = []; S.ui.tab = 'you'; S.ui.youSeg = 'progress'; render(); let n = document.querySelectorAll('#view .thresh').length; S.ui.youSeg = 'lifts'; render(); n += document.querySelectorAll('#view .thresh').length; S.ui.youSeg = 'progress'; S.checkins = keep; render(); return n; })()"), 3)
     ev("A.openProgress()"); vis(pg, '.sheet [data-a="addProgress"]'); pg.wait_for_timeout(200); pg.set_input_files('#pick-input', IMG); pg.wait_for_timeout(900)
     check(tag, 'progress photo from the library skips recognition', ev("[!!D.pg, D.snap, !!document.querySelector('.kind')]"), [True, None, False]); vis(pg, '[data-a="pgSave"]'); pg.wait_for_timeout(500)
     pg.reload(); pg.wait_for_timeout(700)

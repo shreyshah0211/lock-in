@@ -60,7 +60,7 @@ with sync_playwright() as pw:
     for t in ['home', 'ch', 'food', 'you']:
         ev("S.ui.tab = '%s'; render()" % t); A.wait_for_timeout(120); shot(A, '03-empty-' + t)
         check('empty %s tab fits the phone' % t, ev(OV % '#view'), 0)
-    check('empty charts say what unlocks them', ev("document.querySelectorAll('#view .thresh').length"), 3)
+    check('empty charts say what unlocks them', ev("(() => { let n = document.querySelectorAll('#view .thresh').length; const k = S.ui.youSeg; S.ui.youSeg = 'lifts'; render(); n += document.querySelectorAll('#view .thresh').length; S.ui.youSeg = k; render(); return n; })()"), 3)
     # a real photo becomes day 1
     vis(A, '.tabbar [data-tab="home"]'); vis(A, '[data-a="openCapture"]'); A.wait_for_timeout(300); vis(A, '.capture [data-a="goCam"]'); A.wait_for_timeout(200); A.set_input_files('#cam-input', IMG); A.wait_for_timeout(1300)
     vis(A, '[data-a="snapPick"][data-k="gym"]'); A.wait_for_timeout(500); shot(A, '04-composer')
@@ -71,7 +71,7 @@ with sync_playwright() as pw:
     A.wait_for_timeout(600)
     check('check-in and its photo are in the account', [len(core()['checkins']), core()['me']['streakStart'] is not None, (CORE + '/photos/' + key) in DB], [1, True, True])
     vis(A, '.done [data-a="closeSheet"]'); A.wait_for_timeout(200); shot(A, '06-home')
-    vis(A, '.tabbar [data-tab="food"]'); vis(A, '.food-acts [data-a="openSay"]'); A.wait_for_timeout(200)
+    vis(A, '.tabbar [data-tab="food"]'); vis(A, '#view [data-a="openCapture"]'); A.wait_for_timeout(250); vis(A, '.capture [data-to="openSay"]'); A.wait_for_timeout(200)
     check('fields are 16px so the phone does not zoom', ev("getComputedStyle(document.querySelector('#say-text')).fontSize"), '16px')
     A.fill('#say-text', 'two eggs and toast'); vis(A, '#say-go'); A.wait_for_timeout(500); shot(A, '07-meal'); vis(A, '[data-a="mealLog"]'); A.wait_for_timeout(900); shot(A, '08-food')
     check('meal logged and saved', [ev("S.meals.length"), len(core()['meals'])], [1, 1])
