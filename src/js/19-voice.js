@@ -126,7 +126,7 @@ A.sayGo = async () => {
   const force = s.force || (s.mode === 'workout' ? 'workout' : s.mode === 'meal' ? 'food' : '');
   // Just water: logged straight away, no estimate needed.
   const wml = force !== 'workout' && typeof waterFromText === 'function' ? waterFromText(text) : null;
-  if (wml) { closeSheet(); A.waterAdd({ dataset: { ml: wml } }); return; }
+  if (wml) { closeSheet(); A.waterAdd({ dataset: { ml: wml, name: 'Water' } }); return; }
   s.busy = true; s.ask = false; drawSheets(false);
   let r = await aiSay(text, force);
   if (D.say !== s) return;                       // closed while it was working

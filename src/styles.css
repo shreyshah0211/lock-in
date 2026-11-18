@@ -984,7 +984,6 @@ body{overscroll-behavior:none}
 .wc-drops svg{fill:currentColor;stroke:none}
 .wc-add{display:flex;gap:8px;flex-wrap:wrap}
 .wc-add small{font-weight:600;color:var(--mute);margin-left:3px}
-.wc-undo{padding:0 12px}
 .wc-note{font-size:12.5px;display:flex;align-items:center;gap:6px}
 .wc-big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .wc-big button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;border-radius:20px;background:#E8F5FC;color:#0F6C9E}
@@ -999,7 +998,21 @@ body{overscroll-behavior:none}
 .wc-bottles{background:var(--mist);border-radius:18px;padding:0 14px}
 .wc-bottles .row>button.grow{display:flex;align-items:center;gap:8px;text-align:left}
 .wc-bottles small{color:var(--mute);font-weight:600}
-.wc-add{flex-wrap:nowrap;overflow-x:auto}.wc-add .btn{flex:none;white-space:nowrap}
+.wc-add{display:grid;grid-template-columns:52px minmax(0,1.25fr) minmax(0,1fr);gap:8px}
+.wc-t{display:flex;align-items:center;gap:8px;min-width:0;height:52px;padding:0 12px;border-radius:16px;background:#fff;color:var(--ink);text-align:left}
+.wc-t:active{transform:scale(.97)}
+.wc-t>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.wc-t b{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wc-t small{font-size:12.5px;font-weight:700;color:#0F6C9E;margin:0}
+.wc-t svg{flex:none;color:#0F6C9E}
+.wc-t.wc-cam{justify-content:center;padding:0;background:#E8F5FC}
+.wc-log{display:flex;flex-wrap:wrap;gap:6px}
+.wc-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;height:32px;padding:0 4px 0 12px;border-radius:99px;background:#E8F5FC;color:#0F6C9E;font-size:13px;font-weight:600}
+.wc-chip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-chip b{font-weight:800;white-space:nowrap}
+.wc-chip button{width:28px;height:28px;display:grid;place-items:center;border-radius:99px;color:#0F6C9E}
+.wc-chip button:active{background:rgba(15,108,158,.15)}
+.wc-chip.more{padding:0 12px}
 /* My gym */
 .gy-now{display:flex;align-items:center;gap:12px}
 .gy-now b{display:block;font-weight:800}

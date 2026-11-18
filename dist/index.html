@@ -998,7 +998,6 @@ body{overscroll-behavior:none}
 .wc-drops svg{fill:currentColor;stroke:none}
 .wc-add{display:flex;gap:8px;flex-wrap:wrap}
 .wc-add small{font-weight:600;color:var(--mute);margin-left:3px}
-.wc-undo{padding:0 12px}
 .wc-note{font-size:12.5px;display:flex;align-items:center;gap:6px}
 .wc-big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .wc-big button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;border-radius:20px;background:#E8F5FC;color:#0F6C9E}
@@ -1013,7 +1012,21 @@ body{overscroll-behavior:none}
 .wc-bottles{background:var(--mist);border-radius:18px;padding:0 14px}
 .wc-bottles .row>button.grow{display:flex;align-items:center;gap:8px;text-align:left}
 .wc-bottles small{color:var(--mute);font-weight:600}
-.wc-add{flex-wrap:nowrap;overflow-x:auto}.wc-add .btn{flex:none;white-space:nowrap}
+.wc-add{display:grid;grid-template-columns:52px minmax(0,1.25fr) minmax(0,1fr);gap:8px}
+.wc-t{display:flex;align-items:center;gap:8px;min-width:0;height:52px;padding:0 12px;border-radius:16px;background:#fff;color:var(--ink);text-align:left}
+.wc-t:active{transform:scale(.97)}
+.wc-t>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.wc-t b{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wc-t small{font-size:12.5px;font-weight:700;color:#0F6C9E;margin:0}
+.wc-t svg{flex:none;color:#0F6C9E}
+.wc-t.wc-cam{justify-content:center;padding:0;background:#E8F5FC}
+.wc-log{display:flex;flex-wrap:wrap;gap:6px}
+.wc-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;height:32px;padding:0 4px 0 12px;border-radius:99px;background:#E8F5FC;color:#0F6C9E;font-size:13px;font-weight:600}
+.wc-chip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-chip b{font-weight:800;white-space:nowrap}
+.wc-chip button{width:28px;height:28px;display:grid;place-items:center;border-radius:99px;color:#0F6C9E}
+.wc-chip button:active{background:rgba(15,108,158,.15)}
+.wc-chip.more{padding:0 12px}
 /* My gym */
 .gy-now{display:flex;align-items:center;gap:12px}
 .gy-now b{display:block;font-weight:800}
@@ -4572,7 +4585,7 @@ A.sayGo = async () => {
   const force = s.force || (s.mode === 'workout' ? 'workout' : s.mode === 'meal' ? 'food' : '');
   // Just water: logged straight away, no estimate needed.
   const wml = force !== 'workout' && typeof waterFromText === 'function' ? waterFromText(text) : null;
-  if (wml) { closeSheet(); A.waterAdd({ dataset: { ml: wml } }); return; }
+  if (wml) { closeSheet(); A.waterAdd({ dataset: { ml: wml, name: 'Water' } }); return; }
   s.busy = true; s.ask = false; drawSheets(false);
   let r = await aiSay(text, force);
   if (D.say !== s) return;                       // closed while it was working
@@ -5394,13 +5407,32 @@ function waterFmt(ml, bare) {
   return ml >= 1000 ? (Math.round(ml / 100) / 10) + (bare ? '' : ' L') : Math.round(ml) + (bare ? '' : ' ml');
 }
 const waterUnit = () => waterUS() ? 'oz' : 'ml';
-// About 35 ml per kg of body weight, and half a litre more on a training day. A typed goal wins.
+/* The daily goal, from drinks (food brings roughly another fifth on top).
+   - Base: the US National Academies adequate intake from beverages: about 3.0 L for men and
+     2.2 L for women (2.6 and 1.8 L at 14 to 18). Without a body set, 2.6 L, between the two.
+   - Weight: scaled from the reference body (70 kg men, 57 kg women) by the square root of the
+     ratio, so a bigger body needs more but not proportionally more. Kept within 75 to 135%.
+   - Training: the American College of Sports Medicine suggests 0.4 to 0.8 L an hour while
+     exercising. Lock In adds 0.6 L an hour of today's workout (your gym time or check-in
+     minutes; an hour if it does not know).
+   A goal you type wins over all of this. */
+const WATER_REF = { m: [3000, 2600, 70], f: [2200, 1800, 57] };
+function waterBase() {
+  const b = S.body; if (!b || typeof bodyKg !== 'function') return { ml: 2600, why: 'none' };
+  const r = WATER_REF[b.sex === 'f' ? 'f' : 'm'], teen = +b.age && +b.age < 19, base = teen ? r[1] : r[0], kg = bodyKg(b);
+  if (!(kg >= 30)) return { ml: base, why: 'sex' };
+  return { ml: base * clamp(Math.sqrt(kg / r[2]), .75, 1.35), why: 'body' };
+}
+function waterWorkoutMins(fd) {
+  const d = fd == null ? foodDay(now()) : fd, cs = S.checkins.filter(c => foodDay(c.ts) === d);
+  if (!cs.length) return 0;
+  const g = d === foodDay(now()) && typeof gymToday === 'function' ? gymToday() : null;
+  const m = Math.max(g ? g.mins : 0, ...cs.map(c => +c.mins || 0));
+  return clamp(m || 60, 20, 180);
+}
 function waterGoal(fd) {
   if (S.goals.water) return S.goals.water;
-  const kg = S.body && typeof bodyKg === 'function' ? bodyKg(S.body) : 0;
-  const base = kg >= 30 ? Math.round(kg * 35 / 50) * 50 : 2500;
-  const trained = S.checkins.some(c => foodDay(c.ts) === (fd == null ? foodDay(now()) : fd));
-  return base + (trained ? 500 : 0);
+  return Math.round((waterBase().ml + waterWorkoutMins(fd) * 10) / 50) * 50;
 }
 // Today's water: what was added here, plus the fluid in drinks logged as meals.
 function waterDay(fd) {
@@ -5410,26 +5442,32 @@ function waterDay(fd) {
 }
 const WATER_ADD = () => waterUS() ? [[8 * ML_OZ, '8 oz', 'Glass'], [16.9 * ML_OZ, '16.9 oz', 'Bottle'], [24 * ML_OZ, '24 oz', 'Big bottle']] : [[250, '250 ml', 'Glass'], [500, '500 ml', 'Bottle'], [750, '750 ml', 'Big bottle']];
 
-// The water card on the Food tab: drops filling up, and one tap to add.
+// The water card on the Food tab: drops filling up, three buttons that always fit, and
+// today's drinks, each with its own remove.
 function waterCard(fd) {
   const today = fd === foodDay(now()), w = waterDay(fd), g = waterGoal(fd), frac = clamp(w.ml / g, 0, 1), n = 8, full = Math.round(frac * n);
   const drops = Array.from({ length: n }, (_, i) => '<i class="' + (i < full ? 'on' : '') + '">' + ic('drop', 22) + '</i>').join('');
+  const tile = (a, extra, icon, name, amt) => '<button class="wc-t" data-a="' + a + '"' + extra + '><span><b>' + esc(name) + '</b><small>+' + amt + '</small></span></button>';
+  const bt = bottleButtons(1)[0], adds = WATER_ADD();
+  const tiles = '<button class="wc-t wc-cam" data-a="openWaterCam" aria-label="Snap a bottle">' + ic('camera', 20) + '</button>' +
+    (bt ? tile('bottleUse', ' data-id="' + bt[3] + '" data-ml="' + Math.round(bt[0]) + '" data-name="' + esc(bt[2]) + '"', 'plus', bt[2], bt[1]) : tile('waterAdd', ' data-ml="' + Math.round(adds[1][0]) + '" data-name="Bottle"', 'plus', 'Bottle', adds[1][1])) +
+    tile('waterAdd', ' data-ml="' + Math.round(adds[0][0]) + '" data-name="Glass"', 'plus', 'Glass', adds[0][1]);
+  const log = w.list.slice().reverse(), shown = log.slice(0, 4);
   return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
     (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' +
     '<div class="wc-drops" aria-label="' + Math.round(frac * 100) + '% of your water goal">' + drops + '</div>' +
-    (today ? '<div class="wc-add"><button class="btn btn-soft btn-s wc-cam" data-a="openWaterCam" aria-label="Snap a bottle">' + ic('camera', 16) + '</button>' + bottleButtons(1).map(x => '<button class="btn btn-soft btn-s" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + esc(x[2]) + ' <small>' + x[1] + '</small></button>').join('') + WATER_ADD().slice(0, bottleButtons(1).length ? 1 : 2).map(x => '<button class="btn btn-soft btn-s" data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('plus', 15) + x[2] + ' <small>' + x[1] + '</small></button>').join('') +
-      (w.list.length ? '<button class="btn btn-soft btn-s wc-undo" data-a="waterUndo" aria-label="Undo the last water">' + ic('x', 15) + '</button>' : '') + '</div>' : '') +
+    (today ? '<div class="wc-add">' + tiles + '</div>' : '') +
+    (today && shown.length ? '<div class="wc-log">' + shown.map(x => '<span class="wc-chip"><span>' + esc(waterName(x)) + '</span><b>' + waterFmt(x.ml) + '</b><button data-a="waterDel" data-id="' + x.id + '" aria-label="Remove ' + esc(waterName(x)) + ', ' + waterFmt(x.ml) + '">' + ic('x', 14) + '</button></span>').join('') +
+      (log.length > shown.length ? '<button class="wc-chip more" data-a="openWater">+' + (log.length - shown.length) + ' more</button>' : '') + '</div>' : '') +
     (w.meals.length ? '<p class="mute wc-note">' + ic('bowl', 14) + ' Includes ' + waterFmt(w.meals.reduce((a, m) => a + m.ml, 0)) + ' from ' + listNames(w.meals.map(m => m.name.toLowerCase()).slice(0, 3)) + '.</p>' : '') + '</div>';
 }
+const waterName = x => x.name || 'Water';
 A.waterAdd = el => {
   const ml = Math.round(+el.dataset.ml); if (!(ml > 0)) return;
-  (S.water || (S.water = [])).push({ id: uid(), ts: now(), ml: ml });
+  const name = String(el.dataset.name || 'Water').slice(0, 40);
+  (S.water || (S.water = [])).push({ id: uid(), ts: now(), ml: ml, name: name });
   const w = waterDay(), g = waterGoal(); save(); refresh();
   toast(w.ml >= g && w.ml - ml < g ? 'Water goal reached: ' + waterFmt(w.ml) : '+' + waterFmt(ml) + ' water. ' + waterFmt(Math.max(0, g - w.ml)) + ' to go', 'drop');
-};
-A.waterUndo = () => {
-  const list = (S.water || []).filter(w => foodDay(w.ts) === foodDay(now())); const last = list[list.length - 1]; if (!last) return;
-  S.water = S.water.filter(w => w.id !== last.id); save(); refresh(); toast('Removed ' + waterFmt(last.ml));
 };
 // More: other amounts, a custom one, and the goal.
 A.openWater = () => {
@@ -5438,17 +5476,26 @@ A.openWater = () => {
     const w = waterDay(), g = waterGoal(), u = waterUnit();
     return sheetHead('Water') + '<div class="sh-b"><div class="card mcard"><div class="mhead"><span class="mh-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + u + '</span><span class="mh-t">of ' + waterFmt(g) + ' today</span></div>' + bar(w.ml / g, 'var(--water)') + '</div>' +
       '<button class="btn btn-go btn-w" data-a="capGo" data-to="openWaterCam">' + ic('camera', 20) + 'Snap a bottle or glass</button>' +
-      ((S.bottles || []).length ? '<div class="field"><span class="lbl">Your bottles</span><div class="rows wc-bottles">' + bottleButtons(6).map(x => '<div class="row"><button class="grow" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 18) + '<b>' + esc(x[2]) + '</b><small>' + x[1] + '</small></button><button class="rm" data-a="bottleDel" data-id="' + x[3] + '" aria-label="Forget this bottle">' + ic('x', 16) + '</button></div>').join('') + '</div></div>' : '') +
-      '<div class="wc-big">' + WATER_ADD().map(x => '<button data-a="waterAdd" data-ml="' + Math.round(x[0]) + '">' + ic('drop', 24) + '<b>' + x[2] + '</b><small>' + x[1] + '</small></button>').join('') + '</div>' +
+      ((S.bottles || []).length ? '<div class="field"><span class="lbl">Your bottles</span><div class="rows wc-bottles">' + bottleButtons(6).map(x => '<div class="row"><button class="grow" data-a="bottleUse" data-id="' + x[3] + '" data-ml="' + Math.round(x[0]) + '" data-name="' + esc(x[2]) + '">' + ic('drop', 18) + '<b>' + esc(x[2]) + '</b><small>' + x[1] + '</small></button><button class="rm" data-a="bottleDel" data-id="' + x[3] + '" aria-label="Forget this bottle">' + ic('x', 16) + '</button></div>').join('') + '</div></div>' : '') +
+      '<div class="wc-big">' + WATER_ADD().map(x => '<button data-a="waterAdd" data-ml="' + Math.round(x[0]) + '" data-name="' + x[2] + '">' + ic('drop', 24) + '<b>' + x[2] + '</b><small>' + x[1] + '</small></button>').join('') + '</div>' +
       '<div class="field"><label for="wt-amt">Another amount, ' + u + '</label><div class="send"><input class="input" id="wt-amt" type="number" inputmode="decimal" data-m="wt.amt" data-enter="waterCustom" placeholder="' + (waterUS() ? '12' : '330') + '"><button class="btn btn-ink wide" data-a="waterCustom">Add</button></div></div>' +
-      (w.list.length || w.meals.length ? '<div class="card" style="padding:4px 16px"><div class="rows">' + w.list.slice().reverse().map(x => '<div class="row" style="padding:10px 0">' + ic('drop', 18) + '<div class="grow">Water, ' + clock(x.ts) + '</div><b>' + waterFmt(x.ml) + '</b><button class="rm" data-a="waterDel" data-id="' + x.id + '" aria-label="Remove">' + ic('x', 16) + '</button></div>').join('') +
+      (w.list.length || w.meals.length ? '<div class="card" style="padding:4px 16px"><div class="rows">' + w.list.slice().reverse().map(x => '<div class="row" style="padding:10px 0">' + ic('drop', 18) + '<div class="grow">' + esc(waterName(x)) + ', ' + clock(x.ts) + '</div><b>' + waterFmt(x.ml) + '</b><button class="rm" data-a="waterDel" data-id="' + x.id + '" aria-label="Remove">' + ic('x', 16) + '</button></div>').join('') +
         w.meals.map(m => '<div class="row" style="padding:10px 0">' + ic('bowl', 18) + '<div class="grow">' + esc(m.name) + ', ' + clock(m.ts) + '</div><b>' + waterFmt(m.ml) + '</b></div>').join('') + '</div></div>' : '') +
       '<div class="field"><label for="wt-goal">Daily goal, ' + u + '</label><div class="send"><input class="input" id="wt-goal" type="number" inputmode="decimal" data-m="wt.goal" data-enter="waterGoalSave" placeholder="Automatic: ' + waterFmt(waterGoal(), true) + '"><button class="btn btn-line wide" data-a="waterGoalSave">Save</button></div>' +
-      '<p class="mute" style="font-size:12.5px">' + (S.goals.water ? 'Your own goal. Clear it to go back to automatic.' : 'Automatic: about 35 ml per kg of body weight' + (S.body ? '' : ' (set your goals from your body to use yours)') + ', plus 500 ml on days you train.') + ' Drinks you log as meals count too.</p></div></div>';
+      '<p class="mute" style="font-size:12.5px">' + (S.goals.water ? 'Your own goal. Clear it to go back to automatic.' : waterWhy()) + ' Drinks you log as meals count too.</p></div></div>';
   });
 };
-A.waterCustom = () => { const v = +D.wt.amt, ml = waterUS() ? v * ML_OZ : v; if (!(ml > 10 && ml < 5000)) { toast('Enter an amount in ' + waterUnit() + '.'); return; } D.wt.amt = ''; A.waterAdd({ dataset: { ml: Math.round(ml) } }); };
-A.waterDel = el => { S.water = (S.water || []).filter(w => w.id !== el.dataset.id); save(); drawSheets(false); render(); };
+function waterWhy() {
+  const b = waterBase(), m = waterWorkoutMins(), u = waterUS();
+  const base = b.why === 'none' ? 'Automatic: ' + waterFmt(Math.round(b.ml / 50) * 50) + ' from drinks, the middle of the US National Academies amounts for men and women. Set your goals from your body to make it yours.'
+    : 'Automatic: ' + waterFmt(Math.round(b.ml / 50) * 50) + ' from drinks, from the US National Academies amounts for ' + (S.body.sex === 'f' ? 'women' : 'men') + (b.why === 'body' ? ', adjusted for your weight' : '') + '.';
+  return base + (m ? ' Plus ' + waterFmt(m * 10) + ' for today\'s ' + m + ' minute workout (about ' + (u ? '20 oz' : '0.6 L') + ' an hour of exercise, per sports-medicine guidance).' : ' Training days add about ' + (u ? '20 oz' : '0.6 L') + ' an hour of exercise.') + ' Food adds roughly a fifth more on top.';
+}
+A.waterCustom = () => { const v = +D.wt.amt, ml = waterUS() ? v * ML_OZ : v; if (!(ml > 10 && ml < 5000)) { toast('Enter an amount in ' + waterUnit() + '.'); return; } D.wt.amt = ''; A.waterAdd({ dataset: { ml: Math.round(ml), name: 'Water' } }); };
+A.waterDel = el => {
+  const x = (S.water || []).find(w => w.id === el.dataset.id); if (!x) return;
+  S.water = S.water.filter(w => w.id !== x.id); save(); refresh(); toast('Removed ' + waterName(x) + ', ' + waterFmt(x.ml), 'trash');
+};
 A.waterGoalSave = () => {
   const v = D.wt.goal === '' ? 0 : +D.wt.goal, ml = waterUS() ? v * ML_OZ : v;
   if (v && !(ml >= 500 && ml <= 8000)) { toast('Enter a goal between ' + (waterUS() ? '17 and 270 oz' : '500 and 8,000 ml') + ', or leave it empty for automatic.'); return; }
@@ -5515,7 +5562,7 @@ A.wpSave = () => {
     if (list.length > 6) list.length = 6;
   }
   D.wp = null; closeAll();
-  A.waterAdd({ dataset: { ml: ml } });
+  A.waterAdd({ dataset: { ml: ml, name: W.bottle.name.replace(/\s*\(sample\)$/, '').replace(/\s+\d+(\.\d+)?\s*(oz|ml|l)$/i, '') } });
 };
 // Saved bottles, most recently used first, become add buttons.
 function bottleButtons(max) {
