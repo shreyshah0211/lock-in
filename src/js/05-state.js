@@ -12,7 +12,8 @@ function mkCheckin(o) {
   return { id: uid(), ts: o.ts, type: o.type, mins: o.mins, effort: o.effort, nl: o.nl || 0, pts: pointsFor(o), scene: sceneFor(o.type, o.seed || Math.floor(Math.random() * 1e6)), photo: o.photo || null, caption: o.caption || '', verified: o.verified === undefined ? true : o.verified, pr: o.pr || null, lifts: o.lifts || null };
 }
 function seedCheckins(t, r) {
-  const today = dayNum(t), lastTs = t - 16.8 * HOUR, lastDay = dayNum(lastTs), out = [];
+  // the sample last trained yesterday, so a check-in today is always open to try
+  const today = dayNum(t), lastTs = Math.min(t - 16.8 * HOUR, dayStart(today) - 2 * HOUR), lastDay = dayNum(lastTs), out = [];
   const rot = ['push', 'pull', 'legs', 'cardio', 'upper', 'legs', 'full', 'core'];
   let ri = 0, prev = false, gap = 0;
   for (let d = today - 330; d <= lastDay; d++) {

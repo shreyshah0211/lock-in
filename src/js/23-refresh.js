@@ -11,7 +11,8 @@ A.openCapture = () => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
     return sheetHead('Log something') + '<div class="sh-b capture">' +
       (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      opt('goCam', '', 'camera', 'Photo', 'Gym check-in or a meal. Lock In works out which.', ' main') +
+      opt('goCam', '', 'camera', 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : 'Gym check-in or a meal. Lock In works out which.', ' main') +
+      opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="auto">' + ic('mic', 22) + '<b>Say it</b></button>' +
@@ -28,7 +29,7 @@ A.capGo = (el, e) => { const fn = A[el.dataset.to]; closeAll(); if (fn) fn(el, e
 function todayCard() {
   const t = dayTotals(foodDay(now())), g = S.goals, today = dayNum(now()), done = S.checkins.filter(c => dayNum(c.ts) === today).pop();
   const si = snapInfo(), ws = weekStats(), pGap = Math.max(0, Math.round(g.p - t.p)), kLeft = Math.round(g.kcal - t.kcal), hr = new Date(now()).getHours();
-  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + '</small></span>'
+  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + ((done.lifts || []).length ? ', ' + plural(done.lifts.length, 'lift') : '') + '</small></span><span class="btn btn-line btn-s">' + ic('plus', 15) + 'Lift</span>'
     : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>Not trained yet</b><small>' + (si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="btn btn-go btn-s">Check in</span>';
   let next;
   if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', 'openCapture', 'Check in'];
@@ -36,7 +37,7 @@ function todayCard() {
   else if (pGap >= 25 && hr >= 14) next = ['sparkle', pGap + ' g protein to go today.', 'openCoach', 'Ideas'];
   else next = ['check', done ? 'Training done. Eat well and recover.' : 'On track today.', null, null];
   return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2><button class="link" data-a="openCoach">' + ic('sparkle', 15) + 'Ask Coach</button></div>' +
-    '<button class="td-row" data-a="' + (done ? 'tab' : 'openCapture') + '" data-tab="you">' + gym + '</button>' +
+    '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
     '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
     '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +
     '<span class="td-m"><b>' + ws.n + '<small>/' + ws.goal + '</small></b><span>This week</span>' + bar(ws.n / ws.goal, 'var(--go)') + '</span></span></button>' +

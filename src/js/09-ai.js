@@ -85,12 +85,12 @@ async function aiSnap(blob) {
   try {
     const res = await s.json(
       'This photo was just taken in a fitness app that has one camera button for everything. Work out what it shows so the app can file it. Reply with only a JSON object, in one of three shapes. ' +
-      'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. ' +
+      'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "lift": {"exercise": "Squat", "weight": 225, "unit": "lb"}, "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. "lift" is only for when the photo clearly shows one exercise and you can read its weight (count barbell plates on both sides plus the bar, read the number on a dumbbell, or where the pin sits on a machine stack); otherwise "lift": null. ' +
       'If it shows food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium", "screen": false}. Use whole numbers, judge portion sizes from the plate and what surrounds it, list up to 6 parts in "items" whose calories add up to the total, and set "confidence" to low, medium or high. ' + mealContext('') +
       'If it is neither, such as an unrelated scene: {"kind": "other", "screen": false}. ' + SCREEN_ASK,
       { images: [blob], modelTier: 'quick' });
     const kind = res && ['gym', 'food', 'other'].includes(res.kind) ? res.kind : 'other';
-    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '' } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null };
+    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '', lift: res.lift && typeof liftFromAI === 'function' ? liftFromAI(res.lift) : null } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null };
   } catch (e) { return { state: aiFail(e) === 'rate_limited' ? 'busy' : 'off' }; }
 }
 async function aiMealPhoto(blob, hint) {

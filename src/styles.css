@@ -970,3 +970,4 @@ body{overscroll-behavior:none}
 .fix-mic.on{background:var(--go);color:#fff;animation:fixpulse 1.4s ease-in-out infinite}
 @keyframes fixpulse{50%{box-shadow:0 0 0 8px rgba(255,90,31,.18)}}
 @media (prefers-reduced-motion:reduce){.fix-mic.on{animation:none}}
+.lp-nums{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}

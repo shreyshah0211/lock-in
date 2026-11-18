@@ -984,6 +984,7 @@ body{overscroll-behavior:none}
 .fix-mic.on{background:var(--go);color:#fff;animation:fixpulse 1.4s ease-in-out infinite}
 @keyframes fixpulse{50%{box-shadow:0 0 0 8px rgba(255,90,31,.18)}}
 @media (prefers-reduced-motion:reduce){.fix-mic.on{animation:none}}
+.lp-nums{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
 
 </style>
 </head>
@@ -1525,7 +1526,8 @@ function mkCheckin(o) {
   return { id: uid(), ts: o.ts, type: o.type, mins: o.mins, effort: o.effort, nl: o.nl || 0, pts: pointsFor(o), scene: sceneFor(o.type, o.seed || Math.floor(Math.random() * 1e6)), photo: o.photo || null, caption: o.caption || '', verified: o.verified === undefined ? true : o.verified, pr: o.pr || null, lifts: o.lifts || null };
 }
 function seedCheckins(t, r) {
-  const today = dayNum(t), lastTs = t - 16.8 * HOUR, lastDay = dayNum(lastTs), out = [];
+  // the sample last trained yesterday, so a check-in today is always open to try
+  const today = dayNum(t), lastTs = Math.min(t - 16.8 * HOUR, dayStart(today) - 2 * HOUR), lastDay = dayNum(lastTs), out = [];
   const rot = ['push', 'pull', 'legs', 'cardio', 'upper', 'legs', 'full', 'core'];
   let ri = 0, prev = false, gap = 0;
   for (let d = today - 330; d <= lastDay; d++) {
@@ -2484,12 +2486,12 @@ async function aiSnap(blob) {
   try {
     const res = await s.json(
       'This photo was just taken in a fitness app that has one camera button for everything. Work out what it shows so the app can file it. Reply with only a JSON object, in one of three shapes. ' +
-      'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. ' +
+      'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "lift": {"exercise": "Squat", "weight": 225, "unit": "lb"}, "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. "lift" is only for when the photo clearly shows one exercise and you can read its weight (count barbell plates on both sides plus the bar, read the number on a dumbbell, or where the pin sits on a machine stack); otherwise "lift": null. ' +
       'If it shows food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium", "screen": false}. Use whole numbers, judge portion sizes from the plate and what surrounds it, list up to 6 parts in "items" whose calories add up to the total, and set "confidence" to low, medium or high. ' + mealContext('') +
       'If it is neither, such as an unrelated scene: {"kind": "other", "screen": false}. ' + SCREEN_ASK,
       { images: [blob], modelTier: 'quick' });
     const kind = res && ['gym', 'food', 'other'].includes(res.kind) ? res.kind : 'other';
-    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '' } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null };
+    return { state: 'ok', kind: kind, screen: !!(res && res.screen === true), gym: kind === 'gym' ? { workout: TYPE[res.workout] ? res.workout : null, note: typeof res.note === 'string' ? res.note.slice(0, 80) : '', lift: res.lift && typeof liftFromAI === 'function' ? liftFromAI(res.lift) : null } : null, meal: kind === 'food' ? shapeMeal(Object.assign({ food: true }, res)) : null };
   } catch (e) { return { state: aiFail(e) === 'rate_limited' ? 'busy' : 'off' }; }
 }
 async function aiMealPhoto(blob, hint) {
@@ -2554,16 +2556,16 @@ function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcOb
 VIEWS.cam = () => {
   const m = S.me, days = pDays(m), alive = pAlive(m), intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
-  const title = intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
-  const sub = intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
+  const title = intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Snap your gym or your food';
+  const sub = intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which it is and files it for you.';
   const how = live ? 'Point and tap the button.' : isTouch() ? 'Tap the button and your phone\'s camera opens.' : 'Click the button to pick a photo from your computer.';
-  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
+  const pill = intent ? '<span style="padding-left:4px">' + (intent === 'meal' ? 'Adds to today\'s food' : intent === 'lift' ? 'Adds to today\'s workout' : 'Private photo') + '</span>' : flame(16, '#FF8A1E') + '<span>' + (alive ? days + ' days, ' + fmtLeftShort(leftMs()) + ' left' : canRepair() ? 'A gym photo saves your ' + m.lost.days + ' day streak' : 'A gym photo starts a streak') + '</span>';
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
   const left = intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
-  const right = intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
+  const right = intent === 'lift' ? '<span></span>' : intent === 'progress' ? sample('progress', 'Try a sample', progressURI(3)) : out ? '<span></span>' : sample('food', 'Try a meal photo', mealURI('bowl', 7));
   // Gym photos only: a reminder about who else is in the shot, and a way to check in where photos are not allowed.
-  const sayAlt = intent === 'progress' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
+  const sayAlt = intent === 'progress' || intent === 'lift' ? '' : said ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : '<button class="cam-alt" data-a="openSay" data-k="' + (intent === 'meal' ? 'meal' : 'auto') + '">' + ic('mic', 16) + 'Say it instead</button>';
   const gymOnly = intent ? '' : '<p class="cam-note">Keep other people and locker rooms out of the shot.</p><button class="cam-alt" data-a="' + (out ? 'camOutsideOff">Back to the normal camera' : 'openNoPhoto">No photos allowed in your gym?') + '</button>';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span class="cam-pill">' + pill + '</span>' +
@@ -2642,6 +2644,7 @@ const KINDS = [['gym', 'Check-in', 'Gym check-in', 'Counts for your streak and g
 function gotPhoto(ph, sampleKind) {
   const intent = D.camIntent;
   if (intent === 'progress' || sampleKind === 'progress') { D.snap = null; startProgress(ph); return; }
+  if (intent === 'lift') { D.snap = null; startLiftPhoto(ph); return; }
   const out = !intent && !!D.camOutside; D.camOutside = false;
   const s = D.snap = { ph: ph, sample: !ph, sampleKind: sampleKind || 'gym', kind: null, state: 'working', gym: null, meal: null, manual: false, screen: false, outside: out };
   // An outside photo skips the gym-or-food look; startCheckin checks it is plausibly a gym's entrance instead.
@@ -2693,12 +2696,21 @@ function nextType() {
 // opts.workout: check in on the recorded workout alone, with no photo at all.
 function startCheckin(ph, opts) {
   const only = opts && opts.workout;
+  // One check-in a day. Another gym photo the same day adds a lift to the one already posted.
+  const done = todayCheckin();
+  if (done) {
+    const out0 = !!(D.snap && D.snap.outside);
+    if (only || out0) { D.snap = null; D.camIntent = null; closeAll(); if (S.ui.tab === 'cam') A.camClose(); toast('You already checked in today. The next one counts tomorrow.', 'check'); return; }
+    toast('Already checked in today, so this goes on today\'s workout.', 'check'); startLiftPhoto(ph); return;
+  }
   const det = only || (D.fromDetected && S.detected && D.fromDetected.id === S.detected.id ? S.detected : null); D.fromDetected = null;
   const sn = only ? null : D.snap, seen = sn && sn.gym, out = !!(sn && sn.outside);   // seen: Claude already looked at this photo
   const type = det ? det.type : seen && seen.workout ? seen.workout : nextType();
   D.ci = { type: type, touched: !!det, mins: det ? det.mins : 50, effort: det ? (det.hr > 150 ? 4 : det.hr > 138 ? 3 : 2) : 3, lifts: [], caption: '', audience: 'friends', more: false, tag: '', device: det ? det.src : '',
     photo: ph ? ph.key : null, scene: only ? { stat: { mins: det.mins, hr: det.hr, kcal: det.kcal, type: type } } : ph ? null : sceneFor(type, Math.floor(Math.random() * 1e6)),
     noPhoto: !!only, outside: out, screen: !!(sn && sn.screen), ai: only ? 'workout' : !ph ? (out ? 'outside' : 'sample') : seen && !out ? 'ok' : 'checking', note: seen ? seen.note : '', blob: ph ? ph.blob : null };
+  if (D.pendingLift) { D.ci.lifts = [D.pendingLift]; D.ci.more = true; D.pendingLift = null; }
+  else if (seen && seen.lift && seen.lift.w !== '') { D.ci.lifts = [{ name: seen.lift.name, w: seen.lift.w, reps: '', sets: '' }]; D.ci.more = true; D.ci.liftRead = seen.lift; }
   const said = saidPending(); if (said) { sayApply(D.ci, said); D.said = null; }   // described out loud before the photo
   openSheet(checkinSheet, { cls: 'full', onClose: () => { if (D.ci) D.snap = null; } });
   if (D.ci.ai === 'checking') ciCheck(D.ci);
@@ -2747,6 +2759,7 @@ function aiRow(d) {
   }[d.ai] || ['', ''];
   return '<div class="aicheck' + m[0] + '">' + m[1] + '</div>' +
     (d.device && !d.noPhoto ? '<div class="aicheck ok">' + ic('heart', 18) + d.mins + ' minutes and effort filled in from ' + esc(d.device) + '.</div>' : '') +
+    (d.liftRead ? '<div class="aicheck ok">' + ic('dumbbell', 18) + '<span>Read ' + esc(d.liftRead.name) + ', ' + d.liftRead.w + ' ' + S.settings.units + (d.liftRead.how ? ' (' + esc(d.liftRead.how) + ')' : '') + ' from the photo. Add your reps below.</span></div>' : '') +
     (d.said ? '<div class="aicheck ok">' + ic('mic', 18) + '<span>From what you said: ' + esc(d.said) + '</span></div>' : '') +
     (d.screen && d.ai !== 'checking' && d.ai !== 'no' ? '<div class="aicheck warn">' + ic('info', 18) + '<span>This looks like a photo of a screen or a screenshot, so it cannot count. Take the photo with your camera at the gym.</span><button class="link" data-a="ciRetake">Retake</button></div>' : '') +
     (ciBlocked(d) === 'no' || ciBlocked(d) === 'screen' ? '<button class="link nophoto-link" data-a="openNoPhoto">' + ic('info', 16) + 'No photos allowed in your gym?</button>' : '');
@@ -2789,6 +2802,7 @@ A.ciLiftDel = el => { D.ci.lifts.splice(+el.dataset.i, 1); drawSheets(false); };
 A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; const h = $('#ci-hints'); if (h) h.innerHTML = liftHints(D.ci); };
 A.ciPost = () => {
   const d = D.ci; if (!d) return;
+  if (todayCheckin()) { toast('You already checked in today. The next one counts tomorrow.'); return; }
   const why = ciBlocked(d);
   if (why) { toast(why === 'checking' ? 'Still checking your photo. One moment.' : why === 'retry' ? 'The photo has not been checked yet. Tap Check again.' : 'This photo cannot count. Retake it at the gym.'); return; }
   const before = leftMs();
@@ -4961,7 +4975,8 @@ A.openCapture = () => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
     return sheetHead('Log something') + '<div class="sh-b capture">' +
       (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      opt('goCam', '', 'camera', 'Photo', 'Gym check-in or a meal. Lock In works out which.', ' main') +
+      opt('goCam', '', 'camera', 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : 'Gym check-in or a meal. Lock In works out which.', ' main') +
+      opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="auto">' + ic('mic', 22) + '<b>Say it</b></button>' +
@@ -4978,7 +4993,7 @@ A.capGo = (el, e) => { const fn = A[el.dataset.to]; closeAll(); if (fn) fn(el, e
 function todayCard() {
   const t = dayTotals(foodDay(now())), g = S.goals, today = dayNum(now()), done = S.checkins.filter(c => dayNum(c.ts) === today).pop();
   const si = snapInfo(), ws = weekStats(), pGap = Math.max(0, Math.round(g.p - t.p)), kLeft = Math.round(g.kcal - t.kcal), hr = new Date(now()).getHours();
-  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + '</small></span>'
+  const gym = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + ((done.lifts || []).length ? ', ' + plural(done.lifts.length, 'lift') : '') + '</small></span><span class="btn btn-line btn-s">' + ic('plus', 15) + 'Lift</span>'
     : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>Not trained yet</b><small>' + (si.alive ? fmtLeftShort(si.left) + ' left on your clock' : 'Start your streak with a gym photo') + '</small></span><span class="btn btn-go btn-s">Check in</span>';
   let next;
   if (!done && si.alive && si.left < 12 * HOUR) next = ['bolt', 'Under 12 hours on your clock. A gym photo today keeps the streak.', 'openCapture', 'Check in'];
@@ -4986,7 +5001,7 @@ function todayCard() {
   else if (pGap >= 25 && hr >= 14) next = ['sparkle', pGap + ' g protein to go today.', 'openCoach', 'Ideas'];
   else next = ['check', done ? 'Training done. Eat well and recover.' : 'On track today.', null, null];
   return '<div class="card today"><div class="td-h"><h2 class="h2">Today</h2><button class="link" data-a="openCoach">' + ic('sparkle', 15) + 'Ask Coach</button></div>' +
-    '<button class="td-row" data-a="' + (done ? 'tab' : 'openCapture') + '" data-tab="you">' + gym + '</button>' +
+    '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
     '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
     '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +
     '<span class="td-m"><b>' + ws.n + '<small>/' + ws.goal + '</small></b><span>This week</span>' + bar(ws.n / ws.goal, 'var(--go)') + '</span></span></button>' +
@@ -5194,6 +5209,114 @@ document.addEventListener('pointerup', e => {
 document.addEventListener('pointercancel', () => { if (SW.el) { swipeSet(SW.el, SW.start, true); SW.el = null; } });
 // Stop the click that ends a swipe from opening the meal.
 document.addEventListener('click', e => { if (SW.justSwiped && Date.now() - SW.justSwiped < 350 && swipeRow(e.target)) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+/* One check-in a day, and lifts from a photo.
+   The streak counts days, so a second gym photo the same day does not make a second
+   check-in. It adds to the workout you already posted instead: snap the machine, the
+   bar or the dumbbells, Claude reads the exercise and the weight, you confirm the reps. */
+
+function todayCheckin() { const d = dayNum(now()); return S.checkins.filter(c => dayNum(c.ts) === d).pop() || null; }
+
+// Claude looks at the equipment and reads the weight. A draft: the person confirms it.
+async function aiLiftPhoto(blob) {
+  const s = await getAIImages(); if (!s) return { state: 'off' };
+  try {
+    const res = await s.json('This photo was taken at the gym to log a lift in a gym habit app. Work out which exercise or machine it shows and read the weight being used. ' +
+      'For a barbell, count the plates on each side, add both sides and the bar (a standard bar is 45 lb or 20 kg unless it is clearly different). For dumbbells or kettlebells, read the number printed on them (one dumbbell\'s weight, not the pair). For a machine with a stack, read the weight where the pin is; for a plate-loaded machine, add the plates. ' +
+      'Use the unit printed on the equipment, lb or kg. Reply with only a JSON object like {"gym": true, "exercise": "Bench press", "weight": 225, "unit": "lb", "how": "two 45s each side plus the bar", "confidence": "medium"}. ' +
+      '"exercise" is a plain common name such as Bench press, Squat, Lat pulldown, Leg press or Dumbbell curl. "how" is at most 10 words on how you read the weight. "confidence" is low, medium or high. ' +
+      'If you can see the exercise but not the weight, give "weight": null. If it does not show gym equipment at all, reply {"gym": false}.', { images: [blob], modelTier: 'quick' });
+    if (!res || res.gym === false) return { state: 'no' };
+    return { state: 'ok', lift: liftFromAI(res) };
+  } catch (e) { const c = aiFail(e); return { state: c === 'rate_limited' ? 'busy' : 'error' }; }
+}
+// A reading in the person's own units, with a known lift name where there is one.
+function liftFromAI(r) {
+  if (!r) return null;
+  const raw = String(r.exercise || r.name || '').trim(); if (!raw) return null;
+  const name = LIFT_NAMES.find(x => x.toLowerCase() === raw.toLowerCase()) || liftName(raw);
+  let w = +r.weight; const unit = /kg/i.test(r.unit || '') ? 'kg' : 'lb';
+  if (isFinite(w) && w > 0) { if (unit !== S.settings.units) w = unit === 'kg' ? w * KG_LB : w / KG_LB; w = Math.round(w * 2) / 2; } else w = '';
+  return { name: name.slice(0, 40), w: w, how: typeof r.how === 'string' ? r.how.slice(0, 80) : '', conf: ['low', 'medium', 'high'].includes(r.confidence) ? r.confidence : 'medium', unit: unit };
+}
+
+/* ---- the lift sheet ---- */
+function startLiftPhoto(ph) {
+  D.snap = null;
+  D.lift = { photo: ph ? ph.key : null, blob: ph ? ph.blob : null, art: ph ? null : sceneURI('rack', 14), state: ph ? 'reading' : 'sample', name: '', w: '', reps: '', sets: '', how: '', conf: '' };
+  const L = D.lift;
+  openSheet(liftSheet, { cls: 'full', onClose: () => { if (D.lift === L) D.lift = null; } });
+  if (!ph) { liftFill(L, { name: 'Bench press', w: S.settings.units === 'kg' ? 60 : 135, how: 'a 45 on each side plus the bar (sample)', conf: 'high' }); L.state = 'sample'; drawSheets(false); return; }
+  aiLiftPhoto(ph.blob).then(r => {
+    if (D.lift !== L) return;
+    L.state = r.state; if (r.lift) liftFill(L, r.lift);
+    drawSheets(false);
+  });
+}
+function liftFill(L, l) {
+  L.name = l.name; L.w = l.w; L.how = l.how || ''; L.conf = l.conf || '';
+  const prev = S.lifts[l.name] && S.lifts[l.name][S.lifts[l.name].length - 1];
+  if (L.reps === '') L.reps = prev ? prev.reps : 8;
+  if (L.sets === '') L.sets = 3;
+}
+function liftSheet() {
+  const L = D.lift; if (!L) return '';
+  const c = todayCheckin(), u = S.settings.units, src = L.photo ? PHOTOS[L.photo] : L.art;
+  const st = {
+    reading: ['', '<span class="spin"></span>Reading the exercise and the weight'],
+    ok: [' ok', ic('sparkle', 18) + '<span>' + (L.w === '' ? 'Found the exercise but could not read the weight. Add it below.' : 'Read ' + L.w + ' ' + u + (L.how ? ': ' + esc(L.how) : '') + (L.conf === 'low' ? '. Not sure about this one, so check it.' : '.')) + '</span>'],
+    sample: ['', ic('image', 18) + '<span>Sample photo. Your own photos get read by Claude.</span>'],
+    no: [' no', ic('info', 18) + '<span>Could not see gym equipment in this photo. Type the lift in, or retake it closer to the weights.</span>'],
+    busy: [' no', ic('info', 18) + '<span>Claude is busy. Type the lift in, or try the photo again in a moment.</span>'],
+    error: [' no', ic('info', 18) + '<span>Could not read the photo just now. Type the lift in below.</span>'],
+    off: ['', ic('info', 18) + '<span>Reading weights from photos needs Claude switched on. Type the lift in below.</span>']
+  }[L.state] || ['', ''];
+  const f = (k, label, ph, type) => '<div class="field"><label for="lp-' + k + '">' + label + '</label><input class="input" id="lp-' + k + '"' + (type ? ' type="number" inputmode="decimal" min="0"' : ' list="lift-names" autocomplete="off"') + ' data-m="lift.' + k + '" data-on="liftLive" value="' + esc(L[k]) + '" placeholder="' + ph + '"></div>';
+  const nx = L.name && S.lifts[L.name] && S.lifts[L.name].length ? nextLift(L.name) : null, last = nx ? S.lifts[L.name][S.lifts[L.name].length - 1] : null;
+  let h = sheetHead(c ? 'Add to today\'s workout' : 'Log a lift', { back: true }) + '<div class="sh-b"><div class="prev sq"><img src="' + src + '" alt="Your lift photo"></div><div class="aicheck' + st[0] + '">' + st[1] + '</div>';
+  if (L.state !== 'reading') {
+    h += f('name', 'Exercise', 'Bench press') + '<div class="lp-nums">' + f('w', 'Weight, ' + u, u, 1) + f('reps', 'Reps', '8', 1) + f('sets', 'Sets', '3', 1) + '</div>' +
+      '<div id="lp-hint">' + (last ? '<p class="mute" style="font-size:13px">' + ic('trend', 14) + ' Last time ' + last.w + ' × ' + last.reps + '. Suggested ' + nx.w + ' × ' + nx.reps + '.</p>' : '') + '</div>' +
+      (c ? '<p class="mute" style="font-size:13px">' + ic('check', 14) + ' Goes on today\'s ' + esc(TYPE[c.type] ? TYPE[c.type].n.toLowerCase() : 'workout') + ' check-in from ' + clock(c.ts) + '.</p>' : '<p class="mute" style="font-size:13px">' + ic('info', 14) + ' You have not checked in today. This photo becomes your check-in, with the lift on it.</p>');
+  }
+  return h + '</div><div class="sticky-cta"><button class="btn btn-go btn-w" data-a="liftSave"' + (L.state === 'reading' ? ' disabled' : '') + '>' + (c ? 'Add to today' : 'Check in with this lift') + '</button></div>' +
+    '<datalist id="lift-names">' + LIFT_NAMES.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>';
+}
+A.liftLive = el => {
+  if (el.id !== 'lp-name') return;
+  const L = D.lift, n = LIFT_NAMES.find(x => x.toLowerCase() === String(L.name).trim().toLowerCase()), box = $('#lp-hint'); if (!box) return;
+  const a = n && S.lifts[n]; if (!a || !a.length) { box.innerHTML = ''; return; }
+  const last = a[a.length - 1], nx = nextLift(n); box.innerHTML = '<p class="mute" style="font-size:13px">' + ic('trend', 14) + ' Last time ' + last.w + ' × ' + last.reps + '. Suggested ' + nx.w + ' × ' + nx.reps + '.</p>';
+};
+A.liftSave = () => {
+  const L = D.lift; if (!L) return;
+  const raw = String(L.name || '').trim(), name = LIFT_NAMES.find(x => x.toLowerCase() === raw.toLowerCase()) || liftName(raw);
+  const lift = { name: name, w: +L.w, reps: Math.round(+L.reps) || 1, sets: Math.round(+L.sets) || '' };
+  if (!raw) { toast('Add the exercise name.'); return; }
+  if (!(lift.w > 0)) { toast('Add the weight.'); return; }
+  const c = todayCheckin();
+  if (!c) {
+    // No check-in yet today: this photo is the check-in, with the lift already on it.
+    const ph = L.photo ? { key: L.photo, blob: L.blob } : null; D.lift = null; closeAll();
+    D.pendingLift = lift; startCheckin(ph); return;
+  }
+  const r = addLiftToday(c, lift);
+  D.lift = null; closeAll(); save(); render();
+  toast(r.pr ? 'New best on ' + name.toLowerCase() + ': ' + lift.w + ' ' + S.settings.units : name + ' ' + lift.w + ' × ' + lift.reps + ' added to today', r.pr ? 'trend' : 'check');
+};
+// A lift added after posting: it goes on the check-in, the lift history and the points.
+function addLiftToday(c, l) {
+  const arr = S.lifts[l.name] || (S.lifts[l.name] = []), best = arr.reduce((a, x) => Math.max(a, x.w), 0);
+  arr.push({ ts: now(), w: l.w, reps: l.reps });
+  const pr = best > 0 && l.w > best ? { lift: l.name, w: l.w, prev: best } : null;
+  (c.lifts || (c.lifts = [])).push(l); c.nl = c.lifts.length;
+  if (pr && !c.pr) c.pr = pr;
+  c.pts = pointsFor({ mins: c.mins, effort: c.effort, nl: c.nl, pr: c.pr }) + (c.bonus || 0);
+  const post = S.posts.find(p => p.cid === c.id); if (post && pr && !post.pr) post.pr = pr;
+  if (pr) S.badges.pr = 1;
+  return { pr: pr };
+}
+A.openLiftCam = (el, e) => openCam('lift', e);
 
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */

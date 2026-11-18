@@ -44,7 +44,7 @@ def go(pw, mock):
     check(tag, 'camera falls back when no live camera', ev("(A.goCam(), new Promise(r => setTimeout(() => r([cam.live, !!document.querySelector('#cam-video')]), 400)))"), [False, False]); ev("A.camClose()")
     if mock:
         # a gym photo is recognised in one call and lands in the check-in
-        snap(); shot('0-gym')
+        ev("S.offset += 24 * HOUR; tick(); render()"); snap(); shot('0-gym')
         check(tag, 'gym photo -> check-in', ev("[D.snap && D.snap.kind, D.ci && D.ci.ai, D.ci && D.ci.type, D.ci && D.ci.note, window.__imgs, window.__calls.join()]"), ['gym', 'ok', 'legs', 'squat rack and plates', 1, 'snap'])
         vis(pg, '[data-a="snapAs"][data-k="food"]'); pg.wait_for_timeout(900); shot('1-switched-meal')
         check(tag, 'switch to meal runs a meal estimate', ev("[D.snap.kind, D.snap.manual, D.meal && D.meal.state, D.meal && D.meal.kcal, window.__calls.join()]"), ['food', True, 'ai', 610, 'snap,meal'])
@@ -71,7 +71,7 @@ def go(pw, mock):
         check(tag, 'meal logged, Food tab opens', ev("[S.ui.tab, dayTotals(foodDay(now())).kcal - %d, sheets.length, S.meals[S.meals.length - 1].fib, S.meals[S.meals.length - 1].est]" % before), ['food', 700, 0, 6, False])
         check(tag, 'log again adds the same numbers', ev("(() => { const b = document.querySelector('[data-a=mealAgain]'), m = S.meals.find(x => x.id === b.dataset.id), k0 = dayTotals(foodDay(now())).kcal; b.click(); return [dayTotals(foodDay(now())).kcal - k0 === m.kcal, S.meals[S.meals.length - 1].src]; })()"), [True, 'again'])
         # a photo of a screen cannot be posted: it asks for a retake
-        ev("window.__snapKind='gym'; window.__screen=true; window.__calls=[]"); snap(); shot('3b-screen')
+        ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__snapKind='gym'; window.__screen=true; window.__calls=[]"); snap(); shot('3b-screen')
         check(tag, 'screen photo: blocked, retake prompt', ev("[D.ci && D.ci.screen, !!document.querySelector('.aicheck.warn'), document.querySelector('#ci-post').disabled]"), [True, True, True])
         n = ev("S.checkins.length"); ev("A.ciPost()"); check(tag, 'screen photo: post refused', ev("S.checkins.length - %d" % n), 0)
         vis(pg, '[data-a="ciRetake"]'); pg.wait_for_timeout(300)
@@ -97,7 +97,7 @@ def go(pw, mock):
         ev("window.__calFail='server_not_connected'; A.openConnections()"); vis(pg, '[data-a="openConn"][data-k="gcal"]'); vis(pg, '[data-a="calGo"]'); pg.wait_for_timeout(500)
         check(tag, 'calendar failure falls back to a link', ev("!!document.querySelector('.sheet a[href*=\"calendar.google.com\"]')"), True); ev("closeAll()")
     else:
-        snap(); shot('0-ask')
+        ev("S.offset += 24 * HOUR; tick(); render()"); snap(); shot('0-ask')
         check(tag, 'no Claude: asks what the photo is', ev("[D.snap.state, document.querySelectorAll('.snap-ask button').length]"), ['off', 3])
         vis(pg, '[data-a="snapPick"][data-k="gym"]'); pg.wait_for_timeout(600); shot('1-composer')
         check(tag, 'picked gym -> check-in without a check', ev("[D.ci && D.ci.ai, D.snap.kind]"), ['off', 'gym'])
@@ -109,18 +109,18 @@ def go(pw, mock):
         check(tag, 'from Food, no Claude: straight to the meal form', ev("[D.snap.kind, D.meal && D.meal.state]"), ['food', 'off']); ev("closeAll()")
     # proof that needs no photo inside the gym
     n0 = ev("window.__calls ? window.__calls.length : 0")
-    ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+    ev("S.offset += 24 * HOUR; tick(); render()"); ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
     pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900); shot('6-outside')
     check(tag, 'outside photo gets an outside check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['ok', True, 1] if mock else ['off', True, 0])
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600)
     check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof, document.querySelector('#p-' + S.posts[0].id + ' .proof').textContent]"), ['outside', 'outside', 'Outside photo'])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     if mock:
-        ev("window.__outsideOk = false"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+        ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__outsideOk = false"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
         pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900)
         check(tag, 'outside photo that is not a gym is blocked', ev("[D.ci && D.ci.ai, document.querySelector('#ci-post').disabled]"), ['no', True])
         ev("window.__outsideOk = true; closeAll(); D.ci = null; D.snap = null; A.camClose && A.camClose(); S.ui.tab = 'home'; render()")
-    ev("A.connOn({dataset:{k:'health'}})"); pg.wait_for_timeout(300)
+    ev("S.offset += 24 * HOUR; tick(); render()"); ev("A.connOn({dataset:{k:'health'}})"); pg.wait_for_timeout(300)
     vis(pg, '.dt-alt'); pg.wait_for_timeout(400); shot('7-workout-only')
     check(tag, 'recorded workout stands in for the photo', ev("[D.ci.noPhoto, D.ci.ai, D.ci.photo, !!D.ci.scene.stat, !!document.querySelector('.kind')]"), [True, 'workout', None, True, False])
     vis(pg, '[data-a="ciMore"]'); vis(pg, '[data-a="ciTag"][data-k="Exam week"]'); vis(pg, '[data-a="ciLiftAdd"]'); pg.fill('#lf-n0', 'Squat'); pg.fill('#lf-w0', '270'); pg.fill('#lf-r0', '2')

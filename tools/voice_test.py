@@ -66,6 +66,7 @@ with sync_playwright() as pw:
     check('logging it adds the meal to today', [ev('S.meals.length') - meals0, ev('S.meals[S.meals.length-1].name'), ev('S.meals[S.meals.length-1].p'), ev('S.ui.tab')], [1, 'Dal, rice and two rotis', 24, 'food'])
 
     # a workout said from Home: it waits for the photo, then fills the check-in
+    ev("S.offset += 24 * HOUR; tick(); render()");
     vis(pg, '.tabbar [data-tab="home"]'); pg.wait_for_timeout(200); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300)
     vis(pg, '#say-mic'); pg.wait_for_timeout(100); ev("__dict.say(' Leg day, fifty minutes, squat 225 for 5 for three sets, then RDLs 185 for 8. Felt hard.')"); pg.wait_for_timeout(60)
     ev("__dict.set('idle', 'viewer_stopped')"); pg.wait_for_timeout(600); shot(pg, '04-camera')
@@ -84,6 +85,7 @@ with sync_playwright() as pw:
     ev('closeAll()'); pg.wait_for_timeout(200)
 
     # from inside the check-in form
+    ev("S.offset += 24 * HOUR; tick(); render()")
     vis(pg, '.snap'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(300); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1300)
     check('the check-in form has a Say button', pg.locator('.say-in').inner_text(), 'Say what you trained')
     vis(pg, '.say-in'); pg.wait_for_timeout(300)
