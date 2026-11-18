@@ -16,6 +16,7 @@ A.openCapture = () => {
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
       '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="auto">' + ic('mic', 22) + '<b>Say it</b></button>' +
+      '<button class="cap-s" data-a="capGo" data-to="openWater">' + ic('drop', 22) + '<b>Water</b></button>' +
       '<button class="cap-s" data-a="capProgress">' + ic('lock', 22) + '<b>Progress</b></button>' +
       '<button class="cap-s" data-a="openWeigh">' + ic('trend', 22) + '<b>Weight</b></button></div>' +
       '<button class="link cap-nophoto" data-a="capGo" data-to="openNoPhoto">' + ic('info', 16) + 'No photos allowed in your gym?</button></div>';
@@ -40,6 +41,7 @@ function todayCard() {
     '<button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + gym + '</button>' +
     '<button class="td-row td-food" data-a="openFood"><span class="grow"><span class="td-m"><b>' + fmtN(Math.round(t.p)) + '<small>/' + g.p + ' g</small></b><span>Protein</span>' + bar(t.p / g.p, 'var(--protein)') + '</span>' +
     '<span class="td-m"><b>' + fmtN(Math.abs(kLeft)) + '</b><span>kcal ' + (kLeft >= 0 ? 'left' : 'over') + '</span>' + bar(t.kcal / g.kcal, 'var(--iron)') + '</span>' +
+    '<span class="td-m"><b>' + waterFmt(waterDay().ml, true) + '<small>' + waterUnit() + '</small></b><span>Water</span>' + bar(waterDay().ml / waterGoal(), 'var(--water)') + '</span>' +
     '<span class="td-m"><b>' + ws.n + '<small>/' + ws.goal + '</small></b><span>This week</span>' + bar(ws.n / ws.goal, 'var(--go)') + '</span></span></button>' +
     '<div class="td-next">' + ic(next[0], 16) + '<span class="grow">' + next[1] + '</span>' + (next[2] ? '<button class="link" data-a="' + next[2] + '">' + next[3] + '</button>' : '') + '</div></div>';
 }
@@ -117,7 +119,7 @@ function coachContext() {
     'Food today: ' + Math.round(t.kcal) + ' of ' + g.kcal + ' kcal, ' + Math.round(t.p) + ' of ' + g.p + ' g protein, ' + Math.round(t.c) + ' g carbs, ' + Math.round(t.f) + ' g fat. Meals: ' + (t.meals.map(x => x.name).join(', ') || 'none') + '. ' +
     'Foods they log often: ' + recentMeals().slice(0, 6).map(x => x.m.name + ' (' + x.m.p + ' g protein)').join(', ') + '. ' +
     (b ? 'Goal: ' + ({ lose: 'lose fat', keep: 'maintain', gain: 'build muscle' })[b.goal] + '. ' : '') + (tr ? 'Weight ' + wShow(tr.latest.kg) + ' ' + wUnit() + (tr.perWeek != null ? ', trend ' + wShow(tr.perWeek) + ' ' + wUnit() + ' a week' : '') + '. ' : '') +
-    'Local time ' + clock(now()) + '.';
+    'Water today ' + waterFmt(waterDay().ml) + ' of ' + waterFmt(waterGoal()) + '. Local time ' + clock(now()) + '.';
 }
 const COACH_ASK = ['What can I eat tonight to hit my protein?', 'What should I train tomorrow?', 'How is my week going?', 'How do I get my bench moving again?'];
 A.openCoach = () => {

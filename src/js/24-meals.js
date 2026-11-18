@@ -41,7 +41,7 @@ A.mealEdit = el => {
   const m = S.meals.find(x => x.id === el.dataset.id); if (!m) return;
   closeAll(); swipeClose(); D.snap = null;
   D.meal = { editId: m.id, photo: m.photo || null, img: m.img || null, art: m.art || { kind: 'bowl', seed: 3 }, text: m.name, name: m.name, kcal: m.kcal, p: m.p, c: m.c, f: m.f,
-    base: { kcal: m.kcal, p: m.p, c: m.c, f: m.f, fib: m.fib, na: m.na }, items: [], size: 1, slot: m.slot, state: 'edit', conf: '', hint: '', nums: true, busy: false, typed: true };
+    base: { kcal: m.kcal, p: m.p, c: m.c, f: m.f, fib: m.fib, na: m.na, ml: m.ml || 0 }, items: [], size: 1, slot: m.slot, state: 'edit', conf: '', hint: '', nums: true, busy: false, typed: true };
   openSheet(mealSheet, { cls: 'full', onClose: () => { if (D.meal && D.meal.editId) D.meal = null; } });
 };
 A.mealDel = el => {

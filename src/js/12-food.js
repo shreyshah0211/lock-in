@@ -34,6 +34,7 @@ function foodBody() {
   const off = S.ui.foodOff || 0, today = foodDay(now()), fd = today + off, t = dayTotals(fd), run = proteinRun(), kc = S.ui.showKcal !== false;
   let h = '<div class="seg"><button data-a="foodMode" data-k="1" aria-pressed="' + kc + '">Calories and macros</button><button data-a="foodMode" data-k="0" aria-pressed="' + !kc + '">Protein only</button></div>';
   h += '<div class="card">' + nutritionBar(fd, true) + (run > 0 ? '<div style="margin-top:14px"><span class="pill" style="background:#E3EEFF;color:#1B4FB5">' + ic('check', 14) + 'Protein goal ' + plural(run, 'day') + ' running</span></div>' : '') + '</div>';
+  h += waterCard(fd);
   if (off === 0) {
     h += '<div class="food-acts"><button class="btn btn-go" data-a="scanMeal">' + ic('camera', 20) + 'Snap a meal</button><button class="btn btn-line" data-a="scanBarcode">' + ic('scan', 19) + 'Barcode</button><button class="btn btn-line" data-a="openSay" data-k="meal">' + ic('mic', 19) + 'Say it</button></div>';
     if (!S.body) h += '<button class="card bg-nudge" data-a="openBodyGoals"><span class="mi">' + ic('target', 22) + '</span><span class="grow"><b>Set your goals from your body</b><span class="mute">Height, weight and what you want. Takes 30 seconds.</span></span>' + ic('chevR', 18) + '</button>';

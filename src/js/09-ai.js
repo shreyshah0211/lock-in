@@ -65,12 +65,13 @@ async function aiGymCheck(blob, outside) {
     return { state: res && res.gym ? 'ok' : 'no', workout: !outside && res && TYPE[res.workout] ? res.workout : null, note: res && typeof res.note === 'string' ? res.note.slice(0, 80) : '', screen: !!(res && res.screen === true) };
   } catch (e) { const c = aiFail(e); return { state: c === 'rate_limited' ? 'busy' : _aiBlocked ? 'off' : 'error' }; }
 }
-const MEAL_FORMAT = 'Reply with only a JSON object like {"food": true, "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. ' +
+const WATER_ASK = '"water_ml" is the fluid in it, in millilitres: the whole volume for a drink (water, coffee, tea, milk, juice, a shake, soda), the broth for a soup, and 0 for solid food. ';
+const MEAL_FORMAT = 'Reply with only a JSON object like {"food": true, "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "water_ml": 0, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. ' + WATER_ASK +
   'Use whole numbers. "name" is a short plain name for the whole meal. "items" lists up to 6 parts, and their calories add up to the total. "confidence" is low, medium or high. If it is not food or drink, reply {"food": false}.';
 function shapeMeal(res) {
   if (!res || res.food === false || !res.name) return null;
   const opt = (v, hi) => v == null || !isFinite(+v) ? null : num(v, 0, hi);
-  return { name: String(res.name).slice(0, 60), kcal: num(res.calories, 0, 5000), p: num(res.protein_g, 0, 400), c: num(res.carbs_g, 0, 800), f: num(res.fat_g, 0, 400), fib: opt(res.fiber_g, 200), na: opt(res.sodium_mg, 20000),
+  return { name: String(res.name).slice(0, 60), kcal: num(res.calories, 0, 5000), p: num(res.protein_g, 0, 400), c: num(res.carbs_g, 0, 800), f: num(res.fat_g, 0, 400), fib: opt(res.fiber_g, 200), na: opt(res.sodium_mg, 20000), ml: opt(res.water_ml, 4000) || 0,
     items: Array.isArray(res.items) ? res.items.slice(0, 6).map(i => ({ name: String(i.name || '').slice(0, 40), kcal: num(i.calories, 0, 5000) })).filter(i => i.name) : [], conf: ['low', 'medium', 'high'].includes(res.confidence) ? res.confidence : 'medium' };
 }
 // What the model is told besides the photo: the time of day, and anything the person typed to correct it.
@@ -86,7 +87,7 @@ async function aiSnap(blob) {
     const res = await s.json(
       'This photo was just taken in a fitness app that has one camera button for everything. Work out what it shows so the app can file it. Reply with only a JSON object, in one of three shapes. ' +
       'If it plausibly shows the person at a workout (a gym, weights or machines, a studio, a court, a pool, a track, a trail run, or a home workout setup): {"kind": "gym", "workout": "legs", "note": "squat rack and plates", "lift": {"exercise": "Squat", "weight": 225, "unit": "lb"}, "screen": false}. "workout" is your best guess from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "note" is at most 8 words describing what you see. "lift" is only for when the photo clearly shows one exercise and you can read its weight (count barbell plates on both sides plus the bar, read the number on a dumbbell, or where the pin sits on a machine stack); otherwise "lift": null. ' +
-      'If it shows food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium", "screen": false}. Use whole numbers, judge portion sizes from the plate and what surrounds it, list up to 6 parts in "items" whose calories add up to the total, and set "confidence" to low, medium or high. ' + mealContext('') +
+      'If it shows food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "water_ml": 0, "items": [{"name": "rice", "calories": 210}], "confidence": "medium", "screen": false}. ' + WATER_ASK + 'Use whole numbers, judge portion sizes from the plate and what surrounds it, list up to 6 parts in "items" whose calories add up to the total, and set "confidence" to low, medium or high. ' + mealContext('') +
       'If it is neither, such as an unrelated scene: {"kind": "other", "screen": false}. ' + SCREEN_ASK,
       { images: [blob], modelTier: 'quick' });
     const kind = res && ['gym', 'food', 'other'].includes(res.kind) ? res.kind : 'other';

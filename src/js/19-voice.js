@@ -124,6 +124,9 @@ A.sayGo = async () => {
   const text = (s.text || '').trim(); if (!text) { toast('Say or type it first.'); return; }
   voiceStop();
   const force = s.force || (s.mode === 'workout' ? 'workout' : s.mode === 'meal' ? 'food' : '');
+  // Just water: logged straight away, no estimate needed.
+  const wml = force !== 'workout' && typeof waterFromText === 'function' ? waterFromText(text) : null;
+  if (wml) { closeSheet(); A.waterAdd({ dataset: { ml: wml } }); return; }
   s.busy = true; s.ask = false; drawSheets(false);
   let r = await aiSay(text, force);
   if (D.say !== s) return;                       // closed while it was working
@@ -180,7 +183,7 @@ async function aiSay(text, force) {
       'Reply with only a JSON object, in one of these shapes. ' +
       (force === 'food' ? '' : 'A workout: {"kind": "workout", "workout": "legs", "minutes": 50, "effort": 3, "lifts": [{"name": "Squat", "weight": 225, "reps": 5, "sets": 3}], "tag": ""}. "workout" is the best fit from: push, pull, legs, upper, full, cardio, core, sport, mobility, other. "minutes" is how long it lasted. "effort" is 1 easy, 2 steady, 3 hard or 4 all out. ' +
         '"lifts" lists each strength exercise they named, with a plain name such as Bench press, the weight in ' + (S.settings.units === 'kg' ? 'kilograms' : 'pounds') + ', the reps in one set and the number of sets. "tag" is one of Easy day, Sick, Exam week or Travelling when they said so, otherwise "". Use null for anything they did not say, and never invent a number. ') +
-      (force === 'workout' ? '' : 'Food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. Use whole numbers, assume ordinary portions unless they say otherwise, and list up to 6 parts in "items" whose calories add up to the total. It is about ' + clock(now()) + '. ') +
+      (force === 'workout' ? '' : 'Food or drink: {"kind": "food", "name": "Veggie burrito bowl", "calories": 640, "protein_g": 24, "carbs_g": 88, "fat_g": 20, "fiber_g": 12, "sodium_mg": 900, "water_ml": 0, "items": [{"name": "rice", "calories": 210}], "confidence": "medium"}. ' + WATER_ASK + 'Use whole numbers, assume ordinary portions unless they say otherwise, and list up to 6 parts in "items" whose calories add up to the total. It is about ' + clock(now()) + '. ') +
       (force ? '' : 'If it is neither, or you cannot tell: {"kind": "other"}.'), { modelTier: 'quick' });
     const kind = force || (res && ['workout', 'food'].includes(res.kind) ? res.kind : 'other');
     if (kind === 'food') { const m = shapeMeal(Object.assign({}, res, { food: true })); return m ? { state: 'ok', kind: 'food', meal: m } : { state: 'ok', kind: 'food', guess: true }; }

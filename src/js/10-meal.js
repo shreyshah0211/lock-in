@@ -24,7 +24,7 @@ function mealRecalc(d) {
 // A fresh estimate arrived: keep it as the base and start the portions at medium.
 function mealSet(d, m, state) {
   const x = FOOD_X[m.name];
-  d.name = m.name; d.base = { kcal: +m.kcal || 0, p: +m.p || 0, c: +m.c || 0, f: +m.f || 0, fib: m.fib != null ? m.fib : x ? x[0] : null, na: m.na != null ? m.na : x ? x[1] : null };
+  d.name = m.name; d.base = { kcal: +m.kcal || 0, p: +m.p || 0, c: +m.c || 0, f: +m.f || 0, fib: m.fib != null ? m.fib : x ? x[0] : null, na: m.na != null ? m.na : x ? x[1] : null, ml: +m.ml || 0 };
   d.items = (m.items || []).map(i => ({ name: i.name, kcal: i.kcal, mult: 1 })); d.size = 1; d.conf = m.conf || ''; d.state = state; d.nums = false;
   mealRecalc(d);
 }
@@ -57,7 +57,7 @@ function mealHead(d) {
   if (d.kcal === '' || d.kcal == null) return '<div class="mhead"><span class="mh-n"><b class="num">0</b>kcal</span><span class="mh-t">Add the numbers below</span></div>';
   const est = isEstimate(d.state) && !d.typed;
   return '<div class="mhead"><span class="mh-n"><b class="num">' + (est ? 'About ' : '') + fmtN(+d.kcal) + '</b>kcal</span><span class="mh-t">' + (est ? 'Rough estimate' : 'Your numbers') + '</span></div>' +
-    '<div class="mmac"><span><b>' + Math.round(+d.p || 0) + ' g</b>protein</span><span><b>' + Math.round(+d.c || 0) + ' g</b>carbs</span><span><b>' + Math.round(+d.f || 0) + ' g</b>fat</span></div>';
+    '<div class="mmac"><span><b>' + Math.round(+d.p || 0) + ' g</b>protein</span><span><b>' + Math.round(+d.c || 0) + ' g</b>carbs</span><span><b>' + Math.round(+d.f || 0) + ' g</b>fat</span>' + (d.base && d.base.ml > 0 ? '<span class="mm-w"><b>' + waterFmt(d.base.ml * mealFactor(d)) + '</b>water</span>' : '') + '</div>';
 }
 function mealSheet() {
   const d = D.meal; if (!d) return '';
@@ -130,12 +130,12 @@ A.mealLog = () => {
   const k = d.base ? mealFactor(d) : 1, b = d.base || {}, est = isEstimate(d.state) && !d.typed;
   if (d.editId) {
     const m = S.meals.find(x => x.id === d.editId);
-    if (m) Object.assign(m, { name: String(d.name).trim(), kcal: Math.round(+d.kcal), p: Math.round(+d.p || 0), c: Math.round(+d.c || 0), f: Math.round(+d.f || 0), fib: b.fib != null ? Math.round(b.fib * k) : m.fib, na: b.na != null ? round10(b.na * k) : m.na, slot: d.slot, est: est, edited: now() });
+    if (m) Object.assign(m, { ml: b.ml ? Math.round(b.ml * k) : m.ml || 0, name: String(d.name).trim(), kcal: Math.round(+d.kcal), p: Math.round(+d.p || 0), c: Math.round(+d.c || 0), f: Math.round(+d.f || 0), fib: b.fib != null ? Math.round(b.fib * k) : m.fib, na: b.na != null ? round10(b.na * k) : m.na, slot: d.slot, est: est, edited: now() });
     D.meal = null; closeAll(); save(); render(); toast(m ? 'Meal updated: ' + fmtN(m.kcal) + ' kcal, ' + m.p + ' g protein' : 'That meal is gone', 'check'); return;
   }
   if (d.photo) savePhoto(d.photo, PHOTOS[d.photo]);
   S.meals.push({ id: uid(), ts: now(), name: String(d.name).trim(), kcal: Math.round(+d.kcal), p: Math.round(+d.p || 0), c: Math.round(+d.c || 0), f: Math.round(+d.f || 0), fib: b.fib != null ? Math.round(b.fib * k) : null, na: b.na != null ? round10(b.na * k) : null,
-    slot: d.slot, art: d.art || { kind: 'bowl', seed: 3 }, photo: d.photo, src: d.state, est: est });
+    slot: d.slot, art: d.art || { kind: 'bowl', seed: 3 }, photo: d.photo, src: d.state, est: est, ml: b.ml ? Math.round(b.ml * k) : 0 });
   checkBadges();
   const added = S.meals[S.meals.length - 1];
   D.meal = null; D.snap = null; D.camIntent = null; S.ui.foodOff = 0; S.ui.tab = 'food'; scrollPos.food = 0; closeAll(); save(); render();
