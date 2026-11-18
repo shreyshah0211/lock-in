@@ -14,6 +14,7 @@ function render() {
   if (!VIEWS[S.ui.tab]) S.ui.tab = 'home';
   const tab = S.ui.tab;
   $('#phone').classList.toggle('cam-on', tab === 'cam');
+  $('#phone').classList.toggle('dark-top', tab === 'home');   // Home's dark clock runs up into the status bar
   v.innerHTML = (VIEWS[tab] || VIEWS.home)();
   v.scrollTop = curTab === tab ? scrollPos[tab] || 0 : (tab === 'home' ? scrollPos.home || 0 : 0);
   curTab = tab;

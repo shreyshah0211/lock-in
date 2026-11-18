@@ -70,7 +70,7 @@ VIEWS.you = () => {
   let h = '<header class="top"><h1>You</h1><button class="icon-btn" data-a="openMore" aria-label="More and settings">' + ic('gear', 22) + '</button></header>';
   h += '<div class="pad"><div class="seg you-seg">' + [['food', 'Food'], ['training', 'Training'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
   if (seg === 'food') {
-    h += '<div class="pad food-day"><div class="daynav"><button data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 18) + '</button><b>' + dayLabel(foodDay(now()) + off) + '</b><button data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 18) + '</button></div></div>';
+    h += '<div class="pad food-day"><h2>' + dayLabel(foodDay(now()) + off) + '</h2><button class="icon-btn" data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 20) + '</button><button class="icon-btn" data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 20) + '</button></div>';
     h += '<div class="pad vstack">' + foodBody() + '</div>';
   } else if (seg === 'training') {
     h += sec('This week', '', progressTiles(ws));

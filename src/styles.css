@@ -1,4 +1,4 @@
-:root{
+:root{--sat:env(safe-area-inset-top,0px);
   /* Lock In, second pass. White ground, soft grey surfaces with no outlines,
      deep navy for the one dark surface per screen, and a heat ramp that only
      ever means effort or time. Layout: one phone column, one job per section,
@@ -434,6 +434,10 @@ textarea.input{resize:none;min-height:84px}
 .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .mgrid .field label{font-size:12px;color:var(--mute)}
 .mgrid .input{padding:10px 8px;text-align:center;font-weight:700;min-height:50px}
+.food-day{display:flex;align-items:center;gap:8px;margin:24px 0 14px}
+.food-day h2{flex:1;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.food-day .icon-btn{width:40px;height:40px}
+.food-day .icon-btn[disabled]{opacity:.3}
 .daynav{display:inline-flex;align-items:center;gap:2px;background:var(--mist);border-radius:999px;padding:3px}
 .daynav b{min-width:5.6em;text-align:center;font-size:13.5px}
 .daynav button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
@@ -799,8 +803,14 @@ body{overscroll-behavior:none}
 @media (max-width:500px){
   #tabs{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   #view{padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px))}
-  .hero{padding-top:calc(14px + env(safe-area-inset-top,0px))}
-  .top{padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  /* Screens start below the clock and the Dynamic Island, with a little room, so nothing sits where a thumb cannot reach. */
+  #view{top:calc(var(--sat) * 1.2)}
+  #phone.cam-on #view{top:0}
+  #view{background:var(--ground)}
+  #phone.dark-top{background:var(--iron)}
+  .sheet{max-height:calc(100% - var(--sat) * 1.2 - 12px)}
+  .sheet.full{max-height:none}
+  .sheet.full .sh-h{padding-top:calc(16px + var(--sat) * 1.2)}
   .sticky-cta{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
   .cam-top{padding-top:calc(16px + env(safe-area-inset-top,0px))}
 }
