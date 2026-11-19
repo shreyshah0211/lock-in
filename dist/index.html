@@ -79,7 +79,7 @@ h1,h2,h3{text-wrap:balance}
 .tabbar{position:absolute;inset:0;display:grid;grid-template-columns:1fr 96px 1fr;align-items:center;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 14px 34px -10px rgba(18,22,43,.34),0 0 0 1px rgba(18,22,43,.06),inset 0 1px 0 rgba(255,255,255,.8);pointer-events:auto}
 .tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:54px;font-size:11px;font-weight:700;color:var(--faint);border-radius:999px;transition:color .15s,background .15s}
 .tabbar button[aria-current="page"]{color:var(--iron);background:rgba(18,22,43,.07)}
-.snap-lbl{align-self:end;text-align:center;font-size:11px;font-weight:800;color:var(--iron);padding-bottom:8px;white-space:nowrap;pointer-events:none}
+.snap-lbl{visibility:hidden}   /* the camera button sits here; its ring shows the time left */
 .snap-lbl.warn{color:var(--crit)}
 .snap{position:absolute;left:50%;top:-30px;width:76px;height:76px;margin-left:-38px;border-radius:50%;display:grid;place-items:center;pointer-events:auto;transition:transform .12s}
 .snap::before{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;box-shadow:0 10px 24px -8px rgba(18,22,43,.45)}
@@ -212,7 +212,7 @@ textarea.input{resize:none;min-height:84px}
 
 /* ---------- home ---------- */
 .hero{background:var(--iron);color:#fff;border-radius:0 0 40px 40px;padding:14px 20px 22px;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 70% at 50% 34%,rgba(61,220,151,.17),transparent 70%);pointer-events:none;transition:background .4s}
+.hero::before{content:"";position:absolute;inset:0;-webkit-mask:linear-gradient(transparent,#000 90px);mask:linear-gradient(transparent,#000 90px);background:radial-gradient(90% 70% at 50% 34%,rgba(61,220,151,.17),transparent 70%);pointer-events:none;transition:background .4s}
 .hero.s-close::before{background:radial-gradient(90% 70% at 50% 34%,rgba(255,176,32,.26),transparent 70%)}
 .hero.s-crit::before{background:radial-gradient(90% 70% at 50% 34%,rgba(255,83,71,.4),transparent 70%);animation:pulse 1.8s ease-in-out infinite}
 .hero.s-out::before{background:none}
@@ -288,6 +288,7 @@ textarea.input{resize:none;min-height:84px}
 .post-c b{font-weight:700}
 .post-pr{margin:10px 6px 0;display:inline-flex}
 .feed{padding-top:14px}
+.feed .post{padding-left:var(--pad);padding-right:var(--pad)}
 .feed-end{padding:26px var(--pad) 30px;text-align:center;color:var(--mute);font-size:13.5px}
 .feed-h{padding:26px var(--pad) 4px;font-size:19px;font-weight:800;letter-spacing:-.015em}
 
@@ -298,7 +299,6 @@ textarea.input{resize:none;min-height:84px}
 .cam-bg{inset:0;width:100%;height:100%;object-fit:cover}
 .cam-frame.hit::before,.cam-frame.hit::after,.cam-frame.hit i::before,.cam-frame.hit i::after{border-color:#3DDC84}
 #cam-video{transform-origin:center;transition:transform .08s linear}
-.cam-zoom{display:block;margin:0 auto 14px;min-width:46px;height:34px;padding:0 10px;border-radius:17px;background:rgba(8,10,22,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#FFD34D;font-size:13px;font-weight:700}
 .cam.live{touch-action:none}
 .cam-idle{background:radial-gradient(85% 50% at 50% 40%,#232E63,#0B0E1C 78%)}
 .cam-shade{inset:0;background:linear-gradient(180deg,rgba(8,10,22,.7),transparent 22%,transparent 52%,rgba(8,10,22,.92))}
@@ -316,7 +316,7 @@ textarea.input{resize:none;min-height:84px}
 .cam.live .cam-frame p{align-self:end;margin-bottom:12px;font-size:15px;background:rgba(8,10,22,.5);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:10px 16px;border-radius:20px}
 .cam.live .cam-frame small{font-size:12.5px;margin-top:2px}
 .cam-big{display:grid;place-items:center;width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.1);margin:0 auto 16px}
-.cam-txt{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px 0 10px;border-radius:999px;background:rgba(18,22,43,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-weight:700;font-size:13px;min-width:82px}
+.cam-txt{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 14px 0 12px;border-radius:999px;background:rgba(18,22,43,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-weight:700;font-size:13px;min-width:82px}
 .cam-frame small{display:block;font-weight:500;font-size:14px;letter-spacing:0;opacity:.88;margin-top:6px}
 .cam-bot{padding:0 16px 22px}
 .cam-shoot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
@@ -497,6 +497,7 @@ textarea.input{resize:none;min-height:84px}
 .dayd b{font-weight:700}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tile{background:var(--mist);border-radius:24px;padding:16px}
+.card>.two>.tile{padding:0;background:none;border-radius:0}
 .tile .v{font-family:var(--display);font-weight:800;font-size:38px;line-height:.95}
 .tile .v small{font-family:var(--body);font-size:13px;font-weight:600;color:var(--mute);margin-left:3px}
 .tile .k{font-size:13px;font-weight:700;margin-bottom:8px}
@@ -554,6 +555,7 @@ textarea.input{resize:none;min-height:84px}
 .ucard{margin:0 var(--pad);background:var(--iron);color:#fff;border-radius:30px;padding:18px 18px 16px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px}
 .ucard::before{content:"";position:absolute;inset:0;background:radial-gradient(110% 100% at 100% 0%,rgba(255,138,30,.26),transparent 60%);pointer-events:none}
 .ucard>*{position:relative}
+.sh-b .ucard{margin:0}
 .ucard .av i{background:rgba(255,255,255,.14);color:#fff}
 .uc-top{display:flex;align-items:center;gap:12px}
 .uc-id{flex:1;min-width:0}
@@ -830,7 +832,7 @@ body{overscroll-behavior:none}
   .sheet.full{max-height:none}
   .sheet.full .sh-h{padding-top:calc(16px + var(--sat) * 1.2)}
   .sticky-cta{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
-  .cam-top{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .cam-top{padding-top:calc(var(--sat) * 1.2 + 8px)}
 }
 
 /* ---------- the globe and its map ---------- */
@@ -2613,7 +2615,7 @@ function camStop() { scanOff(); if (cam.stream) { cam.stream.getTracks().forEach
 function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcObject !== cam.stream) { v.srcObject = cam.stream; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { }); } zoomPaint(); }
 
 /* ---- zoom ----
-   Pinch the viewfinder, or tap the 1x button. Where the phone lets the page drive the
+   Pinch the viewfinder to zoom in and out. Where the phone lets the page drive the
    camera's own zoom it does; otherwise the picture is enlarged and the photo cropped to match. */
 function zoomInit() {
   const t = cam.stream && cam.stream.getVideoTracks()[0];
@@ -2633,10 +2635,10 @@ function setZoom(z) {
   t.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { cam.hw = false; cam.zmin = 1; zoomPaint(); }).finally(() => { _zoomBusy = false; if (_zoomNext != null) { const n = _zoomNext; _zoomNext = null; cam.zoom = -1; setZoom(n); } });
 }
 function zoomPaint() {
-  const v = $('#cam-video'); if (v) v.style.transform = !cam.hw && cam.zoom > 1 ? 'scale(' + cam.zoom + ')' : '';
-  const b = $('#cam-zoom'); if (b) b.textContent = (cam.zoom < 1 ? cam.zoom.toFixed(1).replace(/^0/, '') : cam.zoom % 1 ? cam.zoom.toFixed(1) : cam.zoom) + '×';
+  // The front camera shows you as a mirror does, as every phone camera app does.
+  const v = $('#cam-video'), z = !cam.hw && cam.zoom > 1 ? cam.zoom : 1, m = cam.facing === 'user' ? -1 : 1;
+  if (v) v.style.transform = z !== 1 || m < 0 ? 'scale(' + (z * m) + ',' + z + ')' : '';
 }
-A.camZoom = () => { const steps = [cam.zmin < 1 ? cam.zmin : null, 1, 2, 3].filter(x => x != null && x <= cam.zmax), i = steps.findIndex(x => x > cam.zoom + .05); setZoom(i < 0 ? steps[0] : steps[i]); };
 const PINCH = { d0: 0, z0: 1 };
 const pinchDist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 document.addEventListener('touchstart', e => { if (e.touches.length === 2 && cam.stream && e.target.closest && e.target.closest('.cam.live')) { PINCH.d0 = pinchDist(e); PINCH.z0 = cam.zoom; } }, { passive: true });
@@ -2658,7 +2660,7 @@ VIEWS.cam = () => {
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span></span>' +
     (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
-    '<div class="cam-bot">' + (live ? '<button class="cam-zoom" id="cam-zoom" data-a="camZoom" aria-label="Zoom">1×</button>' : '') + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
+    '<div class="cam-bot">' + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
     alt + '</div></div>';
 };
 
@@ -5355,15 +5357,11 @@ const WATER_ADD = () => waterUS() ? [[8 * ML_OZ, '8 oz', 'Glass'], [16.9 * ML_OZ
 
 // The water card on the Food tab: drops filling up, three buttons that always fit, and
 // today's drinks, each with its own remove.
-// Water on Food: how much, one bar, and two buttons. Everything else is under More.
+// Water on Food: how much and a bar. Adding and everything else is under More.
 function waterCard(fd) {
   const today = fd === foodDay(now()), w = waterDay(fd), g = waterGoal(fd);
-  const bt = bottleButtons(1)[0], adds = WATER_ADD();
-  const add = (extra, name, amt) => '<button class="wc-t" ' + extra + '>' + ic('plus', 16) + '<b>' + esc(name) + '</b><small>' + amt + '</small></button>';
-  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
-    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' + bar(w.ml / g, 'var(--water)') +
-    (today ? '<div class="wc-add">' + add('data-a="waterAdd" data-ml="' + Math.round(adds[0][0]) + '" data-name="Glass"', 'Glass', adds[0][1]) +
-      (bt ? add('data-a="bottleUse" data-id="' + bt[3] + '" data-ml="' + Math.round(bt[0]) + '" data-name="' + esc(bt[2]) + '"', bt[2], bt[1]) : add('data-a="waterAdd" data-ml="' + Math.round(adds[1][0]) + '" data-name="Bottle"', 'Bottle', adds[1][1])) + '</div>' : '') + '</div>';
+  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + ' water</span></span>' +
+    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' + bar(w.ml / g, 'var(--water)') + '</div>';
 }
 const waterName = x => x.name || 'Water';
 A.waterAdd = el => {

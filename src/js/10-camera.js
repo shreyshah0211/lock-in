@@ -26,7 +26,7 @@ function camStop() { scanOff(); if (cam.stream) { cam.stream.getTracks().forEach
 function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcObject !== cam.stream) { v.srcObject = cam.stream; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { }); } zoomPaint(); }
 
 /* ---- zoom ----
-   Pinch the viewfinder, or tap the 1x button. Where the phone lets the page drive the
+   Pinch the viewfinder to zoom in and out. Where the phone lets the page drive the
    camera's own zoom it does; otherwise the picture is enlarged and the photo cropped to match. */
 function zoomInit() {
   const t = cam.stream && cam.stream.getVideoTracks()[0];
@@ -46,10 +46,10 @@ function setZoom(z) {
   t.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { cam.hw = false; cam.zmin = 1; zoomPaint(); }).finally(() => { _zoomBusy = false; if (_zoomNext != null) { const n = _zoomNext; _zoomNext = null; cam.zoom = -1; setZoom(n); } });
 }
 function zoomPaint() {
-  const v = $('#cam-video'); if (v) v.style.transform = !cam.hw && cam.zoom > 1 ? 'scale(' + cam.zoom + ')' : '';
-  const b = $('#cam-zoom'); if (b) b.textContent = (cam.zoom < 1 ? cam.zoom.toFixed(1).replace(/^0/, '') : cam.zoom % 1 ? cam.zoom.toFixed(1) : cam.zoom) + '×';
+  // The front camera shows you as a mirror does, as every phone camera app does.
+  const v = $('#cam-video'), z = !cam.hw && cam.zoom > 1 ? cam.zoom : 1, m = cam.facing === 'user' ? -1 : 1;
+  if (v) v.style.transform = z !== 1 || m < 0 ? 'scale(' + (z * m) + ',' + z + ')' : '';
 }
-A.camZoom = () => { const steps = [cam.zmin < 1 ? cam.zmin : null, 1, 2, 3].filter(x => x != null && x <= cam.zmax), i = steps.findIndex(x => x > cam.zoom + .05); setZoom(i < 0 ? steps[0] : steps[i]); };
 const PINCH = { d0: 0, z0: 1 };
 const pinchDist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 document.addEventListener('touchstart', e => { if (e.touches.length === 2 && cam.stream && e.target.closest && e.target.closest('.cam.live')) { PINCH.d0 = pinchDist(e); PINCH.z0 = cam.zoom; } }, { passive: true });
@@ -71,7 +71,7 @@ VIEWS.cam = () => {
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span></span>' +
     (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
-    '<div class="cam-bot">' + (live ? '<button class="cam-zoom" id="cam-zoom" data-a="camZoom" aria-label="Zoom">1×</button>' : '') + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
+    '<div class="cam-bot">' + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
     alt + '</div></div>';
 };
 

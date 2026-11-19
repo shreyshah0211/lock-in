@@ -45,15 +45,11 @@ const WATER_ADD = () => waterUS() ? [[8 * ML_OZ, '8 oz', 'Glass'], [16.9 * ML_OZ
 
 // The water card on the Food tab: drops filling up, three buttons that always fit, and
 // today's drinks, each with its own remove.
-// Water on Food: how much, one bar, and two buttons. Everything else is under More.
+// Water on Food: how much and a bar. Adding and everything else is under More.
 function waterCard(fd) {
   const today = fd === foodDay(now()), w = waterDay(fd), g = waterGoal(fd);
-  const bt = bottleButtons(1)[0], adds = WATER_ADD();
-  const add = (extra, name, amt) => '<button class="wc-t" ' + extra + '>' + ic('plus', 16) + '<b>' + esc(name) + '</b><small>' + amt + '</small></button>';
-  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
-    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' + bar(w.ml / g, 'var(--water)') +
-    (today ? '<div class="wc-add">' + add('data-a="waterAdd" data-ml="' + Math.round(adds[0][0]) + '" data-name="Glass"', 'Glass', adds[0][1]) +
-      (bt ? add('data-a="bottleUse" data-id="' + bt[3] + '" data-ml="' + Math.round(bt[0]) + '" data-name="' + esc(bt[2]) + '"', bt[2], bt[1]) : add('data-a="waterAdd" data-ml="' + Math.round(adds[1][0]) + '" data-name="Bottle"', 'Bottle', adds[1][1])) + '</div>' : '') + '</div>';
+  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + ' water</span></span>' +
+    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' + bar(w.ml / g, 'var(--water)') + '</div>';
 }
 const waterName = x => x.name || 'Water';
 A.waterAdd = el => {
