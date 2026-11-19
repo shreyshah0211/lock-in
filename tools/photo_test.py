@@ -14,7 +14,7 @@ window.claude = { use: async (n) => {
     window.__imgs += (opts && opts.images) ? opts.images.length : 0; window.__inputs.push(input);
     const meal = { name: 'Paneer rice bowl', calories: 612, protein_g: 28, carbs_g: 74, fat_g: 21, fiber_g: 6, sodium_mg: 804, items: [{name:'rice', calories: 240},{name:'paneer', calories: 260}], confidence: 'medium' };
     if (input.includes('weekly note')) { window.__calls.push('note'); return { note: 'Four days running, then two off. Put the easy day in the middle next week.' }; }
-    if (input.includes('one camera button for everything')) { window.__calls.push('snap'); const k = window.__snapKind; return k === 'gym' ? { kind: 'gym', workout: 'legs', note: 'squat rack and plates', screen: window.__screen } : k === 'food' ? Object.assign({ kind: 'food' }, meal) : { kind: 'other' }; }
+    if (input.includes('one camera button for everything')) { window.__calls.push('snap'); const k = window.__snapKind; return k === 'lift' ? { kind: 'gym', workout: 'push', note: 'bench and plates', lift: { exercise: 'Bench press', weight: 185, unit: 'lb' } } : k === 'gym' ? { kind: 'gym', workout: 'legs', note: 'squat rack and plates', screen: window.__screen } : k === 'food' ? Object.assign({ kind: 'food' }, meal) : { kind: 'other' }; }
     if (input.includes('outside check-in')) { window.__calls.push('outsidecheck'); return { gym: window.__outsideOk !== false, workout: 'other', note: 'rec centre entrance' }; }
     if (input.includes('gym habit app')) { window.__calls.push('gymcheck'); return { gym: false, workout: 'other', note: 'a plate of food' }; }
     if (input.includes('next 3 sessions')) { window.__calls.push('plan'); return [{focus:'Pull',why:'Nine days since your last pull day.'},{focus:'Cardio',why:'An easy day between lifts.'},{focus:'Legs',why:'Back to legs once you have recovered.'}]; }
@@ -39,7 +39,7 @@ def go(pw, mock):
     if mock: pg.add_init_script(MOCK)
     tag = 'ai  ' if mock else 'noai'; ev = pg.evaluate
     def shot(n): pg.screenshot(path=str(root/'shots'/f'ph-{tag.strip()}-{n}.png'))
-    def snap(): vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1500)
+    def snap(): vis(pg, '.snap'); pg.wait_for_timeout(250); pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(1500)
     pg.goto(url); pg.wait_for_timeout(500); ev('closeAll()')
     check(tag, 'camera falls back when no live camera', ev("(A.goCam(), new Promise(r => setTimeout(() => r([cam.live, !!document.querySelector('#cam-video')]), 400)))"), [False, False]); ev("A.camClose()")
     if mock:
@@ -55,6 +55,12 @@ def go(pw, mock):
         vis(pg, '.done [data-a="calGo"]'); pg.wait_for_timeout(500)
         check(tag, 'calendar event sent to connector', ev("[window.__cal[0][0], window.__cal[0][1], Object.keys(window.__cal[0][2]).sort().join()]"), ['Google Calendar', 'create_event', 'availability,description,endTime,overrideReminders,startTime,summary'])
         vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(300)
+        # a lift photo after checking in: same camera, read once, added to today
+        ev("window.__snapKind='lift'; window.__calls=[]"); snap(); shot('1b-lift')
+        check(tag, 'lift photo -> today\'s workout, one read', ev("[D.lift && D.lift.state, D.lift && D.lift.name, D.lift && D.lift.w, window.__calls.join()]"), ['ok', 'Bench press', 185, 'snap'])
+        n = ev("todayCheckin().lifts ? todayCheckin().lifts.length : 0"); vis(pg, '[data-a="liftSave"]'); pg.wait_for_timeout(400)
+        check(tag, 'lift added to today\'s check-in', ev("[todayCheckin().lifts.length - %d, todayCheckin().lifts.slice(-1)[0].name, S.checkins.filter(c => dayNum(c.ts) === dayNum(now())).length]" % n), [1, 'Bench press', 1])
+        ev("window.__snapKind='gym'")
         # food
         before = ev("dayTotals(foodDay(now())).kcal"); ev("window.__snapKind='food'; window.__calls=[]"); snap(); shot('2-food')
         check(tag, 'food photo -> meal, one call', ev("[D.snap.kind, D.meal && D.meal.state, D.meal && D.meal.name, window.__calls.join()]"), ['food', 'ai', 'Paneer rice bowl', 'snap'])
@@ -109,14 +115,14 @@ def go(pw, mock):
         check(tag, 'from Food, no Claude: straight to the meal form', ev("[D.snap.kind, D.meal && D.meal.state]"), ['food', 'off']); ev("closeAll()")
     # proof that needs no photo inside the gym
     n0 = ev("window.__calls ? window.__calls.length : 0")
-    ev("S.offset += 24 * HOUR; tick(); render()"); ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+    ev("S.offset += 24 * HOUR; tick(); render()"); ev("closeAll(); D.camIntent = null; S.ui.tab = 'home'; render()"); vis(pg, '.snap'); pg.evaluate('A.openNoPhoto()'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
     pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900); shot('6-outside')
     check(tag, 'outside photo gets an outside check', ev("[D.ci && D.ci.ai, D.ci && D.ci.outside, (window.__calls ? window.__calls.length : 0) - %d]" % n0), ['ok', True, 1] if mock else ['off', True, 0])
     vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1600)
     check(tag, 'outside photo is labelled', ev("[S.posts[0].proof, S.checkins[S.checkins.length - 1].proof]"), ['outside', 'outside'])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     if mock:
-        ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__outsideOk = false"); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="openNoPhoto"]'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
+        ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__outsideOk = false"); vis(pg, '.snap'); pg.evaluate('A.openNoPhoto()'); vis(pg, '[data-a="camOutside"]'); pg.wait_for_timeout(200)
         pg.set_input_files('#cam-input', IMG); pg.wait_for_timeout(900)
         check(tag, 'outside photo that is not a gym is blocked', ev("[D.ci && D.ci.ai, document.querySelector('#ci-post').disabled]"), ['no', True])
         ev("window.__outsideOk = true; closeAll(); D.ci = null; D.snap = null; A.camClose && A.camClose(); S.ui.tab = 'home'; render()")
@@ -130,7 +136,7 @@ def go(pw, mock):
     # a comeback after a lost streak earns the bonus
     ev("S.settings.autoPass = false; skipTime(80)"); pg.wait_for_timeout(200)
     check(tag, 'streak lost', ev("[pAlive(S.me), !!S.me.lost]"), [False, True])
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1200); pts = ev("ciPts(D.ci)"); vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1500)
+    vis(pg, '.snap'); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1200); pts = ev("ciPts(D.ci)"); vis(pg, '[data-a="ciPost"]'); pg.wait_for_timeout(1500)
     check(tag, 'comeback bonus', ev("[S.checkins[S.checkins.length - 1].bonus, S.checkins[S.checkins.length - 1].pts - %d]" % pts), [20, 20])
     vis(pg, '.done [data-a="closeSheet"]'); pg.wait_for_timeout(200)
     # duo pause
@@ -149,7 +155,7 @@ def live(pw):
     ctx = b.new_context(viewport={'width':390,'height':844}, device_scale_factor=2, permissions=['camera']); pg = ctx.new_page(); pg.set_default_timeout(5000); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type=='error' else None)
     pg.goto(url); pg.wait_for_timeout(500); pg.evaluate('closeAll()')
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/'shots/ph-live-0.png'))
+    vis(pg, '.snap'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/'shots/ph-live-0.png'))
     check('live', 'viewfinder is on', pg.evaluate("[cam.live, !!cam.stream, (document.querySelector('#cam-video')||{}).videoWidth > 0, !!document.querySelector('[data-a=\"camFlip\"]')]"), [True, True, True, True])
     vis(pg, '[data-a="camShoot"]'); pg.wait_for_timeout(900); pg.screenshot(path=str(root/'shots/ph-live-1.png'))
     check('live', 'shutter takes the frame', pg.evaluate("[!!(D.snap && D.snap.ph), Object.keys(PHOTOS).length, D.snap.state]"), [True, 1, 'off'])

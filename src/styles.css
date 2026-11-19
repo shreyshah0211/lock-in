@@ -925,7 +925,7 @@ body{overscroll-behavior:none}
 .cap-o b{display:block;font-size:17px;font-weight:800}
 .cap-o small{display:block;font-size:13px;color:var(--mute);margin-top:2px}
 .cap-i{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
-.cap-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cap-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .cap-s{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 4px;border-radius:20px;background:var(--mist);font-size:13px}
 .cap-s b{font-weight:700}
 .cap-nophoto{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mute);align-self:center}
@@ -1001,8 +1001,8 @@ body{overscroll-behavior:none}
 .wc-big b{font-weight:800}
 .wc-big small{font-size:12.5px;font-weight:600}
 .mm-w b{color:var(--water)}
-.cap-row{grid-template-columns:repeat(5,1fr)}
-.cap-s{font-size:12px;padding:12px 2px}
+/* (Add food has two small options, side by side) */
+.cap-s{font-size:13px;padding:14px 4px}
 .td-food .grow{grid-template-columns:repeat(4,1fr);gap:10px}
 .td-m b{font-size:17px}
 .wc-cam{padding:0 12px;background:#E8F5FC;color:#0F6C9E}

@@ -95,6 +95,7 @@ A.openMore = () => {
     menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') +
     menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
     menuRow('openMyGym', 'pin', 'My gym', S.gymLoc ? esc(S.gymLoc.name) : 'Notice when you arrive and leave') +
+    menuRow('openNoPhoto', 'info', 'No photos at your gym?', 'Other ways to check in') +
     menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health and more') +
     menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
     menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +

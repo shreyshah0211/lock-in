@@ -48,9 +48,9 @@ with sync_playwright() as pw:
     # ---- 1. Claude's dictation, Claude works it out ----
     b, pg = page(pw); ev = pg.evaluate
     check('the microphone route is Claude dictation', ev('voiceKind()'), 'claude')
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300)
-    check('the capture menu has a Say it button', pg.locator('.capture [data-to="openSay"]').count(), 1)
-    vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(350); shot(pg, '01-sheet')
+    check('the camera button opens the camera, no menu', (vis(pg, '.snap'), pg.wait_for_timeout(300), ev("[S.ui.tab, document.querySelectorAll('.capture').length]"))[2], ['cam', 0])
+    ev("A.camClose()"); pg.wait_for_timeout(200)
+    ev("A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(350); shot(pg, '01-sheet')
     check('the sheet opens with a microphone', [pg.locator('#say-mic').count(), pg.locator('#say-state').inner_text(), pg.locator('#say-go').is_disabled()], [1, 'Tap and talk', True])
     vis(pg, '#say-mic'); pg.wait_for_timeout(120)
     check('tapping the microphone starts listening', [ev('__dict.starts'), ev("document.querySelector('#say-mic').classList.contains('on')"), pg.locator('#say-state').inner_text()], [1, True, 'Listening. Tap when you are done.'])
@@ -67,7 +67,7 @@ with sync_playwright() as pw:
 
     # a workout said from Home: it waits for the photo, then fills the check-in
     ev("S.offset += 24 * HOUR; tick(); render()");
-    vis(pg, '.tabbar [data-tab="home"]'); pg.wait_for_timeout(200); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300)
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300)
     vis(pg, '#say-mic'); pg.wait_for_timeout(100); ev("__dict.say(' Leg day, fifty minutes, squat 225 for 5 for three sets, then RDLs 185 for 8. Felt hard.')"); pg.wait_for_timeout(60)
     ev("__dict.set('idle', 'viewer_stopped')"); pg.wait_for_timeout(600); shot(pg, '04-camera')
     check('a workout goes to the camera for its photo', [ev('S.ui.tab'), ev('sheets.length'), ev('!!D.said'), pg.locator('.cam-frame p').inner_text().split('\n')[0]], ['cam', 0, True, 'Now snap your gym photo'])
@@ -86,7 +86,7 @@ with sync_playwright() as pw:
 
     # from inside the check-in form
     ev("S.offset += 24 * HOUR; tick(); render()")
-    vis(pg, '.snap'); pg.wait_for_timeout(300); vis(pg, '.capture [data-a="goCam"]'); pg.wait_for_timeout(300); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1300)
+    vis(pg, '.snap'); pg.wait_for_timeout(300); vis(pg, '[data-a="camSample"][data-k="gym"]'); pg.wait_for_timeout(1300)
     check('the check-in form has a Say button', pg.locator('.say-in').inner_text(), 'Say what you trained')
     vis(pg, '.say-in'); pg.wait_for_timeout(300)
     check('it opens in workout mode', [ev('D.say.mode'), pg.locator('.sheet').last.locator('h2').inner_text()], ['workout', 'Say what you trained'])
@@ -98,20 +98,20 @@ with sync_playwright() as pw:
     ev('closeAll(); A.camClose()'); pg.wait_for_timeout(200)
 
     # something that is neither: it asks, and the answer settles it
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); pg.fill('#say-text', 'gibberish words'); vis(pg, '#say-go'); pg.wait_for_timeout(500); shot(pg, '07-ask')
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300); pg.fill('#say-text', 'gibberish words'); vis(pg, '#say-go'); pg.wait_for_timeout(500); shot(pg, '07-ask')
     check('unclear words get one question', [pg.locator('.say-ask').count(), ev('!!D.say')], [1, True])
     vis(pg, '[data-a="sayAs"][data-k="food"]'); pg.wait_for_timeout(600)
     check('answering "a meal" opens a meal draft', [ev('!!D.meal'), ev('D.say')], [True, None])
     ev('closeAll()'); pg.wait_for_timeout(150)
 
     # leaving the camera forgets what was said
-    vis(pg, '.tabbar [data-tab="home"]'); pg.wait_for_timeout(150); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); pg.fill('#say-text', 'push day 40 minutes'); vis(pg, '#say-go'); pg.wait_for_timeout(600)
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300); pg.fill('#say-text', 'push day 40 minutes'); vis(pg, '#say-go'); pg.wait_for_timeout(600)
     check('said first, camera next', [ev('S.ui.tab'), ev('!!D.said')], ['cam', True])
     vis(pg, '[data-a="saidClear"]'); pg.wait_for_timeout(200)
-    check('"Forget what I said" clears it', [ev('D.said'), pg.locator('.cam-frame p').inner_text().split('\n')[0]], [None, 'Snap your gym or your food'])
+    check('"Forget what I said" clears it', [ev('D.said'), pg.locator('.cam-frame p').inner_text().split('\n')[0]], [None, 'Gym, lift or food'])
     vis(pg, '[data-a="camClose"]'); pg.wait_for_timeout(200)
     # closing the sheet stops the microphone
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); vis(pg, '#say-mic'); pg.wait_for_timeout(120); pg.keyboard.press('Escape'); pg.wait_for_timeout(250)
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300); vis(pg, '#say-mic'); pg.wait_for_timeout(120); pg.keyboard.press('Escape'); pg.wait_for_timeout(250)
     check('closing the sheet stops listening', [ev('sheets.length'), ev('__dict.state'), ev('D.say')], [0, 'idle', None])
     # the Food tab
     vis(pg, '.tabbar [data-tab="you"]'); vis(pg, '[data-a="youSeg"][data-k="food"]'); pg.wait_for_timeout(200)
@@ -123,7 +123,7 @@ with sync_playwright() as pw:
     # ---- 2. no microphone and no Claude: keyboard route, plain rules ----
     b, pg = page(pw, nodict=True, noai=True, nosr=True); ev = pg.evaluate
     check('with no microphone the route is the keyboard', ev('voiceKind()'), 'kb')
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(350); shot(pg, '08-keyboard')
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(350); shot(pg, '08-keyboard')
     check('the keyboard sheet has no microphone button, says how, and puts the cursor in the box', [pg.locator('#say-mic').count(), pg.locator('.say-kb').count(), ev("document.activeElement && document.activeElement.id")], [0, 1, 'say-text'])
     check('the box is 16px so the phone does not zoom', ev("getComputedStyle(document.querySelector('#say-text')).fontSize"), '16px')
     box = ev("(() => { const r = document.querySelector('#say-go').getBoundingClientRect(); return Math.round(r.bottom); })()")
@@ -134,7 +134,7 @@ with sync_playwright() as pw:
     check('plain rules: type, time and effort', [d['type'], d['mins'], d['effort']], ['push', 90, 1])
     check('plain rules: lifts', d['lifts'], [{'name': 'Bench press', 'w': 185, 'reps': 5, 'sets': ''}, {'name': 'Incline dumbbell press', 'w': 60, 'reps': 8, 'sets': 3}])
     ev('closeAll(); A.camClose()'); pg.wait_for_timeout(200)
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); pg.fill('#say-text', 'two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(600)
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300); pg.fill('#say-text', 'two eggs and toast'); vis(pg, '#say-go'); pg.wait_for_timeout(600)
     check('plain rules: a meal opens as a rough guess', [ev('!!D.meal'), ev('D.meal && D.meal.state'), ev('D.meal && +D.meal.kcal > 0')], [True, 'guess', True])
     ev('closeAll()')
     rules = ev('''[
@@ -150,10 +150,10 @@ with sync_playwright() as pw:
 
     # ---- 3. dictation refused ----
     b, pg = page(pw, deny=True); ev = pg.evaluate
-    vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300); vis(pg, '#say-mic'); pg.wait_for_timeout(300); shot(pg, '09-refused')
+    pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300); vis(pg, '#say-mic'); pg.wait_for_timeout(300); shot(pg, '09-refused')
     check('refused: the sheet switches to the keyboard and stays open', [ev('voiceKind()'), pg.locator('#say-mic').count(), pg.locator('.say-kb').count(), ev('!!D.say')], ['kb', 0, 1, True])
     check('refused: it says so once', pg.locator('.toast').count(), 1)
-    pg.keyboard.press('Escape'); pg.wait_for_timeout(200); vis(pg, '[data-a="openCapture"]'); pg.wait_for_timeout(300); vis(pg, '.capture [data-to="openSay"]'); pg.wait_for_timeout(300)
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(200); pg.evaluate("closeAll(); S.ui.tab = 'home'; render(); A.openSay({dataset:{k:'auto'}})"); pg.wait_for_timeout(300)
     check('refused: it does not ask again', [ev('__dict.starts'), pg.locator('#say-mic').count()], [1, 0])
     check('no errors when refused', pg.errs, []); b.close()
 
