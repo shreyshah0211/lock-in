@@ -84,7 +84,7 @@ with sync_playwright() as pw:
     check('laptop: data from the account can be changed, and the change reaches the phone', [B.evaluate("S.goals.p"), core()['goals']['p'], ev("S.goals.p")], [150, 150, 150])
     n = len(DB); B.wait_for_timeout(1200)
     check('two open devices do not keep rewriting the account', [len(DB), B.evaluate("SYNC.seen === SYNC.sent"), ev("SYNC.seen === SYNC.sent")], [n, True, True])
-    B.evaluate("S.ui.tab = 'food'; render()"); vis(B, '[data-a="mealAgain"]'); A.wait_for_timeout(1500)
+    B.evaluate("A.mealAgain({dataset:{id:S.meals[0].id}})"); A.wait_for_timeout(1500)
     check('a meal logged on the laptop shows on the phone', [ev("S.meals.length"), len(core()['meals'])], [2, 2])
     # both devices log at the same moment: nothing is lost
     ev("A.mealAgain({dataset:{id:S.meals[0].id}})"); B.evaluate("A.mealAgain({dataset:{id:S.meals[0].id}})"); A.wait_for_timeout(2500)

@@ -35,11 +35,6 @@ function foodBody() {
   let h = '';
   h += '<div class="card">' + nutritionBar(fd, true) + '</div>';
   h += waterCard(fd);
-  if (off === 0) {
-    const rec = recentMeals();
-    if (rec.length) h += '<div><div class="sec-h" style="margin-bottom:6px"><h2 class="h2">Log again</h2></div><div class="again hscroll">' +
-      rec.map(x => '<button data-a="mealAgain" data-id="' + x.m.id + '" aria-label="Log ' + esc(x.m.name) + ' again"><img src="' + mealImg(x.m) + '" alt=""><span class="grow"><b>' + esc(x.m.name) + '</b><small>' + (kc ? fmtN(x.m.kcal) + ' kcal, ' : '') + x.m.p + ' g protein</small></span><span class="plus">' + ic('plus', 18) + '</span></button>').join('') + '</div></div>';
-  }
   const viaHealth = conn().health || conn().hconnect;
   h += '<div><div class="sec-h"><h2 class="h2">' + (off === 0 ? 'Meals today' : 'Meals') + '</h2>' + (off === 0 ? '<button class="link" data-a="openCapture">' + ic('plus', 15) + 'Add</button>' : '') + '</div>' +
     (t.meals.length ? '<div>' + t.meals.map(m => '<div class="mswipe"><div class="mswipe-acts"><button class="sw-edit" data-a="mealEdit" data-id="' + m.id + '">' + ic('pencil', 20) + 'Edit</button><button class="sw-del" data-a="mealDel" data-id="' + m.id + '">' + ic('trash', 20) + 'Delete</button></div>' +
