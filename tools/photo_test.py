@@ -76,6 +76,11 @@ def go(pw, mock):
         vis(pg, '[data-a="mealLog"]'); pg.wait_for_timeout(500); shot('3-food-tab')
         check(tag, 'meal logged, Food tab opens', ev("[S.ui.tab, dayTotals(foodDay(now())).kcal - %d, sheets.length, S.meals[S.meals.length - 1].fib, S.meals[S.meals.length - 1].est]" % before), ['you', 700, 0, 6, False])
         check(tag, 'log again adds the same numbers', ev("(() => { const b = document.querySelector('[data-a=mealAgain]'), m = S.meals.find(x => x.id === b.dataset.id), k0 = dayTotals(foodDay(now())).kcal; b.click(); return [dayTotals(foodDay(now())).kcal - k0 === m.kcal, S.meals[S.meals.length - 1].src]; })()"), [True, 'again'])
+        # a barcode in the photo: read on the phone, straight to the product, no estimate
+        ev("window.__realBD = window.BarcodeDetector; window.BarcodeDetector = class { detect() { return Promise.resolve([{ rawValue: '0049000028911' }]); } }; window.__bcOpened = null; window.__bcOpen = bcOpen; bcOpen = c => { window.__bcOpened = c; }; window.__snapKind='food'; window.__calls=[]")
+        snap()
+        check(tag, 'barcode photo -> product lookup', ev("[window.__bcOpened, D.snap, D.meal, sheets.length]"), ['0049000028911', None, None, 0])
+        ev("bcOpen = window.__bcOpen; if (window.__realBD) window.BarcodeDetector = window.__realBD; else delete window.BarcodeDetector; A.camClose()")
         # a photo of a screen cannot be posted: it asks for a retake
         ev("S.offset += 24 * HOUR; tick(); render()"); ev("window.__snapKind='gym'; window.__screen=true; window.__calls=[]"); snap(); shot('3b-screen')
         check(tag, 'screen photo: blocked, retake prompt', ev("[D.ci && D.ci.screen, !!document.querySelector('.aicheck.warn'), document.querySelector('#ci-post').disabled]"), [True, True, True])

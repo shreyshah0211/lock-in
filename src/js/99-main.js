@@ -33,6 +33,7 @@ function boot() {
     else if (++n % 30 === 0) { renderTabs(); renderRail(); }
     live();
   }, 1000);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) camStop(); else { tick(); softRefresh(); } });
+  // Leaving the app turns the camera off; coming back to the camera screen turns it on again.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) camStop(); else { tick(); softRefresh(); if (S.ui.tab === 'cam') camStart(); } });
 }
 boot();

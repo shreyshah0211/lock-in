@@ -2,7 +2,7 @@
    works out which it is. Where the browser lets a page use the camera you get a
    live viewfinder. Where it does not (a page hosted on Claude), the button opens
    the phone's own camera and the photo comes back here. */
-const cam = { live: null, stream: null, facing: 'environment', busy: false };
+const cam = { live: null, stream: null, facing: 'environment', busy: false, zoom: 1, zmin: 1, zmax: 5, hw: false };
 const isTouch = () => { try { return matchMedia('(pointer:coarse)').matches; } catch (e) { return false; } };
 function camProbe() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { cam.live = false; return; }
@@ -17,19 +17,50 @@ async function camStart() {
   try {
     const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cam.facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     if (S.ui.tab !== 'cam') s.getTracks().forEach(t => t.stop());
-    else { cam.stream = s; cam.live = true; }
+    else { cam.stream = s; cam.live = true; zoomInit(); }
   } catch (e) { cam.live = false; }
   cam.busy = false;
   if (S.ui.tab === 'cam') render();
 }
-function camStop() { if (cam.stream) { cam.stream.getTracks().forEach(t => t.stop()); cam.stream = null; } }
-function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcObject !== cam.stream) { v.srcObject = cam.stream; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { }); } }
+function camStop() { if (cam.stream) { cam.stream.getTracks().forEach(t => t.stop()); cam.stream = null; } cam.zoom = 1; }
+function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcObject !== cam.stream) { v.srcObject = cam.stream; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { }); } zoomPaint(); }
+
+/* ---- zoom ----
+   Pinch the viewfinder, or tap the 1x button. Where the phone lets the page drive the
+   camera's own zoom it does; otherwise the picture is enlarged and the photo cropped to match. */
+function zoomInit() {
+  const t = cam.stream && cam.stream.getVideoTracks()[0];
+  let c = null; try { c = t && t.getCapabilities ? t.getCapabilities() : null; } catch (e) { }
+  if (c && c.zoom && c.zoom.max > c.zoom.min) { cam.hw = true; cam.zmin = Math.max(c.zoom.min, .5); cam.zmax = Math.min(c.zoom.max, 10); }
+  else { cam.hw = false; cam.zmin = 1; cam.zmax = 5; }
+  cam.zoom = clamp(1, cam.zmin, cam.zmax);
+}
+let _zoomBusy = false, _zoomNext = null;
+function setZoom(z) {
+  z = Math.round(clamp(z, cam.zmin, cam.zmax) * 10) / 10; if (z === cam.zoom) return;
+  cam.zoom = z; zoomPaint();
+  if (!cam.hw) return;
+  const t = cam.stream && cam.stream.getVideoTracks()[0]; if (!t) return;
+  if (_zoomBusy) { _zoomNext = z; return; }   // one change at a time, then the latest
+  _zoomBusy = true;
+  t.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { cam.hw = false; cam.zmin = 1; zoomPaint(); }).finally(() => { _zoomBusy = false; if (_zoomNext != null) { const n = _zoomNext; _zoomNext = null; cam.zoom = -1; setZoom(n); } });
+}
+function zoomPaint() {
+  const v = $('#cam-video'); if (v) v.style.transform = !cam.hw && cam.zoom > 1 ? 'scale(' + cam.zoom + ')' : '';
+  const b = $('#cam-zoom'); if (b) b.textContent = (cam.zoom < 1 ? cam.zoom.toFixed(1).replace(/^0/, '') : cam.zoom % 1 ? cam.zoom.toFixed(1) : cam.zoom) + '×';
+}
+A.camZoom = () => { const steps = [cam.zmin < 1 ? cam.zmin : null, 1, 2, 3].filter(x => x != null && x <= cam.zmax), i = steps.findIndex(x => x > cam.zoom + .05); setZoom(i < 0 ? steps[0] : steps[i]); };
+const PINCH = { d0: 0, z0: 1 };
+const pinchDist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+document.addEventListener('touchstart', e => { if (e.touches.length === 2 && cam.stream && e.target.closest && e.target.closest('.cam.live')) { PINCH.d0 = pinchDist(e); PINCH.z0 = cam.zoom; } }, { passive: true });
+document.addEventListener('touchmove', e => { if (e.touches.length !== 2 || !PINCH.d0 || !cam.stream) return; e.preventDefault(); setZoom(PINCH.z0 * pinchDist(e) / PINCH.d0); }, { passive: false });
+document.addEventListener('touchend', e => { if (e.touches.length < 2) PINCH.d0 = 0; }, { passive: true });
 
 VIEWS.cam = () => {
   const intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
   const title = intent === 'water' ? 'Snap your water bottle' : intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Gym, lift or food';
-  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Lock In works out which.';
+  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Or a barcode. Lock In works out which.';
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
   const left = intent === 'water' ? (S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="gym"><span class="b">' + ic('drop', 24) + '</span>Try a sample</button>') : intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
@@ -40,7 +71,7 @@ VIEWS.cam = () => {
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span></span>' +
     (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
-    '<div class="cam-bot"><div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
+    '<div class="cam-bot">' + (live ? '<button class="cam-zoom" id="cam-zoom" data-a="camZoom" aria-label="Zoom">1×</button>' : '') + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
     alt + '</div></div>';
 };
 
@@ -60,7 +91,8 @@ A.camFlip = () => { cam.facing = cam.facing === 'user' ? 'environment' : 'user';
 A.camShoot = async () => {
   const v = $('#cam-video');
   if (cam.stream && v && v.videoWidth) {
-    const cv = document.createElement('canvas'); cv.width = v.videoWidth; cv.height = v.videoHeight; cv.getContext('2d').drawImage(v, 0, 0);
+    const z = cam.hw ? 1 : Math.max(1, cam.zoom), sw = v.videoWidth / z, sh = v.videoHeight / z;
+    const cv = document.createElement('canvas'); cv.width = Math.round(sw); cv.height = Math.round(sh); cv.getContext('2d').drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, cv.width, cv.height);
     const blob = dataURLBlob(cv.toDataURL('image/jpeg', .9));
     if (blob) { try { gotPhoto(await fileToPhoto(blob)); } catch (err) { toast('The camera did not return a photo. Try again.'); } return; }
   }
@@ -122,7 +154,12 @@ function gotPhoto(ph, sampleKind) {
   openSheet(snapSheet, { cls: 'full dark' });
   if (!ph) { setTimeout(() => { if (D.snap !== s || s.kind) return; s.kind = sampleKind || 'gym'; s.state = 'sample'; snapRoute(); }, 950); return; }
   setTimeout(() => { if (D.snap === s && s.state === 'working') { s.state = 'slow'; drawSheets(false); } }, 12000);
-  aiSnap(ph.blob).then(r => {
+  // A barcode is read on the phone itself, in well under a second, and wins over Claude's look:
+  // the label's own numbers beat any estimate.
+  const bcP = bcFind(ph.blob);
+  bcP.then(code => { if (!code || D.snap !== s || s.kind) return; s.kind = 'barcode'; D.snap = null; closeSheet(); bcOpen(code); });
+  aiSnap(ph.blob).then(async r => {
+    await bcP;
     if (D.snap !== s || s.kind) return;
     s.screen = !!r.screen;
     if (r.state === 'ok' && r.kind === 'water' && r.water) { D.snap = null; closeSheet(); startWaterPhoto(ph, r.water); }
@@ -131,13 +168,25 @@ function gotPhoto(ph, sampleKind) {
     else { s.state = r.state === 'ok' ? 'unsure' : r.state; drawSheets(false); }
   });
 }
+// The barcode digits in a photo, or null. The iPhone app reads it with Apple's Vision;
+// a browser with a barcode reader uses that; anywhere else there is none.
+function bcFind(blob) {
+  const give = new Promise(res => setTimeout(() => res(null), 2500));
+  const h = typeof foodNative === 'function' && foodNative();
+  const look = h ? new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => res(null); fr.readAsDataURL(blob); })
+      .then(b64 => b64 ? h.postMessage({ op: 'detect', image: b64 }) : null).then(c => c ? String(c).replace(/\D/g, '') || null : null).catch(() => null)
+    : 'BarcodeDetector' in window ? createImageBitmap(blob).then(bm => new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'itf'] }).detect(bm))
+      .then(a => { const c = a && a[0] && String(a[0].rawValue || '').replace(/\D/g, ''); return c && c.length >= 6 && c.length <= 14 ? c : null; }).catch(() => null)
+    : Promise.resolve(null);
+  return Promise.race([look, give]);
+}
 function snapSrc(s) { return s.ph ? PHOTOS[s.ph.key] : s.sampleKind === 'food' ? mealURI('bowl', 7) : sceneURI('rack', 14); }
 function snapSheet() {
   const s = D.snap; if (!s) return '';
   const working = s.state === 'working';
   const msg = { slow: 'This is taking longer than usual. Tell me what it is, or keep waiting.', unsure: s.screen ? 'This looks like a photo of a screen, so I could not tell what it is. What should I do with it?' : 'I could not tell what this is. What should I do with it?', busy: 'The photo check is busy right now. What is this photo?', off: 'Recognising photos needs Claude switched on for this page. For now, tell me what this is.' }[s.state] || '';
   return '<div class="snapw' + (working ? ' w' : '') + '"><div class="prev"><img src="' + snapSrc(s) + '" alt="The photo you just took"></div>' +
-    (working ? '<div class="snap-work"><span class="spin lt"></span><b>Working out what this is</b><span>Gym, lift or food. A few seconds.</span></div>' : '') +
+    (working ? '<div class="snap-work"><span class="spin lt"></span><b>Working out what this is</b><span>Gym, lift, food or a barcode. A few seconds.</span></div>' : '') +
     (working ? '' : '<div class="snap-ask"><p>' + msg + '</p>' + KINDS.map(k => '<button data-a="snapPick" data-k="' + k[0] + '"><span class="ki">' + ic(k[4], 22) + '</span><span><b>' + k[2] + '</b><small>' + k[3] + '</small></span></button>').join('') + '</div>') +
     '<button class="intro-skip" data-a="snapCancel">Cancel</button></div>';
 }

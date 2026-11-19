@@ -282,6 +282,9 @@ textarea.input{resize:none;min-height:84px}
 .cam>*{position:relative}
 .cam>.cam-bg,.cam>.cam-shade{position:absolute}
 .cam-bg{inset:0;width:100%;height:100%;object-fit:cover}
+#cam-video{transform-origin:center;transition:transform .08s linear}
+.cam-zoom{display:block;margin:0 auto 14px;min-width:46px;height:34px;padding:0 10px;border-radius:17px;background:rgba(8,10,22,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#FFD34D;font-size:13px;font-weight:700}
+.cam.live{touch-action:none}
 .cam-idle{background:radial-gradient(85% 50% at 50% 40%,#232E63,#0B0E1C 78%)}
 .cam-shade{inset:0;background:linear-gradient(180deg,rgba(8,10,22,.7),transparent 22%,transparent 52%,rgba(8,10,22,.92))}
 .cam-top{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;gap:10px}
