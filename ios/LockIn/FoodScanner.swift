@@ -12,7 +12,7 @@ import WebKit
 //   {op: "canScan"}            -> true when this iPhone can scan live
 //   {op: "scan"}               -> the barcode digits, or rejects "cancelled" / "unsupported"
 //   {op: "product", code: "…"} -> the product as JSON text, or rejects "not_found" / "offline"
-//   {op: "detect", image: "<base64 JPEG>"} -> the barcode digits in a photo, or null
+//   {op: "detect", image: "<base64 JPEG>"} -> what a barcode or QR code in the image says, or null
 // Products come from Open Food Facts (world.openfoodfacts.org), a free, open database.
 final class FoodScanner: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "food"
@@ -59,10 +59,10 @@ final class FoodScanner: NSObject, WKScriptMessageHandlerWithReply {
 
     static func barcode(in img: CGImage) -> String? {
         let req = VNDetectBarcodesRequest()
-        req.symbologies = [.ean13, .ean8, .upce, .code128, .itf14]
+        req.symbologies = [.ean13, .ean8, .upce, .code128, .itf14, .qr]
         try? VNImageRequestHandler(cgImage: img, options: [:]).perform([req])
-        let best = (req.results ?? []).filter { $0.confidence > 0.5 }.compactMap { $0.payloadStringValue?.filter(\.isNumber) }.first { (6...14).contains($0.count) }
-        return best
+        // The page decides what counts: product numbers, and QR codes that carry one.
+        return (req.results ?? []).filter { $0.confidence > 0.5 }.compactMap { $0.payloadStringValue }.first { !$0.isEmpty }
     }
 
     // MARK: Scanning

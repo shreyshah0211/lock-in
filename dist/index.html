@@ -296,6 +296,7 @@ textarea.input{resize:none;min-height:84px}
 .cam>*{position:relative}
 .cam>.cam-bg,.cam>.cam-shade{position:absolute}
 .cam-bg{inset:0;width:100%;height:100%;object-fit:cover}
+.cam-frame.hit::before,.cam-frame.hit::after,.cam-frame.hit i::before,.cam-frame.hit i::after{border-color:#3DDC84}
 #cam-video{transform-origin:center;transition:transform .08s linear}
 .cam-zoom{display:block;margin:0 auto 14px;min-width:46px;height:34px;padding:0 10px;border-radius:17px;background:rgba(8,10,22,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#FFD34D;font-size:13px;font-weight:700}
 .cam.live{touch-action:none}
@@ -2601,12 +2602,12 @@ async function camStart() {
   try {
     const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cam.facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     if (S.ui.tab !== 'cam') s.getTracks().forEach(t => t.stop());
-    else { cam.stream = s; cam.live = true; zoomInit(); }
+    else { cam.stream = s; cam.live = true; zoomInit(); scanOn(); }
   } catch (e) { cam.live = false; }
   cam.busy = false;
   if (S.ui.tab === 'cam') render();
 }
-function camStop() { if (cam.stream) { cam.stream.getTracks().forEach(t => t.stop()); cam.stream = null; } cam.zoom = 1; }
+function camStop() { scanOff(); if (cam.stream) { cam.stream.getTracks().forEach(t => t.stop()); cam.stream = null; } cam.zoom = 1; }
 function camAttach() { const v = $('#cam-video'); if (v && cam.stream && v.srcObject !== cam.stream) { v.srcObject = cam.stream; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { }); } zoomPaint(); }
 
 /* ---- zoom ----
@@ -2644,7 +2645,7 @@ VIEWS.cam = () => {
   const intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;
   const said = intent ? null : saidPending();
   const title = intent === 'water' ? 'Snap your water bottle' : intent === 'lift' ? 'Snap the machine or the weights' : intent === 'progress' ? 'Take a progress photo' : intent === 'meal' ? 'Snap your meal' : out ? 'Snap the entrance or outside' : said ? 'Now snap your gym photo' : 'Gym, lift or food';
-  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : 'Or a barcode. Lock In works out which.';
+  const sub = intent === 'water' ? 'Any bottle or glass. Lock In works out how much it holds and adds it to your water.' : intent === 'lift' ? 'Lock In reads the exercise and the weight, and adds it to today\'s workout.' : intent === 'progress' ? 'Saved privately. Only you can see these.' : out ? 'It counts as your check-in. Friends see it was taken outside the gym.' : said ? (sayLine(said) ? 'Heard: ' + esc(sayLine(said)) + '. It' : 'What you said') + ' fills in after the photo.' : det ? 'It goes with the ' + det.mins + ' minute workout ' + esc(det.src) + ' recorded.' : (live && intent !== 'meal' ? 'Point at a barcode and it opens by itself.' : 'Or a barcode. Lock In works out which.');
   // Sample photos are for looking around. With your own data on, only real photos count.
   const sample = (k, label, src) => S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="' + k + '"><span class="b"><img src="' + src + '" alt=""></span>' + label + '</button>';
   const left = intent === 'water' ? (S.mode === 'real' ? '<span></span>' : '<button class="cam-side" data-a="camSample" data-k="gym"><span class="b">' + ic('drop', 24) + '</span>Try a sample</button>') : intent === 'progress' ? '<button class="cam-side" data-a="camPick"><span class="b">' + ic('image', 24) + '</span>Photo library</button>' : sample('gym', 'Try a gym photo', sceneURI('rack', 14));
@@ -2752,17 +2753,56 @@ function gotPhoto(ph, sampleKind) {
     else { s.state = r.state === 'ok' ? 'unsure' : r.state; drawSheets(false); }
   });
 }
-// The barcode digits in a photo, or null. The iPhone app reads it with Apple's Vision;
-// a browser with a barcode reader uses that; anywhere else there is none.
+/* ---- barcodes and QR codes ----
+   The iPhone app reads them with Apple's Vision; a browser with a barcode reader uses that.
+   Only a product number counts: the digits under the bars, or a QR code that carries one
+   (a GS1 Digital Link, "…/01/<number>"). Other QR codes, such as a website, are ignored. */
+function bcParse(raw) {
+  raw = String(raw || '').trim(); if (!raw) return null;
+  const link = raw.match(/\/01\/(\d{8,14})(?:[/?#]|$)/); if (link) return link[1];
+  const d = raw.replace(/[\s-]/g, ''); return /^\d{6,14}$/.test(d) ? d : null;
+}
+const BC_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'itf', 'qr_code'];
+// src: a JPEG as base64 (for the app) and an image source (for a browser's reader).
+function bcRead(b64, img) {
+  const h = typeof foodNative === 'function' && foodNative();
+  if (h && b64) return h.postMessage({ op: 'detect', image: b64 }).then(bcParse).catch(() => null);
+  if ('BarcodeDetector' in window && img) { try { return new BarcodeDetector({ formats: BC_FORMATS }).detect(img).then(a => { for (const x of a || []) { const c = bcParse(x.rawValue); if (c) return c; } return null; }).catch(() => null); } catch (e) { } }
+  return Promise.resolve(null);
+}
+// A photo already taken: its product number, or null.
 function bcFind(blob) {
   const give = new Promise(res => setTimeout(() => res(null), 2500));
-  const h = typeof foodNative === 'function' && foodNative();
-  const look = h ? new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => res(null); fr.readAsDataURL(blob); })
-      .then(b64 => b64 ? h.postMessage({ op: 'detect', image: b64 }) : null).then(c => c ? String(c).replace(/\D/g, '') || null : null).catch(() => null)
-    : 'BarcodeDetector' in window ? createImageBitmap(blob).then(bm => new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'itf'] }).detect(bm))
-      .then(a => { const c = a && a[0] && String(a[0].rawValue || '').replace(/\D/g, ''); return c && c.length >= 6 && c.length <= 14 ? c : null; }).catch(() => null)
-    : Promise.resolve(null);
+  const look = new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => res(null); fr.readAsDataURL(blob); })
+    .then(b64 => foodNative() ? bcRead(b64, null) : createImageBitmap(blob).then(bm => bcRead(null, bm))).catch(() => null);
   return Promise.race([look, give]);
+}
+// The live viewfinder: looks about once a second and opens the product the moment it sees one.
+const SCAN = { t: null, busy: false, last: '', lastAt: 0 };
+function scanOn() { clearTimeout(SCAN.t); SCAN.t = setTimeout(scanTick, 900); }
+function scanOff() { clearTimeout(SCAN.t); SCAN.t = null; }
+function scanTick() {
+  SCAN.t = null;
+  if (!cam.stream || S.ui.tab !== 'cam') return;                     // the camera is off: stop until it is back
+  const v = $('#cam-video'), want = !D.camIntent || D.camIntent === 'meal';
+  if (!want || SCAN.busy || sheets.length || D.snap || !v || !v.videoWidth) { scanOn(); return; }
+  SCAN.busy = true;
+  // What you see in the viewfinder (the zoomed part), at most 960 pixels wide.
+  const z = cam.hw ? 1 : Math.max(1, cam.zoom), sw = v.videoWidth / z, sh = v.videoHeight / z, k = Math.min(1, 960 / sw);
+  const cv = document.createElement('canvas'); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+  cv.getContext('2d').drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, cv.width, cv.height);
+  const b64 = foodNative() ? cv.toDataURL('image/jpeg', .7).split(',')[1] : null;
+  bcRead(b64, cv).then(code => {
+    SCAN.busy = false;
+    if (code && S.ui.tab === 'cam' && !sheets.length && !D.snap && !(code === SCAN.last && Date.now() - SCAN.lastAt < 6000)) {
+      SCAN.last = code; SCAN.lastAt = Date.now();
+      const f = $('.cam-frame'); if (f) f.classList.add('hit');
+      bcOpen(code);
+      setTimeout(() => { const g = $('.cam-frame'); if (g) g.classList.remove('hit'); }, 900);
+    }
+    if (code === SCAN.last) SCAN.lastAt = Date.now();               // still pointing at the same one after closing it
+    scanOn();
+  });
 }
 function snapSrc(s) { return s.ph ? PHOTOS[s.ph.key] : s.sampleKind === 'food' ? mealURI('bowl', 7) : sceneURI('rack', 14); }
 function snapSheet() {
