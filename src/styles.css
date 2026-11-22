@@ -1144,3 +1144,13 @@ body{overscroll-behavior:none}
 .rw-miss p{font-size:14px;line-height:1.4}
 .rw-rec{font-size:13px;font-weight:700;color:var(--mute)}
 .rw-hist .sec-h{margin-bottom:2px}
+
+.rw-aside{border:0;padding:0;display:flex;gap:12px;align-items:center}
+.rw-aside .grow{flex:1;min-width:0}
+.rw-aside .t{font-weight:700;font-size:14.5px}
+.rw-aside .s{font-size:12.5px;color:var(--mute);line-height:1.4;margin-top:2px}
+.rw-shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.rw-shelf button{display:flex;flex-direction:column;gap:3px;text-align:left;min-width:0}
+.rw-simg{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:16px;background:var(--wash);margin-bottom:3px}
+.rw-shelf b{font-size:12.5px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rw-shelf small{font-size:11.5px;color:var(--mute);display:flex;align-items:center;gap:4px}

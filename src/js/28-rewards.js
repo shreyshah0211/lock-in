@@ -31,15 +31,18 @@ function rwArt() {
 function rwImg(r, cls) { return '<img class="' + (cls || 'rw-img') + '" src="' + esc(rwHttps(r.img) || rwArt()) + '" alt="" onerror="this.onerror=null;this.src=\'' + rwArt() + '\'">'; }
 // The reward's photo under a cover of tiles. Every gym day lifts some, in an order that is
 // different for each reward, so the picture comes together as you go.
-function rwGrid(r) { const n = r.kind === 'gym' ? Math.max(1, r.target) : 20, cols = Math.max(2, Math.ceil(Math.sqrt(n * 1.3))), rows = Math.ceil(n / cols); return { cols: cols, rows: rows, cells: cols * rows }; }
+// Enough tiles for a head start plus at least one new piece for every gym day.
+function rwGrid(r) { const d = r.kind === 'gym' ? Math.max(1, r.target) : 20, head = Math.max(1, Math.round(d * .08)), n = d + head, cols = Math.max(2, Math.ceil(Math.sqrt(n * 1.3))), rows = Math.ceil(n / cols); return { cols: cols, rows: rows, cells: cols * rows, head: head }; }
 function rwOrder(r, cells) {
   let h = 7; String(r.id).split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) >>> 0; });
   const a = []; for (let i = 0; i < cells; i++) a.push(i);
   for (let i = cells - 1; i > 0; i--) { h = (h * 1664525 + 1013904223) >>> 0; const j = h % (i + 1), t = a[i]; a[i] = a[j]; a[j] = t; }
   return a;
 }
+// A new lock starts with a piece or two already off: a head start gets finished more often than a blank one.
+function rwOpen(r, frac) { const g = rwGrid(r); return frac >= 1 ? g.cells : g.head + Math.floor(clamp(frac, 0, 1) * (g.cells - g.head) + 1e-9); }
 function rwCover(r, frac, prevFrac, extra) {
-  const g = rwGrid(r), open = frac >= 1 ? g.cells : Math.floor(clamp(frac, 0, 1) * g.cells), was = prevFrac == null ? open : Math.floor(clamp(prevFrac, 0, 1) * g.cells), ord = rwOrder(r, g.cells), st = [];
+  const g = rwGrid(r), open = rwOpen(r, frac), was = prevFrac == null ? open : rwOpen(r, prevFrac), ord = rwOrder(r, g.cells), st = [];
   ord.forEach((cell, k) => { st[cell] = k < was ? 'open' : k < open ? 'open new' : ''; });
   return '<div class="rw-cover" style="--c:' + g.cols + ';--r:' + g.rows + '">' + rwImg(r, 'rw-cimg') + '<div class="rw-tiles" aria-hidden="true">' + st.map(c => '<i class="' + c + '"></i>').join('') + '</div>' + (extra || '') + '</div>';
 }
@@ -121,7 +124,7 @@ function rwCard(r) {
   if (p.kind === 'gym') {
     const st = p.spare < 0 ? 'bad' : p.spare <= 2 ? 'warn' : 'ok';
     const line = p.spare < 0 ? 'Out of reach this time: ' + p.need + ' to go and only ' + plural(p.avail, 'day') + ' left.'
-      : (p.todayDone ? 'Today is done. ' : '') + p.need + ' to go. ' + (p.spare === 0 ? 'No days to spare: every day left has to count.' : 'You can miss ' + p.spare + ' of the ' + p.avail + ' days left.');
+      : (p.todayDone ? 'Today is done. ' : '') + (p.need <= 3 ? 'Nearly there: ' + p.need + ' to go. ' : p.need + ' to go. ') + (p.spare === 0 ? 'No days to spare: every day left has to count.' : 'You can miss ' + p.spare + ' of the ' + p.avail + ' days left.');
     h += '<div class="rw-n"><b class="num">' + p.done + '</b><span>of ' + plural(r.target, 'gym day') + '</span><em>' + (r.pausedAt ? 'paused' : plural(p.daysLeft, 'day') + ' left') + '</em></div>' + bar(p.frac, 'var(--go)') +
       '<p class="rw-line ' + st + '">' + line + '</p>';
   } else {
@@ -161,7 +164,11 @@ function rewardsView() {
       '<button class="btn btn-ink btn-w" data-a="rwNew">' + ic('lock', 18) + 'Pick a reward</button><p class="rw-fine">Lock In never takes or holds your money.</p></div>';
   }
   const fin = rewards().filter(r => !r.sample && r.state !== 'locked'), kept = fin.filter(r => r.state === 'won').length;
-  if (past.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">Past rewards</h2>' + (fin.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rows">' + past.map(rwPast).join('') + '</div></div>';
+  const shelf = past.filter(r => r.state === 'won'); past.splice(0, past.length, ...past.filter(r => r.state !== 'won'));
+  if (shelf.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">Earned</h2>' + (fin.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rw-shelf">' +
+    shelf.map(r => '<button data-a="rwSealOpen" data-id="' + r.id + '">' + rwImg(r, 'rw-simg') + '<b>' + esc(r.name) + '</b><small>' + rwDate(r.doneAt) + (r.seal ? ' ' + ic('lock', 11) : '') + '</small></button>').join('') + '</div></div>';
+  rwWatch();
+  if (past.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">' + (shelf.length ? 'Missed' : 'Past rewards') + '</h2>' + (fin.length && !shelf.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rows">' + past.map(rwPast).join('') + '</div></div>';
   return h + '</div>';
 }
 
@@ -252,7 +259,7 @@ function rwWeightCheck(G, end) {
 A.rwNew = () => {
   if (rwActive()) { toast('One locked reward at a time. Finish this one first.'); return; }
   closeAll();
-  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', witness: '', seal: '' }, D.rwSeed || {}); D.rwSeed = null;
+  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', witness: '', seal: '', aside: false }, D.rwSeed || {}); D.rwSeed = null;
   openSheet(rwSheet, { cls: 'full', onClose: () => { D.rw = null; } });
 };
 A.rwAgain = el => {
@@ -313,6 +320,7 @@ function rwSheet() {
     '<li>' + ic('x', 16) + '<span>Miss it and you do not get it, and you cannot lock this item again for 30 days. No money is taken, ever.</span></li>' +
     '<li>' + ic('heart', 16) + '<span>Hurt or ill? You can pause once, for up to two weeks.</span></li></ul>' +
     '<div class="field"><label for="rw-wit">Who holds you to it? (optional)</label><input class="input" id="rw-wit" data-m="rw.witness" placeholder="A friend\'s name" maxlength="30" autocomplete="off" value="' + esc(G.witness) + '"><p class="rw-fine left">You send them the deal yourself, and tell them how it ended. A goal someone else knows about is much harder to drop.</p></div>' +
+    (d.price > 0 ? '<div class="setrow rw-aside"><div class="grow"><div class="t">I have set the ' + esc(rwMoney(d.price, d.cur)) + ' aside</div><div class="s">Move it somewhere you will not spend it, like a savings pot. Money with a name on it gets spent on that. Lock In never touches it.</div></div>' + sw(G.aside, 'rwAside') + '</div>' : '') +
     '<div class="field"><label for="rw-seal">Seal something inside (optional)</label><textarea class="input" id="rw-seal" data-m="rw.seal" maxlength="400" placeholder="A note to yourself, a gift card code, a lockbox combination">' + esc(G.seal) + '</textarea><p class="rw-fine left">Hidden the moment you lock, and shown again only when you earn it. Miss, and it stays sealed for 30 more days. It is kept on this phone only.</p></div>' +
     '<p class="rw-fine">The deal is with yourself: do not buy it until you have earned it.</p></div>' +
     '<div class="sticky-cta"><button class="btn btn-go btn-w rw-hold" data-hold="rwLock" data-a="rwHoldHint">' + ic('lock', 18) + '<span>Hold to lock it in</span></button></div>';
@@ -349,6 +357,7 @@ A.rwLock = () => {
   const r = Object.assign(d, { id: uid(), kind: G.kind, start: dayStart(dayNum(now())), end: per[2], lockedAt: now(), state: 'locked' });
   if (G.kind === 'weight') { const c = rwWeightCheck(G, per[2]); if (!c.ok) { G.step = 'goal'; drawSheets(false); return; } r.fromKg = Math.round(c.from * 10) / 10; r.toKg = Math.round(c.to * 10) / 10; }
   else r.target = clamp(G.target, 1, rwSpan(per[2]));
+  r.aside = !!G.aside && d.price > 0;
   r.witness = String(G.witness || '').trim().slice(0, 30); r.seal = String(G.seal || '').trim().slice(0, 400);
   rewards().push(r); addActivity({ icon: 'lock', text: 'You locked ' + r.name + ': ' + rwGoalTxt(r) + '.' }); S.ui.homeSeg = 'rewards'; S.ui.tab = 'home'; D.rw = null;
   closeAll(); save(); render();
@@ -408,34 +417,67 @@ A.rwBought = el => { const r = rewards().find(x => x.id === el.dataset.id); if (
 A.rwShare = el => {
   const r = rewards().find(x => x.id === el.dataset.id); if (!r) return;
   const hi = r.witness ? r.witness + ', ' : '', did = r.kind === 'gym' ? plural(r.got != null ? r.got : r.target, 'gym day') : 'my weight goal';
+  const p0 = rwProg(r), grid = r.kind === 'gym' ? rwGridText(r) : '';
+  if (r.state === 'locked' && (r.told || !r.witness) && p0.kind === 'gym' && p0.done > 0) {
+    rwSend({ text: hi + r.name + ': ' + p0.done + ' of ' + r.target + ' gym days, ' + plural(p0.daysLeft, 'day') + ' left.\n' + grid + '\nLocked in with Lock In.' }, r); return;
+  }
   const text = r.state === 'won' ? hi + 'I did it. ' + (r.kind === 'gym' ? did + ', and' : 'I hit ' + did + ', and') + ' the ' + r.name + ' is mine.'
     : r.state === 'locked' ? hi + 'I locked in a reward: ' + r.name + '. ' + rwGoalTxt(r) + '. If I miss, I do not get it. Hold me to it.'
     : hi + 'I missed it. ' + (r.kind === 'gym' && r.got != null ? r.got + ' of ' + r.target + ' gym days, so' : 'So') + ' no ' + r.name + ' for me. I am going again.';
-  const data = { text: text }; if (rwHttps(r.url) && r.state !== 'missed' && r.state !== 'quit') data.url = r.url;
+  const data = { text: text + (r.state === 'won' && grid ? '\n' + grid : '') }; if (rwHttps(r.url) && r.state !== 'missed' && r.state !== 'quit') data.url = r.url;
   if (r.state === 'locked' && r.witness && !r.told) { r.told = now(); save(); render(); }
+  rwSend(data, r);
+};
+// The month as squares, the way a word-game result is shared: how it went, at a glance.
+function rwGridText(r) {
+  const days = rwGymDays(r), a = dayNum(r.start), b = Math.min(dayNum(r.doneAt || now()), dayNum(rwEnd(r))); let out = '';
+  for (let d = a; d <= b; d++) out += (days[d] ? '\uD83D\uDFE7' : '\u2B1B') + ((d - a) % 7 === 6 && d < b ? '\n' : '');
+  return out;
+}
+function rwSend(data, r) {
   if (navigator.share) { navigator.share(data).catch(() => { }); return; }
+  const text = data.text;
   const full = text + (data.url ? ' ' + data.url : '');
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(() => toast('Copied. Paste it to ' + (r.witness || 'a friend') + '.', 'copy'), () => toast(full));
   else toast(full);
 };
+A.rwAside = () => { D.rw.aside = !D.rw.aside; drawSheets(false); };
+// Twice a day, look at the store again: has the price moved, is your size still there?
+function rwWatch() {
+  const r = rwCurrent(); if (!r || r.sample || !rwHttps(r.url) || !(appNative() || window.__rwWatch) || now() - (r.checked || 0) < 12 * HOUR) return;
+  r.checked = now();
+  rwLookup(r.url).then(p => {
+    if (!p) return;
+    const v = p.variants.find(x => x.title === r.size) || (p.variants.length === 1 ? p.variants[0] : null); if (!v) return;
+    const was = [r.priceNow, r.inStock]; r.priceNow = v.price > 0 ? v.price : r.priceNow; r.inStock = v.ok;
+    save(); if (was[0] !== r.priceNow || was[1] !== r.inStock) softRefresh();
+  }).catch(() => { });
+}
 A.rwAck = el => { const r = rewards().find(x => x.id === el.dataset.id); if (r) { r.ack = true; save(); render(); } };
 // Who is watching, and whether something is sealed inside.
 function rwExtras(r) {
   const bits = []; if (r.witness) bits.push(ic('eye', 13) + esc(r.witness) + ' is holding you to it'); if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
+  if (r.aside && r.state === 'locked') bits.push(ic('dollar', 13) + esc(rwMoney(r.price, r.cur)) + ' set aside for it');
+  if (r.state === 'locked' || (r.state === 'won' && !r.bought)) {
+    if (r.inStock === false) bits.push(ic('info', 13) + (r.size ? 'Size ' + esc(r.size) + ' is' : 'It is') + ' sold out right now');
+    if (r.priceNow > 0 && Math.abs(r.priceNow - r.price) >= .5) bits.push(ic('trend', 13) + 'Now ' + esc(rwMoney(r.priceNow, r.cur)) + (r.priceNow < r.price ? ', down from ' : ', up from ') + esc(rwMoney(r.price, r.cur)));
+  }
   return bits.length ? '<span class="rw-x">' + bits.map(b => '<span>' + b + '</span>').join('') + '</span>' : '';
 }
 function rwSealBox(r) { return r.seal ? '<div class="rw-sealbox"><small>' + ic('lock', 13) + 'You sealed this inside</small><p>' + esc(r.seal) + '</p></div>' : ''; }
 A.rwSealOpen = el => {
-  const r = rewards().find(x => x.id === el.dataset.id); if (!r || !r.seal) return;
+  const r = rewards().find(x => x.id === el.dataset.id); if (!r || (!r.seal && r.state !== 'won')) return;
   const at = r.state === 'won' ? 0 : (r.doneAt || r.end) + RW_OUT;
   if (at > now()) { toast('Sealed until ' + rwDate(at) + '.', 'lock'); return; }
-  openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + rwSealBox(r) + '</div>');
+  openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + (r.state === 'won' ? rwCover(r, 1, null) + '<p class="mute">Earned ' + rwDate(r.doneAt) + (r.kind === 'gym' ? ' with ' + plural(r.got || r.target, 'gym day') : '') + '.</p>' : '') + rwSealBox(r) +
+    (r.state === 'won' ? '<button class="btn btn-line btn-w" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 17) + 'Share it</button>' : '') + '</div>');
 };
 // After a check-in: the piece it just uncovered.
 function rwDoneLine() {
   const r = rwActive(); if (!r || r.kind !== 'gym' || r.pausedAt) return '';
   const p = rwProg(r); if (!p.todayDone) return '';
-  return '<div class="rw-done">' + rwCover(r, p.frac, (p.done - 1) / r.target) + '<div><b>' + (p.hit ? 'That was the last piece' : 'Piece ' + p.done + ' of ' + r.target + ' uncovered') + '</b><span>' + (p.hit ? esc(r.name) + ' is yours.' : p.need + ' to go for your ' + esc(r.name) + '.') + '</span></div></div>';
+  const mark = [[.75, 'Three quarters there'], [.5, 'Halfway'], [.25, 'A quarter of the way']].find(m => (p.done - 1) / r.target < m[0] && p.frac >= m[0]);
+  return '<div class="rw-done">' + rwCover(r, p.frac, (p.done - 1) / r.target) + '<div><b>' + (p.hit ? 'That was the last piece' : mark ? mark[1] + ': ' + p.done + ' of ' + r.target : 'Piece ' + p.done + ' of ' + r.target + ' uncovered') + '</b><span>' + (p.hit ? esc(r.name) + ' is yours.' : p.need + ' to go for your ' + esc(r.name) + '.') + '</span></div></div>';
 }
 
 // On Home's Today card: the reward you are working towards, one tap from its tab.
