@@ -35,8 +35,10 @@ function feedPosts() {
 function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
-  let h = heroPanel() + todayCard() + homeCard();
-  h += '<div class="sec" style="padding-bottom:0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
+  const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
+  let h = heroPanel() + todayCard() + homeCard() + homeSeg(seg);
+  if (seg === 'rewards') return h + rewardsView();
+  h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
   h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">No photos yet.</p>') + '</div>';
   return h;

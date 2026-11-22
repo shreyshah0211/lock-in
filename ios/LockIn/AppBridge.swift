@@ -10,6 +10,7 @@ import WebKit
 // Native pieces the page asks for through the "app" message handler (see src/js/22-native.js):
 //   {op: "map", places: [{name, city, lat, lon, count}], focus: "name"} -> shows the gyms in Apple Maps
 //   {op: "remind", on: true, deadline: <ms since 1970>, days: 23}   -> schedules streak reminders
+//   {op: "page", url: "https://..."}                              -> the text of a product page, for locked rewards
 //   {op: "listen"} / {op: "listenStop"}                               -> speech to text; words arrive through window.__speech
 final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "app"
@@ -55,6 +56,18 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(["visits": w.visits, "inside": w.inside, "status": w.statusName, "watching": w.gym != nil], nil)
         case "gymMap":
             GymWatcher.shared.showMap(); replyHandler(true, nil)
+        case "page":
+            // The text of a store's product page, so a pasted link can show its photo, name and price.
+            // https only, no cookies, nothing about you is sent.
+            guard let s = body["url"] as? String, let url = URL(string: s), url.scheme == "https" else { replyHandler(nil, "bad_request"); return }
+            var req = URLRequest(url: url, timeoutInterval: 12)
+            req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            req.setValue("text/html,application/json;q=0.9,*/*;q=0.5", forHTTPHeaderField: "Accept")
+            URLSession(configuration: .ephemeral).dataTask(with: req) { data, resp, _ in
+                let ok = (resp as? HTTPURLResponse).map { (200..<300).contains($0.statusCode) } ?? false
+                let text = ok ? String(decoding: (data ?? Data()).prefix(1_500_000), as: UTF8.self) : ""
+                DispatchQueue.main.async { replyHandler(["text": text], nil) }
+            }.resume()
         case "listenStop":
             SpeechInput.shared.finish(); replyHandler(true, nil)
         default:
