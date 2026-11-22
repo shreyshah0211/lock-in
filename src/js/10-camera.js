@@ -304,7 +304,7 @@ function ciBlocked(d) {
 function ciPostBtn(d) {
   const why = ciBlocked(d);
   return '<button class="btn btn-go btn-w" id="ci-post" data-a="ciPost"' + (why ? ' disabled' : '') + '>' +
-    (why === 'checking' ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Checking your photo' : why ? 'Needs a gym photo to post' : 'Post check-in<span id="ci-pts" style="opacity:.85;font-weight:600">+' + ciPts(d) + ' points</span>') + '</button>';
+    (why === 'checking' ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Checking your photo' : why ? 'Needs a gym photo to post' : 'Post check-in') + '</button>';
 }
 // What backs this check-in, said in plain words above the form.
 function aiRow(d) {
@@ -361,7 +361,7 @@ A.ciRetake = () => { D.ci = null; D.snap = null; closeSheet(); };
 A.ciRecheck = () => { const d = D.ci; if (d && d.blob) ciCheck(d); };
 A.ciLiftAdd = () => { D.ci.lifts.push({ name: '', w: '', reps: '', sets: '' }); drawSheets(false); const i = $('#lf-n' + (D.ci.lifts.length - 1)); if (i) i.focus(); };
 A.ciLiftDel = el => { D.ci.lifts.splice(+el.dataset.i, 1); drawSheets(false); };
-A.ciPtsLive = () => { const e = $('#ci-pts'); if (e) e.textContent = '+' + ciPts(D.ci) + ' points'; const h = $('#ci-hints'); if (h) h.innerHTML = liftHints(D.ci); };
+A.ciPtsLive = () => { const h = $('#ci-hints'); if (h) h.innerHTML = liftHints(D.ci); };
 A.ciPost = () => {
   const d = D.ci; if (!d) return;
   if (todayCheckin()) { toast('You already checked in today. The next one counts tomorrow.'); return; }
@@ -391,7 +391,7 @@ function showDone(res, leftBefore) {
       '<h2>' + (res.repaired ? 'Streak restored' : res.had ? 'Day ' + days + ', locked in' : 'New streak started') + '</h2>' +
       '<p>Your next photo is due ' + whenBy(deadline()) + '.</p>' +
       (pr ? '<div class="pr-banner">' + ic('trend', 24) + '<div><b>New best: ' + esc(pr.lift) + ' ' + pr.w + ' ' + u + '</b><span>' + (pr.prev ? 'Up ' + (Math.round((pr.w - pr.prev) * 10) / 10) + ' ' + u + ' on your old best of ' + pr.prev + '.' : 'Your heaviest yet.') + '</span></div></div>' : '') +
-      '<div class="earn"><span class="pill">' + ic('bolt', 15) + '+' + res.pts + ' effort points</span>' + res.earned.map(e => '<span class="pill">' + ic(e.icon, 15) + esc(e.text) + '</span>').join('') + '</div>' +
+      rwDoneLine() + (res.earned.length ? '<div class="earn">' + res.earned.map(e => '<span class="pill">' + ic(e.icon, 15) + esc(e.text) + '</span>').join('') + '</div>' : '') +
       '<div class="acts"><button class="btn btn-white" data-a="closeSheet">Done</button>' + next + '<div class="done-links">' + doneCal() + '</div></div></div>';
   }, { cls: 'full dark', after: (el, sh) => { if (!el || sh.ran) return; sh.ran = true; animateDial($('#done-dial'), from); } });
 }

@@ -27,7 +27,7 @@ function dayDetail() {
   const d = S.ui.heatSel; if (d == null) return '';
   const cs = S.checkins.filter(c => dayNum(c.ts) === d), lbl = dateLong(dayStart(d));
   if (!cs.length) return '<div class="dayd"><span><b>' + lbl + '</b><br>' + (lapseDays()[d] ? 'Your clock ran out and a streak ended here.' : 'Rest day. No check-in.') + '</span></div>';
-  return '<div class="dayd"><span><b>' + lbl + '</b>' + cs.map(c => '<button class="dd-s" data-a="openSession" data-id="' + c.id + '">' + esc(TYPE[c.type].v) + ', ' + c.mins + ' min, ' + EFFORT[c.effort].toLowerCase() + ', ' + c.pts + ' points' + ic('chevR', 15) + '</button>').join('') + '</span></div>';
+  return '<div class="dayd"><span><b>' + lbl + '</b>' + cs.map(c => '<button class="dd-s" data-a="openSession" data-id="' + c.id + '">' + esc(TYPE[c.type].v) + ', ' + c.mins + ' min, ' + EFFORT[c.effort].toLowerCase() + ic('chevR', 15) + '</button>').join('') + '</span></div>';
 }
 function menuRow(action, icon, title, sub) {
   return '<button data-a="' + action + '"><span class="mi">' + ic(icon, 20) + '</span><span class="g"><b>' + title + '</b><span>' + sub + '</span></span><span class="chev">' + ic('chevR', 18) + '</span></button>';
@@ -43,14 +43,14 @@ function progressTiles(ws) {
   const lb = latestBest(), d = lb && new Date(lb.ts);
   return '<div class="two"><button class="tile" data-a="openSessions"><div class="k">Check-ins</div><div class="v">' + ws.n + '<small>of ' + ws.goal + ' this week</small></div>' + bar(ws.n / ws.goal, 'var(--go)') + '<div class="d">Tap to see each one.</div></button>' +
     '<button class="tile" data-a="openSessions"><div class="k">Time trained</div><div class="v">' + ws.hours.toFixed(1) + '<small>hours</small></div><div class="d">Across ' + plural(ws.n, 'session') + '.</div></button>' +
-    '<button class="tile" data-a="openEffortInfo"><div class="k">Effort points</div><div class="verdict ' + ws.verdict[1] + '">' + ws.verdict[0] + '</div><div class="v">' + ws.pts + '</div><div class="d">' + (ws.avg4 ? 'Your usual week is ' + ws.avg4 + '. ' : '') + 'See how points work.</div></button>' +
+    '<div class="tile"><div class="k">Weeks on goal</div><div class="v">' + ws.hits + '<small>of the last 8</small></div><div class="d">Weeks with ' + ws.goal + ' check-ins or more.</div></div>' +
     (lb ? '<button class="tile" data-a="openLift" data-n="' + esc(lb.name) + '"><div class="k">Latest best</div><div class="v">' + lb.w + '<small>' + S.settings.units + '</small></div><div class="d">' + esc(lb.name) + ', ' + MO[d.getMonth()] + ' ' + d.getDate() + '.</div></button>'
       : '<div class="tile"><div class="k">Latest best</div><div class="v">0</div><div class="d">Log the same lift twice and your best shows up here.</div></div>') + '</div>';
 }
 function weekBars(ws) {
-  const maxW = Math.max(1, ...ws.wk.map(w => w.pts)), total = ws.wk.reduce((a, w) => a + w.n, 0);
-  if (total < 3) return '<div class="card"><div class="card-k">Effort points, last 8 weeks</div><p class="thresh">Check in 3 times and your weekly trend appears here. You have ' + total + ' so far.</p></div>';
-  return '<div class="card"><div class="card-k">Effort points, last 8 weeks</div><div class="wk">' + ws.wk.map((w, i) => { const d = new Date(w.start), lbl = i === 7 ? 'Now' : (d.getMonth() + 1) + '/' + d.getDate(); return '<button class="' + (i === 7 ? 'cur' : '') + '" data-a="openSessions" data-i="' + i + '" aria-label="Week from ' + lbl + ', ' + w.pts + ' points, ' + plural(w.n, 'check-in') + '"><em>' + (w.pts || '') + '</em><i style="height:' + (w.pts / maxW * 58).toFixed(1) + '%"></i><span>' + lbl + '</span></button>'; }).join('') + '</div><p style="font-size:13.5px;margin-top:12px">You hit your goal of ' + ws.goal + ' check-ins in <b>' + ws.hits + ' of the last 8 weeks</b>. Tap a week to see its sessions.</p></div>';
+  const maxW = Math.max(1, ...ws.wk.map(w => w.n)), total = ws.wk.reduce((a, w) => a + w.n, 0);
+  if (total < 3) return '<div class="card"><div class="card-k">Check-ins, last 8 weeks</div><p class="thresh">Check in 3 times and your weekly trend appears here. You have ' + total + ' so far.</p></div>';
+  return '<div class="card"><div class="card-k">Check-ins, last 8 weeks</div><div class="wk">' + ws.wk.map((w, i) => { const d = new Date(w.start), lbl = i === 7 ? 'Now' : (d.getMonth() + 1) + '/' + d.getDate(); return '<button class="' + (i === 7 ? 'cur' : '') + '" data-a="openSessions" data-i="' + i + '" aria-label="Week from ' + lbl + ', ' + plural(w.n, 'check-in') + '"><em>' + (w.n || '') + '</em><i style="height:' + (w.n / maxW * 58).toFixed(1) + '%"></i><span>' + lbl + '</span></button>'; }).join('') + '</div><p style="font-size:13.5px;margin-top:12px">You hit your goal of ' + ws.goal + ' check-ins in <b>' + ws.hits + ' of the last 8 weeks</b>. Tap a week to see its sessions.</p></div>';
 }
 function splitCard() {
   const split = splitByType(60), n = checkinsSince(now() - 60 * DAY).length;
@@ -176,7 +176,7 @@ A.openSettings = () => {
     return sheetHead('Settings', { back: true }) + '<div class="sh-b">' + dataCard() +
       '<div class="two">' + inp('name', 'Name') + inp('handle', 'Username') + inp('campus', 'Campus') + inp('gym', 'Home gym') + '</div>' +
       '<div class="field"><span class="lbl">Weekly goal</span><div class="stepper"><button data-a="goalStep" data-d="-1" aria-label="Fewer">' + ic('minus') + '</button><span class="v">' + m.goalPerWeek + '</span><button data-a="goalStep" data-d="1" aria-label="More">' + ic('plus') + '</button><span class="u">check-ins a week</span></div></div>' +
-      '<div><h3 class="h2">What friends can see</h3>' + row('Streak and time left', 'Always on. It is the point of the app.', true, 'locked') + row('Workouts and effort points', 'What you trained, how long and how hard.', s.share.workouts, 'share.workouts') + row('Lifts and new bests', 'Weights you log.', s.share.lifts, 'share.lifts') +
+      '<div><h3 class="h2">What friends can see</h3>' + row('Streak and time left', 'Always on. It is the point of the app.', true, 'locked') + row('Workouts', 'What you trained, how long and how hard.', s.share.workouts, 'share.workouts') + row('Lifts and new bests', 'Weights you log.', s.share.lifts, 'share.lifts') +
       '<div class="setrow"><div class="grow"><div class="t">Food, health data and progress photos</div><div class="s">Always private.</div></div>' + ic('lock', 20) + '</div></div>' +
       '<div><h3 class="h2">Streak</h3>' + row('Use rest passes automatically', 'Spend a pass instead of losing the streak.', s.autoPass, 'autoPass') + '</div>' +
       '<button class="btn btn-line btn-w" data-a="openIntro">Replay the intro</button>' +
