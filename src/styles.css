@@ -1125,3 +1125,22 @@ body{overscroll-behavior:none}
 .rw-done div:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
 .rw-done b{font-size:15px}
 .rw-done span{font-size:13px;opacity:.8}
+
+.td-rw .rw-cover{width:44px;flex:none;aspect-ratio:1;border-radius:11px}
+.td-rw .rw-tiles i{box-shadow:none}
+.td-rw .grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-rw .grow{min-width:0}
+
+.rw-fine.left{text-align:left}
+.rw-x{display:flex;flex-direction:column;gap:3px;margin-top:5px;font-size:13px;font-weight:600;color:var(--iron)}
+.rw-x span{display:flex;align-items:center;gap:6px}
+.rw-sealbox{background:#fff;border-radius:16px;padding:12px 14px;text-align:left;width:100%}
+.rw-sealbox small{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px}
+.rw-sealbox p{font-size:15px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.sh-b>.rw-sealbox,.rw-win .rw-sealbox{background:var(--mist)}
+.rw-sealed{display:inline-flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px}
+.card.rw-miss{display:flex;flex-direction:column;gap:8px;background:#FBEDEA}
+.rw-miss b{font-size:16px}
+.rw-miss p{font-size:14px;line-height:1.4}
+.rw-rec{font-size:13px;font-weight:700;color:var(--mute)}
+.rw-hist .sec-h{margin-bottom:2px}

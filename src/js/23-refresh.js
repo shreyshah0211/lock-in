@@ -26,7 +26,7 @@ function todayCard() {
   const done = todayCheckin(), si = snapInfo(), gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
   const row = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) : '') + '</small></span>'
     : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far' : 'Tap to check in') + '</small></span>';
-  return '<div class="card today"><button class="td-row" data-a="goCam">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button></div>';
+  return '<div class="card today"><button class="td-row" data-a="goCam">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button>' + (S.ui.homeSeg === 'rewards' ? '' : rwTodayRow()) + '</div>';
 }
 
 /* ---- next weight ----

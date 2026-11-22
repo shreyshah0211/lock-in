@@ -1140,6 +1140,25 @@ body{overscroll-behavior:none}
 .rw-done b{font-size:15px}
 .rw-done span{font-size:13px;opacity:.8}
 
+.td-rw .rw-cover{width:44px;flex:none;aspect-ratio:1;border-radius:11px}
+.td-rw .rw-tiles i{box-shadow:none}
+.td-rw .grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-rw .grow{min-width:0}
+
+.rw-fine.left{text-align:left}
+.rw-x{display:flex;flex-direction:column;gap:3px;margin-top:5px;font-size:13px;font-weight:600;color:var(--iron)}
+.rw-x span{display:flex;align-items:center;gap:6px}
+.rw-sealbox{background:#fff;border-radius:16px;padding:12px 14px;text-align:left;width:100%}
+.rw-sealbox small{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px}
+.rw-sealbox p{font-size:15px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.sh-b>.rw-sealbox,.rw-win .rw-sealbox{background:var(--mist)}
+.rw-sealed{display:inline-flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px}
+.card.rw-miss{display:flex;flex-direction:column;gap:8px;background:#FBEDEA}
+.rw-miss b{font-size:16px}
+.rw-miss p{font-size:14px;line-height:1.4}
+.rw-rec{font-size:13px;font-weight:700;color:var(--mute)}
+.rw-hist .sec-h{margin-bottom:2px}
+
 </style>
 </head>
 <body>
@@ -5078,7 +5097,7 @@ function todayCard() {
   const done = todayCheckin(), si = snapInfo(), gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
   const row = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) : '') + '</small></span>'
     : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far' : 'Tap to check in') + '</small></span>';
-  return '<div class="card today"><button class="td-row" data-a="goCam">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button></div>';
+  return '<div class="card today"><button class="td-row" data-a="goCam">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button>' + (S.ui.homeSeg === 'rewards' ? '' : rwTodayRow()) + '</div>';
 }
 
 /* ---- next weight ----
@@ -5746,9 +5765,9 @@ function rwCard(r) {
   const p = rwProg(r), u = wUnit();
   const fr = r.state === 'won' ? [1, null] : rwFracs(r, p);
   const tag = '<span class="rw-tag">' + (r.state === 'won' ? ic('check', 13) + 'Earned' : r.pausedAt ? ic('hourglass', 13) + 'Paused' : ic('lock', 13) + 'Locked') + '</span>';
-  let h = '<div class="card rw' + (r.state === 'won' ? ' won' : '') + '">' + rwCover(r, fr[0], fr[1], tag) + '<div class="rw-id"><b class="rw-name">' + esc(r.name) + '</b><span class="rw-sub">' + rwSub(r) + '</span></div>';
+  let h = '<div class="card rw' + (r.state === 'won' ? ' won' : '') + '">' + rwCover(r, fr[0], fr[1], tag) + '<div class="rw-id"><b class="rw-name">' + esc(r.name) + '</b><span class="rw-sub">' + rwSub(r) + '</span>' + rwExtras(r) + '</div>';
   if (r.state === 'won') {
-    return h + '<p class="rw-line"><b>You earned it.</b> ' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ', done ' + rwDate(r.doneAt) + '.' : 'You reached ' + wShow(r.toKg) + ' ' + u + ' on ' + rwDate(r.doneAt) + '.') + '</p>' +
+    return h + rwSealBox(r) + '<p class="rw-line"><b>You earned it.</b> ' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ', done ' + rwDate(r.doneAt) + '.' : 'You reached ' + wShow(r.toKg) + ' ' + u + ' on ' + rwDate(r.doneAt) + '.') + '</p>' +
       rwBuyBtn(r) + '<div class="rw-acts"><button class="btn btn-line" data-a="rwBought" data-id="' + r.id + '">' + ic('check', 17) + 'I ordered it</button><button class="btn btn-line" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 17) + 'Share it</button></div></div>';
   }
   if (p.kind === 'gym') {
@@ -5763,7 +5782,8 @@ function rwCard(r) {
   }
   h += '<div class="rw-acts">' + (p.kind === 'gym' ? (p.todayDone ? '' : '<button class="btn btn-go" data-a="goCam">' + ic('camera', 18) + 'Check in today</button>') : '<button class="btn btn-go" data-a="openWeigh">' + ic('plus', 18) + 'Log my weight</button>') +
     '<button class="btn btn-line" data-a="rwOpts" data-id="' + r.id + '">' + (now() - r.lockedAt < RW_UNDO && !r.sample ? 'Undo or pause' : 'Options') + '</button></div>' +
-    '<button class="link rw-tell" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 15) + 'Tell a friend, so someone holds you to it</button>';
+    (r.witness && !r.told ? '<button class="btn btn-ink btn-w" data-a="rwShare" data-id="' + r.id + '">' + ic('send', 17) + 'Send the deal to ' + esc(r.witness) + '</button>'
+      : '<button class="link rw-tell" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 15) + (r.witness ? 'Send it to ' + esc(r.witness) + ' again' : 'Tell a friend, so someone holds you to it') + '</button>');
   return h + '</div>';
 }
 function rwBuyBtn(r) {
@@ -5774,20 +5794,26 @@ function rwBuyBtn(r) {
 A.rwNoLink = () => toast('This one has no link. It is yours: go and buy it.', 'trophy');
 function rwPast(r) {
   const won = r.state === 'won', what = r.kind === 'gym' ? (r.got != null ? r.got + ' of ' + r.target + ' gym days' : plural(r.target, 'gym day')) : 'Goal ' + wShow(r.toKg) + ' ' + wUnit();
-  return '<div class="row rw-past">' + rwImg(r, 'rw-thumb') + '<div class="grow"><div class="t">' + esc(r.name) + '</div><div class="s">' + what + ', ' + rwDate(r.doneAt || r.end) + '</div></div>' +
+  const sealAt = r.seal && !won ? (r.doneAt || r.end) + RW_OUT : 0;
+  return '<div class="row rw-past">' + rwImg(r, 'rw-thumb') + '<div class="grow"><div class="t">' + esc(r.name) + '</div><div class="s">' + what + ', ' + rwDate(r.doneAt || r.end) + '</div>' +
+    (r.seal ? '<button class="link rw-sealed" data-a="rwSealOpen" data-id="' + r.id + '">' + ic('lock', 13) + (won || sealAt <= now() ? 'Read what you sealed' : 'Sealed until ' + rwDate(sealAt)) + '</button>' : '') + '</div>' +
     '<span class="pill' + (won ? ' rw-ok' : '') + '">' + (won ? 'Earned' : r.state === 'quit' ? 'Gave up' : 'Missed') + '</span>' +
     (won || r.sample ? '' : rwLockedOut(r) ? '<span class="rw-back">Back ' + rwDate(rwLockedOut(r)) + '</span>' : '<button class="link" data-a="rwAgain" data-id="' + r.id + '">Try again</button>') + '</div>';
 }
 function rewardsView() {
   const cur = rwCurrent(), past = rewards().filter(r => r !== cur && r.state !== 'locked').reverse();
   let h = '<div class="pad rw-wrap">';
+  const miss = rewards().slice().reverse().find(r => !r.sample && (r.state === 'missed' || r.state === 'quit') && !r.ack);
+  if (miss) h += '<div class="card rw-miss"><b>' + (miss.state === 'quit' ? 'You gave up on ' : 'You missed ') + esc(miss.name) + '</b><p>' + (miss.kind === 'gym' && miss.got != null ? miss.got + ' of ' + miss.target + ' gym days. ' : '') + 'It is locked out until ' + rwDate((miss.doneAt || miss.end) + RW_OUT) + '. The next one starts whenever you are ready.</p>' +
+    '<div class="rw-acts">' + (miss.witness ? '<button class="btn btn-ink" data-a="rwShare" data-id="' + miss.id + '">' + ic('send', 17) + 'Tell ' + esc(miss.witness) + '</button>' : '') + '<button class="btn btn-line" data-a="rwAck" data-id="' + miss.id + '">OK</button></div></div>';
   if (cur) h += rwCard(cur);
   if (!rwActive()) {
     h += '<div class="card rw-new"><h2 class="h2">' + (cur ? 'Lock the next one' : past.length ? 'Lock another reward' : 'Earn something you want') + '</h2>' +
       (cur || past.length ? '' : rwCover({ id: 'teaser', kind: 'gym', target: 20, img: '' }, .35, null) + '<p class="rw-pitch">Pick something you want and lock it behind a goal. Every gym day uncovers a piece of it. Finish, and it is yours to order. Miss, and it is gone for a month.</p>') +
       '<button class="btn btn-ink btn-w" data-a="rwNew">' + ic('lock', 18) + 'Pick a reward</button><p class="rw-fine">Lock In never takes or holds your money.</p></div>';
   }
-  if (past.length) h += '<div class="rw-hist"><h2 class="h2">Past rewards</h2><div class="rows">' + past.map(rwPast).join('') + '</div></div>';
+  const fin = rewards().filter(r => !r.sample && r.state !== 'locked'), kept = fin.filter(r => r.state === 'won').length;
+  if (past.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">Past rewards</h2>' + (fin.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rows">' + past.map(rwPast).join('') + '</div></div>';
   return h + '</div>';
 }
 
@@ -5878,7 +5904,7 @@ function rwWeightCheck(G, end) {
 A.rwNew = () => {
   if (rwActive()) { toast('One locked reward at a time. Finish this one first.'); return; }
   closeAll();
-  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '' }, D.rwSeed || {}); D.rwSeed = null;
+  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', witness: '', seal: '' }, D.rwSeed || {}); D.rwSeed = null;
   openSheet(rwSheet, { cls: 'full', onClose: () => { D.rw = null; } });
 };
 A.rwAgain = el => {
@@ -5938,6 +5964,8 @@ function rwSheet() {
     '<li>' + ic('trophy', 16) + '<span>Hit the goal and the checkout opens with it ready to buy. You pay the store.</span></li>' +
     '<li>' + ic('x', 16) + '<span>Miss it and you do not get it, and you cannot lock this item again for 30 days. No money is taken, ever.</span></li>' +
     '<li>' + ic('heart', 16) + '<span>Hurt or ill? You can pause once, for up to two weeks.</span></li></ul>' +
+    '<div class="field"><label for="rw-wit">Who holds you to it? (optional)</label><input class="input" id="rw-wit" data-m="rw.witness" placeholder="A friend\'s name" maxlength="30" autocomplete="off" value="' + esc(G.witness) + '"><p class="rw-fine left">You send them the deal yourself, and tell them how it ended. A goal someone else knows about is much harder to drop.</p></div>' +
+    '<div class="field"><label for="rw-seal">Seal something inside (optional)</label><textarea class="input" id="rw-seal" data-m="rw.seal" maxlength="400" placeholder="A note to yourself, a gift card code, a lockbox combination">' + esc(G.seal) + '</textarea><p class="rw-fine left">Hidden the moment you lock, and shown again only when you earn it. Miss, and it stays sealed for 30 more days. It is kept on this phone only.</p></div>' +
     '<p class="rw-fine">The deal is with yourself: do not buy it until you have earned it.</p></div>' +
     '<div class="sticky-cta"><button class="btn btn-go btn-w rw-hold" data-hold="rwLock" data-a="rwHoldHint">' + ic('lock', 18) + '<span>Hold to lock it in</span></button></div>';
 }
@@ -5973,6 +6001,7 @@ A.rwLock = () => {
   const r = Object.assign(d, { id: uid(), kind: G.kind, start: dayStart(dayNum(now())), end: per[2], lockedAt: now(), state: 'locked' });
   if (G.kind === 'weight') { const c = rwWeightCheck(G, per[2]); if (!c.ok) { G.step = 'goal'; drawSheets(false); return; } r.fromKg = Math.round(c.from * 10) / 10; r.toKg = Math.round(c.to * 10) / 10; }
   else r.target = clamp(G.target, 1, rwSpan(per[2]));
+  r.witness = String(G.witness || '').trim().slice(0, 30); r.seal = String(G.seal || '').trim().slice(0, 400);
   rewards().push(r); addActivity({ icon: 'lock', text: 'You locked ' + r.name + ': ' + rwGoalTxt(r) + '.' }); S.ui.homeSeg = 'rewards'; S.ui.tab = 'home'; D.rw = null;
   closeAll(); save(); render();
   if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { }
@@ -6021,7 +6050,7 @@ function rwCelebrate(r) {
   r.seen = true; save();
   S.ui.homeSeg = 'rewards';
   openSheet(() => sheetHead('You earned it') + '<div class="sh-b rw-win"><div class="rw-burst">' + rwImg(r, 'rw-big') + '<span>' + ic('check', 26) + '</span></div>' +
-    '<h3>' + esc(r.name) + '</h3><p class="mute">' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ' since ' + rwDate(r.start) + '. You said you would, and you did.' : 'You reached ' + wShow(r.toKg) + ' ' + wUnit() + '. You said you would, and you did.') + '</p>' +
+    '<h3>' + esc(r.name) + '</h3>' + rwSealBox(r) + '<p class="mute">' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ' since ' + rwDate(r.start) + '. You said you would, and you did.' : 'You reached ' + wShow(r.toKg) + ' ' + wUnit() + '. You said you would, and you did.') + '</p>' +
     rwBuyBtn(r) + '<button class="link rw-tell" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 15) + 'Share the win</button></div>', { onClose: () => { if (S.ui.tab === 'home') render(); } });
 }
 A.rwBought = el => { const r = rewards().find(x => x.id === el.dataset.id); if (!r) return; r.bought = now(); save(); render(); toast('Enjoy it. Lock the next one while it is fresh.', 'trophy'); };
@@ -6030,19 +6059,43 @@ A.rwBought = el => { const r = rewards().find(x => x.id === el.dataset.id); if (
    A goal someone else knows about is much harder to drop quietly. */
 A.rwShare = el => {
   const r = rewards().find(x => x.id === el.dataset.id); if (!r) return;
-  const text = r.state === 'won' ? 'I earned my ' + r.name + ': ' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') : 'hit my weight goal') + ' with Lock In.'
-    : 'I locked in a reward: ' + r.name + '. ' + rwGoalTxt(r) + '. If I miss, I do not get it. Hold me to it.';
-  const data = { text: text }; if (rwHttps(r.url)) data.url = r.url;
+  const hi = r.witness ? r.witness + ', ' : '', did = r.kind === 'gym' ? plural(r.got != null ? r.got : r.target, 'gym day') : 'my weight goal';
+  const text = r.state === 'won' ? hi + 'I did it. ' + (r.kind === 'gym' ? did + ', and' : 'I hit ' + did + ', and') + ' the ' + r.name + ' is mine.'
+    : r.state === 'locked' ? hi + 'I locked in a reward: ' + r.name + '. ' + rwGoalTxt(r) + '. If I miss, I do not get it. Hold me to it.'
+    : hi + 'I missed it. ' + (r.kind === 'gym' && r.got != null ? r.got + ' of ' + r.target + ' gym days, so' : 'So') + ' no ' + r.name + ' for me. I am going again.';
+  const data = { text: text }; if (rwHttps(r.url) && r.state !== 'missed' && r.state !== 'quit') data.url = r.url;
+  if (r.state === 'locked' && r.witness && !r.told) { r.told = now(); save(); render(); }
   if (navigator.share) { navigator.share(data).catch(() => { }); return; }
   const full = text + (data.url ? ' ' + data.url : '');
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(() => toast('Copied. Paste it to a friend.', 'copy'), () => toast(full));
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(() => toast('Copied. Paste it to ' + (r.witness || 'a friend') + '.', 'copy'), () => toast(full));
   else toast(full);
+};
+A.rwAck = el => { const r = rewards().find(x => x.id === el.dataset.id); if (r) { r.ack = true; save(); render(); } };
+// Who is watching, and whether something is sealed inside.
+function rwExtras(r) {
+  const bits = []; if (r.witness) bits.push(ic('eye', 13) + esc(r.witness) + ' is holding you to it'); if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
+  return bits.length ? '<span class="rw-x">' + bits.map(b => '<span>' + b + '</span>').join('') + '</span>' : '';
+}
+function rwSealBox(r) { return r.seal ? '<div class="rw-sealbox"><small>' + ic('lock', 13) + 'You sealed this inside</small><p>' + esc(r.seal) + '</p></div>' : ''; }
+A.rwSealOpen = el => {
+  const r = rewards().find(x => x.id === el.dataset.id); if (!r || !r.seal) return;
+  const at = r.state === 'won' ? 0 : (r.doneAt || r.end) + RW_OUT;
+  if (at > now()) { toast('Sealed until ' + rwDate(at) + '.', 'lock'); return; }
+  openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + rwSealBox(r) + '</div>');
 };
 // After a check-in: the piece it just uncovered.
 function rwDoneLine() {
   const r = rwActive(); if (!r || r.kind !== 'gym' || r.pausedAt) return '';
   const p = rwProg(r); if (!p.todayDone) return '';
   return '<div class="rw-done">' + rwCover(r, p.frac, (p.done - 1) / r.target) + '<div><b>' + (p.hit ? 'That was the last piece' : 'Piece ' + p.done + ' of ' + r.target + ' uncovered') + '</b><span>' + (p.hit ? esc(r.name) + ' is yours.' : p.need + ' to go for your ' + esc(r.name) + '.') + '</span></div></div>';
+}
+
+// On Home's Today card: the reward you are working towards, one tap from its tab.
+function rwTodayRow() {
+  const r = rwCurrent(); if (!r) return '';
+  const p = rwProg(r), fr = r.state === 'won' ? [1, null] : rwFracs(r, p);
+  const sub = r.state === 'won' ? 'Earned. Tap to get it.' : r.pausedAt ? 'Paused' : p.kind === 'gym' ? (p.spare < 0 ? 'Out of reach this time' : p.need + ' to go, ' + plural(p.daysLeft, 'day') + ' left') : wShow(p.gap) + ' ' + wUnit() + ' to go, ' + plural(p.daysLeft, 'day') + ' left';
+  return '<button class="td-row td-rw" data-a="homeSeg" data-k="rewards">' + rwCover(r, fr[0], null) + '<span class="grow"><b>' + esc(r.name) + '</b><small>' + sub + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span></button>';
 }
 
 /* The right-hand panel on a computer, and start-up. On a phone the same
