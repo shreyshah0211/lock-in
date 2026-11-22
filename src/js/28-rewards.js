@@ -22,50 +22,18 @@ function rwMoney(v, cur) {
   if (!(v > 0)) return '';
   try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || 'USD', maximumFractionDigits: v % 1 ? 2 : 0 }).format(v); } catch (e) { return '$' + fmtN(v); }
 }
-// A plain hoodie for the sample reward and for rewards with no photo.
-function rwArt() {
-  return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150"><rect width="120" height="150" fill="#E4E7EF"/>' +
-    '<path d="M44 34c4-9 28-9 32 0l22 10 10 44-15 5-5-20v47H32V73l-5 20-15-5 10-44z" fill="#9AA1B8"/><path d="M44 34c2 14 30 14 32 0-3 20-29 20-32 0z" fill="#7F87A3"/>' +
-    '<path d="M46 96h28v14H46z" fill="#8990AA"/><path d="M56 48v16M64 48v16" stroke="#F3F4F8" stroke-width="2" stroke-linecap="round"/></svg>');
-}
-function rwImg(r, cls) { return '<img class="' + (cls || 'rw-img') + '" src="' + esc(rwHttps(r.img) || rwArt()) + '" alt="" onerror="this.onerror=null;this.src=\'' + rwArt() + '\'">'; }
-// The reward's photo under a cover of tiles. Every gym day lifts some, in an order that is
-// different for each reward, so the picture comes together as you go.
-// Enough tiles for a head start plus at least one new piece for every gym day.
-function rwGrid(r) { const d = r.kind === 'gym' ? Math.max(1, r.target) : 20, head = Math.max(1, Math.round(d * .08)), n = d + head, cols = Math.max(2, Math.ceil(Math.sqrt(n * 1.3))), rows = Math.ceil(n / cols); return { cols: cols, rows: rows, cells: cols * rows, head: head }; }
-function rwOrder(r, cells) {
-  let h = 7; String(r.id).split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) >>> 0; });
-  const a = []; for (let i = 0; i < cells; i++) a.push(i);
-  for (let i = cells - 1; i > 0; i--) { h = (h * 1664525 + 1013904223) >>> 0; const j = h % (i + 1), t = a[i]; a[i] = a[j]; a[j] = t; }
-  return a;
-}
-// A new lock starts with a piece or two already off: a head start gets finished more often than a blank one.
-function rwOpen(r, frac) { const g = rwGrid(r); return frac >= 1 ? g.cells : g.head + Math.floor(clamp(frac, 0, 1) * (g.cells - g.head) + 1e-9); }
-// Rewards you lock yourself let you choose which tile each earned piece lifts (r.picks).
-// The head start tiles are always off; older rewards and the small previews lift them in a set order.
-function rwPicks(r) { const g = rwGrid(r), head = rwOrder(r, g.cells).slice(0, g.head); return (r.picks || []).filter((c, i, a) => c >= 0 && c < g.cells && a.indexOf(c) === i && head.indexOf(c) < 0); }
-function rwPend(r, frac) { return Array.isArray(r.picks) && r.state === 'locked' ? Math.max(0, rwOpen(r, frac) - rwGrid(r).head - rwPicks(r).length) : 0; }
-function rwCover(r, frac, prevFrac, extra, pick) {
-  const g = rwGrid(r), ord = rwOrder(r, g.cells), st = [];
-  if (Array.isArray(r.picks) && r.state === 'locked') {
-    const pend = rwPend(r, frac);
-    ord.slice(0, g.head).concat(rwPicks(r)).forEach(c => { st[c] = D.rwJust === r.id + ':' + c ? 'open new' : 'open'; });
-    let h = ''; for (let c = 0; c < g.cells; c++) h += st[c] ? '<i class="' + st[c] + '"></i>' : pick && pend ? '<button class="pick" data-a="rwPick" data-id="' + r.id + '" data-i="' + c + '" aria-label="Uncover this piece"></button>' : '<i></i>';
-    return '<div class="rw-cover' + (pick && pend ? ' ready' : '') + '" style="--c:' + g.cols + ';--r:' + g.rows + '">' + rwImg(r, 'rw-cimg') + '<div class="rw-tiles">' + h + '</div>' + (extra || '') + '</div>';
-  }
-  const open = rwOpen(r, frac), was = prevFrac == null ? open : rwOpen(r, prevFrac);
-  ord.forEach((cell, k) => { st[cell] = k < was ? 'open' : k < open ? 'open new' : ''; });
-  return '<div class="rw-cover" style="--c:' + g.cols + ';--r:' + g.rows + '">' + rwImg(r, 'rw-cimg') + '<div class="rw-tiles" aria-hidden="true">' + st.map(c => '<i class="' + c + '"></i>').join('') + '</div>' + (extra || '') + '</div>';
-}
-A.rwPick = el => {
-  const r = rewards().find(x => x.id === el.dataset.id), c = +el.dataset.i; if (!r || !Array.isArray(r.picks) || !rwPend(r, rwProg(r).frac)) return;
-  r.picks.push(c); D.rwJust = r.id + ':' + c; save(); render();
-  if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { }
-  setTimeout(() => { D.rwJust = null; }, 1600);
+// Simple drawings for rewards with no photo, and for what friends are working towards.
+const RW_ART = {
+  hoodie: '<path d="M44 34c4-9 28-9 32 0l22 10 10 44-15 5-5-20v47H32V73l-5 20-15-5 10-44z" fill="#9AA1B8"/><path d="M44 34c2 14 30 14 32 0-3 20-29 20-32 0z" fill="#7F87A3"/><path d="M46 96h28v14H46z" fill="#8990AA"/><path d="M56 48v16M64 48v16" stroke="#F3F4F8" stroke-width="2" stroke-linecap="round"/>',
+  shoe: '<path d="M18 92c0-10 6-20 14-20 6 0 8 8 18 8l14-18c6 2 10 12 20 18 12 6 20 6 20 16v6H18z" fill="#FF7A3D"/><path d="M18 102h86v8H18z" fill="#F3F4F8"/><path d="M58 74l8 6M64 66l8 6" stroke="#fff" stroke-width="3" stroke-linecap="round"/>',
+  phones: '<path d="M30 84V70a30 30 0 0160 0v14" fill="none" stroke="#3D4460" stroke-width="8" stroke-linecap="round"/><rect x="20" y="78" width="22" height="38" rx="10" fill="#5B6388"/><rect x="78" y="78" width="22" height="38" rx="10" fill="#5B6388"/>',
+  bottle: '<rect x="50" y="26" width="20" height="14" rx="4" fill="#3D4460"/><path d="M44 46h32l4 14v58a8 8 0 01-8 8H48a8 8 0 01-8-8V60z" fill="#2AA7E8"/><rect x="40" y="74" width="40" height="18" fill="#fff" opacity=".35"/>',
+  bag: '<path d="M40 56c0-22 40-22 40 0" fill="none" stroke="#3D4460" stroke-width="7" stroke-linecap="round"/><rect x="18" y="56" width="84" height="56" rx="16" fill="#12996B"/><rect x="18" y="74" width="84" height="8" fill="#0E6B4C"/><rect x="54" y="70" width="12" height="16" rx="3" fill="#F3F4F8"/>'
 };
-A.rwGoPick = () => { closeAll(); if (S.ui.tab === 'cam' && A.camClose) A.camClose(); S.ui.tab = 'home'; S.ui.homeSeg = 'rewards'; save(); render(); $('#view').scrollTop = 330; };
-// How much of the cover is off, now and before today's gym day.
-function rwFracs(r, p) { return p.kind === 'gym' ? [p.frac, p.todayDone ? (p.done - 1) / r.target : null] : [p.frac, null]; }
+function rwArt(kind) { return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150"><rect width="120" height="150" fill="#E4E7EF"/>' + (RW_ART[kind] || RW_ART.hoodie) + '</svg>'); }
+function rwImg(r, cls) { return '<img class="' + (cls || 'rw-img') + '" src="' + esc(rwHttps(r.img) || rwArt(r.art)) + '" alt="" onerror="this.onerror=null;this.src=\'' + rwArt(r.art) + '\'">'; }
+// The reward's picture, whole.
+function rwCover(r, extra) { return '<div class="rw-cover">' + rwImg(r, 'rw-cimg') + (extra || '') + '</div>'; }
 // A reward you missed or gave up on cannot be locked again for 30 days.
 const RW_OUT = 30 * DAY;
 const rwKey = r => (r.url || '').replace(/[?#].*$/, '').toLowerCase() || String(r.name || '').trim().toLowerCase();
@@ -79,8 +47,7 @@ function rwSample() {
   S.checkins.forEach(c => { if (c.ts >= start) days[dayNum(c.ts)] = 1; });
   const r = { id: uid(), sample: true, name: 'Grey zip hoodie', img: '', price: 119, cur: 'USD', url: '', buy: '', store: 'Sample store', size: 'M', kind: 'gym',
     target: Object.keys(days).length + 14, start: start, end: rwEndOfDay(now() + 18 * DAY), lockedAt: start, state: 'locked' };
-  const g = rwGrid(r), n = rwOpen(r, Object.keys(days).length / r.target) - g.head;
-  r.picks = rwOrder(r, g.cells).slice(g.head, g.head + Math.max(0, n - 1)); r.spare0 = 12;
+  r.spare0 = 12; r.group = S.friends.filter(f => f.fol).slice(0, 3).map(f => f.id);
   return r;
 }
 
@@ -111,7 +78,7 @@ function rwTick() {
     if (r.state !== 'locked') return;
     if (r.pausedAt && now() - r.pausedAt >= RW_PAUSE_MAX) { rwResume(r); ch = true; }
     const p = rwProg(r);
-    if (p.hit) { r.state = 'won'; r.doneAt = now(); r.got = p.kind === 'gym' ? p.done : null; ch = true; if (!r.sample) addActivity({ icon: 'trophy', text: 'You earned ' + r.name + '.' }); }
+    if (p.hit) { r.state = 'won'; r.doneAt = now(); r.got = p.kind === 'gym' ? p.done : null; ch = true; if ((r.group || []).length) { const b = rwRows(r, p); r.gm = [b.filter(x => x.hit).length, b.length, 1 + b.filter(x => x.id !== 'me' && x.hit).length]; } if (!r.sample) addActivity({ icon: 'trophy', text: 'You earned ' + r.name + '.' }); }
     else if (p.over) { r.state = 'missed'; r.doneAt = r.end; r.got = p.kind === 'gym' ? p.done : null; ch = true; if (!r.sample) addActivity({ icon: 'lock', text: 'You missed ' + r.name + '. It is locked out for 30 days.' }); }
   });
   if (ch) { save(); softRefresh(); }
@@ -124,7 +91,7 @@ function rwResume(r) { r.end += Math.min(now() - r.pausedAt, RW_PAUSE_MAX); r.pa
 /* ---- the Rewards tab on Home ---- */
 function homeSeg(seg) {
   const r = rwActive(), p = r ? rwProg(r) : null, owed = !r && rwCurrent();
-  const lbl = p ? 'Reward ' + (p.kind === 'gym' ? p.done + '/' + r.target : Math.round(p.frac * 100) + '%') + (rwPend(r, p.frac) ? ' <i class="rw-pip"></i>' : '') : owed ? 'Reward earned' : 'Rewards';
+  const lbl = p ? 'Reward ' + (p.kind === 'gym' ? p.done + '/' + r.target : Math.round(p.frac * 100) + '%')  : owed ? 'Reward earned' : 'Rewards';
   return '<div class="pad home-seg"><div class="seg">' + [['friends', 'Friends'], ['rewards', lbl]].map(x => '<button data-a="homeSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
 }
 A.homeSeg = el => { S.ui.homeSeg = el.dataset.k; save(); render(); };
@@ -135,12 +102,11 @@ function rwGoalTxt(r) {
 }
 function rwCard(r) {
   const p = rwProg(r), u = wUnit();
-  const fr = r.state === 'won' ? [1, null] : rwFracs(r, p);
   const tag = '<span class="rw-tag">' + (r.state === 'won' ? ic('check', 13) + 'Earned' : r.pausedAt ? ic('hourglass', 13) + 'Paused' : ic('lock', 13) + 'Locked') + '</span>';
-  let h = '<div class="card rw' + (r.state === 'won' ? ' won' : '') + '">' + rwCover(r, fr[0], fr[1], tag, true) + (rwPend(r, fr[0]) ? '<p class="rw-ready">' + ic('sparkle', 15) + (rwPend(r, fr[0]) === 1 ? 'A piece is ready. Tap a tile to uncover it.' : rwPend(r, fr[0]) + ' pieces are ready. Tap the tiles to uncover them.') + '</p>' : '') + '<div class="rw-id"><b class="rw-name">' + esc(r.name) + '</b><span class="rw-sub">' + rwSub(r) + '</span>' + rwExtras(r) + '</div>';
+  let h = '<div class="card rw' + (r.state === 'won' ? ' won' : '') + '">' + rwCover(r, tag) + '<div class="rw-id"><b class="rw-name">' + esc(r.name) + '</b><span class="rw-sub">' + rwSub(r) + '</span>' + rwExtras(r) + '</div>';
   if (r.state === 'won') {
     return h + rwSealBox(r) + '<p class="rw-line"><b>You earned it.</b> ' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ', done ' + rwDate(r.doneAt) + '.' : 'You reached ' + wShow(r.toKg) + ' ' + u + ' on ' + rwDate(r.doneAt) + '.') + '</p>' +
-      rwBuyBtn(r) + '<div class="rw-acts"><button class="btn btn-line" data-a="rwBought" data-id="' + r.id + '">' + ic('check', 17) + 'I ordered it</button><button class="btn btn-line" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 17) + 'Share it</button></div></div>';
+      rwBuyBtn(r) + '<button class="btn btn-line btn-w" data-a="rwBought" data-id="' + r.id + '">' + ic('check', 17) + 'I ordered it</button></div>';
   }
   if (p.kind === 'gym') {
     const st = p.spare < 0 ? 'bad' : p.spare <= 2 ? 'warn' : 'ok';
@@ -153,9 +119,8 @@ function rwCard(r) {
       '<p class="rw-line">' + (p.gap <= 0.049 ? 'You are there. Log your weight this week to confirm it.' : wShow(p.gap) + ' ' + u + ' to go, judged on the average of your last weigh-ins.') + '</p>';
   }
   h += '<div class="rw-acts">' + (p.kind === 'gym' ? (p.spare < 0 ? '<button class="btn btn-ink" data-a="rwOpts" data-id="' + r.id + '">End it now</button>' : p.todayDone ? '' : '<button class="btn btn-go" data-a="goCam">' + ic('camera', 18) + 'Check in today</button>') : '<button class="btn btn-go" data-a="openWeigh">' + ic('plus', 18) + 'Log my weight</button>') +
-    '<button class="btn btn-line" data-a="rwOpts" data-id="' + r.id + '">' + (now() - r.lockedAt < RW_UNDO && !r.sample ? 'Undo or pause' : 'Options') + '</button></div>' +
-    (r.witness && !r.told ? '<button class="btn btn-ink btn-w" data-a="rwShare" data-id="' + r.id + '">' + ic('send', 17) + 'Send the deal to ' + esc(r.witness) + '</button>'
-      : '<button class="link rw-tell" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 15) + (r.witness ? 'Send it to ' + esc(r.witness) + ' again' : 'Tell a friend, so someone holds you to it') + '</button>');
+    '<button class="btn btn-line" data-a="rwOpts" data-id="' + r.id + '">' + (now() - r.lockedAt < RW_UNDO && !r.sample ? 'Undo or pause' : 'Options') + '</button></div>';
+  if (p.kind === 'gym') h += rwBoard(r, p);
   return h + '</div>';
 }
 function rwBuyBtn(r) {
@@ -177,11 +142,11 @@ function rewardsView() {
   let h = '<div class="pad rw-wrap">';
   const miss = rewards().slice().reverse().find(r => !r.sample && (r.state === 'missed' || r.state === 'quit') && !r.ack);
   if (miss) h += '<div class="card rw-miss"><b>' + (miss.state === 'quit' ? 'You gave up on ' : 'You missed ') + esc(miss.name) + '</b><p>' + (miss.kind === 'gym' && miss.got != null ? miss.got + ' of ' + miss.target + ' gym days. ' : '') + 'It is locked out until ' + rwDate((miss.doneAt || miss.end) + RW_OUT) + '. The next one starts whenever you are ready.</p>' +
-    '<div class="rw-acts">' + (miss.witness ? '<button class="btn btn-ink" data-a="rwShare" data-id="' + miss.id + '">' + ic('send', 17) + 'Tell ' + esc(miss.witness) + '</button>' : '') + '<button class="btn btn-line" data-a="rwAck" data-id="' + miss.id + '">OK</button></div></div>';
+    '<button class="btn btn-line btn-w" data-a="rwAck" data-id="' + miss.id + '">OK</button></div>';
   if (cur) h += rwCard(cur);
   if (!rwActive()) {
     h += '<div class="card rw-new"><h2 class="h2">' + (cur ? 'Lock the next one' : past.length ? 'Lock another reward' : 'Earn something you want') + '</h2>' +
-      (cur || past.length ? '' : rwCover({ id: 'teaser', kind: 'gym', target: 20, img: '' }, .35, null) + '<p class="rw-pitch">Pick something you want and lock it behind a goal. Every gym day uncovers a piece of it. Finish, and it is yours to order. Miss, and it is gone for a month.</p>') +
+      (cur || past.length ? '' : '<p class="rw-pitch">Pick something you want and lock it behind a goal. Friends see what you are working for, and you can take it on as a group. Finish, and it is yours to order. Miss, and it is gone for a month.</p>') +
       '<button class="btn btn-ink btn-w" data-a="rwNew">' + ic('lock', 18) + 'Pick a reward</button><p class="rw-fine">Lock In never takes or holds your money.</p></div>';
   }
   const fin = rewards().filter(r => !r.sample && r.state !== 'locked'), kept = fin.filter(r => r.state === 'won').length;
@@ -189,6 +154,7 @@ function rewardsView() {
   if (shelf.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">Earned</h2>' + (fin.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rw-shelf">' +
     shelf.map(r => '<button data-a="rwSealOpen" data-id="' + r.id + '">' + rwImg(r, 'rw-simg') + '<b>' + esc(r.name) + '</b><small>' + rwDate(r.doneAt) + (r.seal ? ' ' + ic('lock', 11) : '') + '</small></button>').join('') + '</div></div>';
   rwWatch();
+  h += rwFriendsList();
   if (past.length) h += '<div class="rw-hist"><div class="sec-h"><h2 class="h2">' + (shelf.length ? 'Missed' : 'Past rewards') + '</h2>' + (fin.length && !shelf.length ? '<span class="rw-rec">Kept ' + kept + ' of ' + fin.length + '</span>' : '') + '</div><div class="rows">' + past.map(rwPast).join('') + '</div></div>';
   return h + '</div>';
 }
@@ -281,7 +247,7 @@ function rwWeightCheck(G, end) {
 A.rwNew = () => {
   if (rwActive()) { toast('One locked reward at a time. Finish this one first.'); return; }
   closeAll();
-  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', witness: '', seal: '', aside: false }, D.rwSeed || {}); D.rwSeed = null;
+  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', seal: '', aside: false, hide: false, group: [] }, D.rwSeed || {}); D.rwSeed = null;
   openSheet(rwSheet, { cls: 'full', onClose: () => { D.rw = null; } });
 };
 A.rwAgain = el => {
@@ -326,7 +292,9 @@ function rwSheet() {
       const spare = n - G.target;
       h += '<div class="field"><span class="lbl">How many gym days?</span><div class="rw-step"><button data-a="rwTarget" data-d="-1" aria-label="Fewer">' + ic('minus', 22) + '</button><span><b class="num">' + G.target + '</b><small>of the next ' + n + ' days</small></span><button data-a="rwTarget" data-d="1" aria-label="More">' + ic('plus', 22) + '</button></div>' +
         '<p class="mute rw-note">' + (sg.recent ? 'You trained ' + plural(sg.recent, 'day') + ' in the last four weeks. ' : '') + 'That is about ' + (Math.round(G.target / n * 70) / 10) + ' a week, and you could miss ' + plural(spare, 'day') + '.' +
-        (spare < 2 ? ' Leave a day or two spare: goals with no room tend to get dropped after one miss.' : G.target < sg.target ? ' A bit more of a stretch works better.' : '') + '</p></div>';
+        (spare < 2 ? ' Leave a day or two spare: goals with no room tend to get dropped after one miss.' : G.target < sg.target ? ' A bit more of a stretch works better.' : '') + '</p></div>' +
+        '<div class="field"><span class="lbl">Take it on as a group? (optional)</span><div class="rw-pickf">' + following().slice(0, 12).map(f => '<button data-a="rwGroup" data-id="' + f.id + '" aria-pressed="' + (G.group.indexOf(f.id) >= 0) + '">' + av(f, 44, { nowarn: true }) + '<span>' + esc(first(f.name)) + '</span></button>').join('') + '</div>' +
+        '<p class="mute rw-note">' + (G.group.length ? 'Same goal, same date, and each of you works for your own reward. Everyone sees the board.' : 'Pick up to five friends. Same goal and date; each of you works for your own reward.') + '</p></div>';
     } else {
       const c = rwWeightCheck(G, per[2]); ok = !!c.ok;
       h += (c.from ? '<div class="field"><label for="rw-tow">Target weight, ' + wUnit() + '</label><input class="input" id="rw-tow" type="number" inputmode="decimal" min="0" data-m="rw.toW" data-on="rwLive" placeholder="' + wShow(c.from) + '" value="' + esc(G.toW) + '">' : '<div class="field">') +
@@ -341,7 +309,7 @@ function rwSheet() {
     '<li>' + ic('trophy', 16) + '<span>Hit the goal and the checkout opens with it ready to buy. You pay the store.</span></li>' +
     '<li>' + ic('x', 16) + '<span>Miss it and you do not get it, and you cannot lock this item again for 30 days. No money is taken, ever.</span></li>' +
     '<li>' + ic('heart', 16) + '<span>Hurt or ill? You can pause once, for up to two weeks.</span></li></ul>' +
-    '<div class="field"><label for="rw-wit">Who holds you to it? (optional)</label><input class="input" id="rw-wit" data-m="rw.witness" placeholder="A friend\'s name" maxlength="30" autocomplete="off" value="' + esc(G.witness) + '"><p class="rw-fine left">You send them the deal yourself, and tell them how it ended. A goal someone else knows about is much harder to drop.</p></div>' +
+    '<div class="setrow rw-aside"><div class="grow"><div class="t">Friends can see this reward</div><div class="s">What it is and how far along you are, on your profile and your check-ins.' + ((G.group || []).length ? ' Your group always sees it.' : '') + '</div></div>' + sw(!G.hide, 'rwHide') + '</div>' +
     (d.price > 0 ? '<div class="setrow rw-aside"><div class="grow"><div class="t">I have set the ' + esc(rwMoney(d.price, d.cur)) + ' aside</div><div class="s">Move it somewhere you will not spend it, like a savings pot. Money with a name on it gets spent on that. Lock In never touches it.</div></div>' + sw(G.aside, 'rwAside') + '</div>' : '') +
     '<div class="field"><label for="rw-seal">Seal something inside (optional)</label><textarea class="input" id="rw-seal" data-m="rw.seal" maxlength="400" placeholder="A note to yourself, a gift card code, a lockbox combination">' + esc(G.seal) + '</textarea><p class="rw-fine left">Hidden the moment you lock, and shown again only when you earn it. Miss, and it stays sealed for 30 more days. It is kept on this phone only.</p></div>' +
     '<p class="rw-fine">The deal is with yourself: do not buy it until you have earned it.</p></div>' +
@@ -379,9 +347,9 @@ A.rwLock = () => {
   const r = Object.assign(d, { id: uid(), kind: G.kind, start: dayStart(dayNum(now())), end: per[2], lockedAt: now(), state: 'locked' });
   if (G.kind === 'weight') { const c = rwWeightCheck(G, per[2]); if (!c.ok) { G.step = 'goal'; drawSheets(false); return; } r.fromKg = Math.round(c.from * 10) / 10; r.toKg = Math.round(c.to * 10) / 10; }
   else { r.target = clamp(G.target, 1, rwSpan(per[2])); r.spare0 = rwSpan(per[2]) - r.target; }
-  r.picks = [];
   r.aside = !!G.aside && d.price > 0;
-  r.witness = String(G.witness || '').trim().slice(0, 30); r.seal = String(G.seal || '').trim().slice(0, 400);
+  r.hide = !!G.hide; r.group = G.kind === 'gym' ? (G.group || []).filter(id => person(id)).slice(0, 5) : [];
+  r.seal = String(G.seal || '').trim().slice(0, 400);
   rewards().push(r); addActivity({ icon: 'lock', text: 'You locked ' + r.name + ': ' + rwGoalTxt(r) + '.' }); S.ui.homeSeg = 'rewards'; S.ui.tab = 'home'; D.rw = null;
   closeAll(); save(); render();
   if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { }
@@ -431,39 +399,12 @@ function rwCelebrate(r) {
   S.ui.homeSeg = 'rewards';
   openSheet(() => sheetHead('You earned it') + '<div class="sh-b rw-win"><div class="rw-burst">' + rwImg(r, 'rw-big') + '<span>' + ic('check', 26) + '</span></div>' +
     '<h3>' + esc(r.name) + '</h3>' + rwSealBox(r) + '<p class="mute">' + (r.kind === 'gym' ? plural(r.got || r.target, 'gym day') + ' since ' + rwDate(r.start) + '. You said you would, and you did.' : 'You reached ' + wShow(r.toKg) + ' ' + wUnit() + '. You said you would, and you did.') + '</p>' +
-    rwBuyBtn(r) + '<button class="link rw-tell" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 15) + 'Share the win</button></div>', { onClose: () => { if (S.ui.tab === 'home') render(); } });
+    (r.gm ? '<p class="rw-line">' + (r.gm[2] === 1 ? 'First in your group to finish.' : 'You finished ' + RW_NTH[r.gm[2]] + ' in your group.') + '</p>' : '') + rwBuyBtn(r) + '</div>', { onClose: () => { if (S.ui.tab === 'home') render(); } });
 }
 A.rwBought = el => { const r = rewards().find(x => x.id === el.dataset.id); if (!r) return; r.bought = now(); save(); render(); toast('Enjoy it. Lock the next one while it is fresh.', 'trophy'); };
 
-/* ---- telling someone ----
-   A goal someone else knows about is much harder to drop quietly. */
-A.rwShare = el => {
-  const r = rewards().find(x => x.id === el.dataset.id); if (!r) return;
-  const hi = r.witness ? r.witness + ', ' : '', did = r.kind === 'gym' ? plural(r.got != null ? r.got : r.target, 'gym day') : 'my weight goal';
-  const p0 = rwProg(r), grid = r.kind === 'gym' ? rwGridText(r) : '';
-  if (r.state === 'locked' && (r.told || !r.witness) && p0.kind === 'gym' && p0.done > 0) {
-    rwSend({ text: hi + r.name + ': ' + p0.done + ' of ' + r.target + ' gym days, ' + plural(p0.daysLeft, 'day') + ' left.\n' + grid + '\nLocked in with Lock In.' }, r); return;
-  }
-  const text = r.state === 'won' ? hi + 'I did it. ' + (r.kind === 'gym' ? did + ', and' : 'I hit ' + did + ', and') + ' the ' + r.name + ' is mine.'
-    : r.state === 'locked' ? hi + 'I locked in a reward: ' + r.name + '. ' + rwGoalTxt(r) + '. If I miss, I do not get it. Hold me to it.'
-    : hi + 'I missed it. ' + (r.kind === 'gym' && r.got != null ? r.got + ' of ' + r.target + ' gym days, so' : 'So') + ' no ' + r.name + ' for me. I am going again.';
-  const data = { text: text + (r.state === 'won' && grid ? '\n' + grid : '') }; if (rwHttps(r.url) && r.state !== 'missed' && r.state !== 'quit') data.url = r.url;
-  if (r.state === 'locked' && r.witness && !r.told) { r.told = now(); save(); render(); }
-  rwSend(data, r);
-};
-// The month as squares, the way a word-game result is shared: how it went, at a glance.
-function rwGridText(r) {
-  const days = rwGymDays(r), a = dayNum(r.start), b = Math.min(dayNum(r.doneAt || now()), dayNum(rwEnd(r))); let out = '';
-  for (let d = a; d <= b; d++) out += (days[d] ? '\uD83D\uDFE7' : '\u2B1B') + ((d - a) % 7 === 6 && d < b ? '\n' : '');
-  return out;
-}
-function rwSend(data, r) {
-  if (navigator.share) { navigator.share(data).catch(() => { }); return; }
-  const text = data.text;
-  const full = text + (data.url ? ' ' + data.url : '');
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(() => toast('Copied. Paste it to ' + (r.witness || 'a friend') + '.', 'copy'), () => toast(full));
-  else toast(full);
-};
+A.rwHide = () => { D.rw.hide = !D.rw.hide; drawSheets(false); };
+A.rwGroup = el => { const g = D.rw.group, i = g.indexOf(el.dataset.id); if (i >= 0) g.splice(i, 1); else if (g.length < 5) g.push(el.dataset.id); else toast('Five friends at most.'); drawSheets(false); };
 A.rwAside = () => { D.rw.aside = !D.rw.aside; drawSheets(false); };
 // Twice a day, look at the store again: has the price moved, is your size still there?
 function rwWatch() {
@@ -477,9 +418,9 @@ function rwWatch() {
   }).catch(() => { });
 }
 A.rwAck = el => { const r = rewards().find(x => x.id === el.dataset.id); if (r) { r.ack = true; save(); render(); } };
-// Who is watching, and whether something is sealed inside.
+// What is sealed inside, money set aside, and what the store says today.
 function rwExtras(r) {
-  const bits = []; if (r.witness) bits.push(ic('eye', 13) + esc(r.witness) + ' is holding you to it'); if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
+  const bits = []; if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
   if (r.aside && r.state === 'locked') bits.push(ic('dollar', 13) + esc(rwMoney(r.price, r.cur)) + ' set aside for it');
   if (r.state === 'locked' || (r.state === 'won' && !r.bought)) {
     if (r.inStock === false) bits.push(ic('info', 13) + (r.size ? 'Size ' + esc(r.size) + ' is' : 'It is') + ' sold out right now');
@@ -492,23 +433,70 @@ A.rwSealOpen = el => {
   const r = rewards().find(x => x.id === el.dataset.id); if (!r || (!r.seal && r.state !== 'won')) return;
   const at = r.state === 'won' ? 0 : (r.doneAt || r.end) + RW_OUT;
   if (at > now()) { toast('Sealed until ' + rwDate(at) + '.', 'lock'); return; }
-  openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + (r.state === 'won' ? rwCover(r, 1, null) + '<p class="mute">Earned ' + rwDate(r.doneAt) + (r.kind === 'gym' ? ' with ' + plural(r.got || r.target, 'gym day') : '') + '.</p>' : '') + rwSealBox(r) +
-    (r.state === 'won' ? '<button class="btn btn-line btn-w" data-a="rwShare" data-id="' + r.id + '">' + ic('share', 17) + 'Share it</button>' : '') + '</div>');
+  openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + (r.state === 'won' ? rwCover(r) + '<p class="mute">Earned ' + rwDate(r.doneAt) + (r.kind === 'gym' ? ' with ' + plural(r.got || r.target, 'gym day') : '') + '.</p>' : '') + rwSealBox(r) + '</div>');
 };
-// After a check-in: the piece it just uncovered.
+// After a check-in: how far along the reward is now.
 function rwDoneLine() {
   const r = rwActive(); if (!r || r.kind !== 'gym' || r.pausedAt) return '';
   const p = rwProg(r); if (!p.todayDone) return '';
-  const mark = [[.75, 'Three quarters there'], [.5, 'Halfway'], [.25, 'A quarter of the way']].find(m => (p.done - 1) / r.target < m[0] && p.frac >= m[0]), pend = rwPend(r, p.frac);
-  return '<button class="rw-done" data-a="rwGoPick">' + rwCover(r, p.frac, (p.done - 1) / r.target) + '<span><b>' + (p.hit ? 'That was the last piece' : mark ? mark[1] + ': ' + p.done + ' of ' + r.target : 'Gym day ' + p.done + ' of ' + r.target) + '</b><small>' +
-    (p.hit ? esc(r.name) + ' is yours.' : pend ? 'A piece of your ' + esc(r.name) + ' is ready. Tap to choose which.' : p.need + ' to go for your ' + esc(r.name) + '.') + '</small></span>' + (pend ? ic('chevR', 18) : '') + '</button>';
+  const mark = [[.75, 'Three quarters there'], [.5, 'Halfway'], [.25, 'A quarter of the way']].find(m => (p.done - 1) / r.target < m[0] && p.frac >= m[0]);
+  const rows = (r.group || []).length ? rwRows(r, p) : null, rank = rows ? rows.findIndex(x => x.id === 'me') + 1 : 0;
+  return '<button class="rw-done" data-a="rwGo">' + rwCover(r) + '<span><b>' + (p.hit ? 'That is the goal' : mark ? mark[1] + ': ' + p.done + ' of ' + r.target : 'Gym day ' + p.done + ' of ' + r.target) + '</b><small>' +
+    (p.hit ? esc(r.name) + ' is yours.' : p.need + ' to go for your ' + esc(r.name) + '.' + (rank ? ' ' + RW_NTH[rank] + ' of ' + rows.length + ' in your group.' : '')) + '</small></span>' + ic('chevR', 18) + '</button>';
 }
+const RW_NTH = ['', '1st', '2nd', '3rd', '4th', '5th', '6th'];
+A.rwGo = () => { closeAll(); if (S.ui.tab === 'cam' && A.camClose) A.camClose(); S.ui.tab = 'home'; S.ui.homeSeg = 'rewards'; save(); render(); $('#view').scrollTop = 330; };
 // On Home's Today card: the reward you are working towards, one tap from its tab.
 function rwTodayRow() {
   const r = rwCurrent(); if (!r) return '';
-  const p = rwProg(r), fr = r.state === 'won' ? [1, null] : rwFracs(r, p);
-  const sub = r.state === 'won' ? 'Earned. Tap to get it.' : rwPend(r, fr[0]) ? 'A piece is ready to uncover' : r.pausedAt ? 'Paused' : p.kind === 'gym' ? (p.spare < 0 ? 'Out of reach this time' : p.need + ' to go, ' + plural(p.daysLeft, 'day') + ' left') : wShow(p.gap) + ' ' + wUnit() + ' to go, ' + plural(p.daysLeft, 'day') + ' left';
-  return '<button class="td-row td-rw" data-a="homeSeg" data-k="rewards">' + rwCover(r, fr[0], null) + '<span class="grow"><b>' + esc(r.name) + '</b><small>' + sub + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span></button>';
+  const p = rwProg(r);
+  const sub = r.state === 'won' ? 'Earned. Tap to get it.' : r.pausedAt ? 'Paused' : p.kind === 'gym' ? (p.spare < 0 ? 'Out of reach this time' : p.need + ' to go, ' + plural(p.daysLeft, 'day') + ' left') : wShow(p.gap) + ' ' + wUnit() + ' to go, ' + plural(p.daysLeft, 'day') + ' left';
+  return '<button class="td-row td-rw" data-a="homeSeg" data-k="rewards">' + rwCover(r) + '<span class="grow"><b>' + esc(r.name) + '</b><small>' + sub + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span></button>';
+}
+
+/* ---- friends and groups ----
+   Friends see what you are working for, and you see theirs. A group takes the same goal
+   and date; each person works for their own reward, and everyone sees the board.
+   Friends here are still sample people, so their rewards and progress are made up from
+   their sample check-in history until Lock In has real accounts for friends. */
+const RW_WANT = [['hoodie', 'Zip hoodie'], ['shoe', 'Running shoes'], ['phones', 'Headphones'], ['bottle', 'Steel bottle'], ['bag', 'Gym bag']];
+function rwOf(f, g) {
+  const h = hash(f.id + 'rw'), w = RW_WANT[h % RW_WANT.length]; if (!g && h % 4 === 0) return null;
+  const d = new Date(now()), start = g ? g.start : new Date(d.getFullYear(), d.getMonth(), 1).getTime(), end = g ? rwEnd(g) : new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).getTime();
+  const span = dayNum(end) - dayNum(start) + 1, target = g ? g.target : clamp(Math.round(span * (.4 + (f.rel || .5) * .3)), 6, 26), last = Math.min(dayNum(g && g.doneAt ? g.doneAt : now()), dayNum(end));
+  let done = 0; for (let x = dayNum(start); x <= last; x++) if (friendLevel(f, x) > 0) done++;
+  return { name: w[1], art: w[0], img: '', target: target, done: Math.min(done, target), hit: done >= target, end: end, daysLeft: Math.max(0, dayNum(end) - dayNum(now()) + 1) };
+}
+const rwShown = r => r && !r.hide;
+// Everyone in a group, furthest along first.
+function rwRows(r, p) {
+  const rows = [{ id: 'me', name: 'You', done: p.done, hit: p.hit, item: r.name, u: S.me }];
+  (r.group || []).forEach(id => { const f = person(id), o = f && rwOf(f, r); if (o) rows.push({ id: id, name: first(f.name), done: o.done, hit: o.hit, item: o.name, u: f }); });
+  return rows.sort((a, b) => b.done - a.done || (a.id === 'me' ? -1 : b.id === 'me' ? 1 : 0));
+}
+function rwBoard(r, p) {
+  if (!(r.group || []).length) return '';
+  const rows = rwRows(r, p), rank = rows.findIndex(x => x.id === 'me') + 1, top = rows[0];
+  const lead = rank === 1 ? (rows[1] && rows[1].done === p.done ? 'Level at the front.' : 'You are in front.') : (top.done - p.done) + ' behind ' + esc(top.name) + '.';
+  return '<div class="rw-board"><div class="sec-h"><b>Group, ' + rows.length + ' of you</b><span class="rw-rec">' + lead + '</span></div>' + rows.map((x, i) => '<div class="rw-brow' + (x.id === 'me' ? ' me' : '') + '"' + (x.id === 'me' ? '' : ' data-a="openProfile" data-id="' + x.id + '"') + '><i>' + (i + 1) + '</i>' + av(x.u, 34, { nowarn: true }) +
+    '<span class="grow"><b>' + esc(x.name) + (x.hit ? ' ' + ic('check', 13) : i === 0 ? ' ' + ic('crown', 13) : '') + '</b><small>' + esc(x.item) + '</small>' + bar(x.done / r.target, x.id === 'me' ? 'var(--go)' : 'var(--iron)') + '</span><em>' + x.done + '/' + r.target + '</em></div>').join('') + '</div>';
+}
+// What friends are working towards, on the Rewards tab and on their profiles.
+function rwFriendsList() {
+  const l = following().map(f => [f, rwOf(f, null)]).filter(x => x[1]).sort((a, b) => b[1].done / b[1].target - a[1].done / a[1].target).slice(0, 6);
+  if (!l.length) return '';
+  return '<div class="rw-hist"><div class="sec-h"><h2 class="h2">Friends are working for</h2></div><div class="rows">' + l.map(x => '<button class="row rw-frow" data-a="openProfile" data-id="' + x[0].id + '">' + rwImg(x[1], 'rw-thumb') +
+    '<span class="grow"><span class="t">' + esc(first(x[0].name)) + ': ' + esc(x[1].name) + '</span>' + bar(x[1].done / x[1].target, 'var(--iron)') + '</span><em>' + (x[1].hit ? 'Earned' : x[1].done + '/' + x[1].target) + '</em></button>').join('') + '</div></div>';
+}
+function rwFriendCard(f) {
+  const mine = rwActive(), inGroup = mine && (mine.group || []).indexOf(f.id) >= 0, o = rwOf(f, inGroup ? mine : null); if (!o) return '';
+  return '<div class="card rw-fcard">' + rwImg(o, 'rw-thumb') + '<div class="grow"><small>' + (inGroup ? 'In your group, working for' : 'Working for') + '</small><b>' + esc(o.name) + '</b>' + bar(o.done / o.target, 'var(--go)') + '</div><em>' + (o.hit ? 'Earned' : o.done + '/' + o.target) + '</em></div>';
+}
+// The small tag on a check-in photo: what this person is working for and how far along they are.
+function rwPostTag(uid) {
+  if (uid === 'me') { const r = rwActive(); if (!rwShown(r) || r.kind !== 'gym') return ''; const p = rwProg(r); return '<span class="post-rw">' + rwImg(r, 'post-rwi') + esc(r.name) + ' · ' + p.done + '/' + r.target + '</span>'; }
+  const f = person(uid), mine = rwActive(), o = f && rwOf(f, mine && (mine.group || []).indexOf(uid) >= 0 ? mine : null); if (!o) return '';
+  return '<span class="post-rw">' + rwImg(o, 'post-rwi') + esc(o.name) + ' · ' + (o.hit ? 'earned' : o.done + '/' + o.target) + '</span>';
 }
 
 /* ---- reminders ----
@@ -524,7 +512,6 @@ function rwNotes() {
       if (p.need === 1) add('last', at(p.todayDone ? today + 1 : today, 9), 'One more gym day and it is yours.');
       add('three', at(endDay - 2, 9), p.need + ' gym ' + (p.need === 1 ? 'day' : 'days') + ' to go and 3 days left.');
     }
-    if (rwPend(r, p.frac)) add('piece', at(today + 1, 10), 'A piece is ready to uncover.');
   } else if (!p.hit) add('weigh', at(endDay - 2, 9), '3 days left. Log your weight to see where you stand.');
   return out;
 }

@@ -77,3 +77,11 @@ Research: `reports/Reward ideas from other apps.md`. Check-in points were remove
 - **First lock** can run two weeks.
 
 Not built, and why: shielding the store's site (needs a paid Apple account and the Family Controls entitlement), a home-screen widget (untested on a free account), real friends as witnesses, duo or group rewards (need a server), brand discounts (need partners), arrival photo for the shelf.
+
+## Changed on the user's feedback (2026-11-22, later)
+
+- **Tiles removed.** The reward shows as the whole picture.
+- **Tell a friend, witness and share removed.**
+- **Friends see your reward:** a tag on your check-in photos and a card on profiles, with a "Friends can see this reward" switch at lock time. The Rewards tab lists what friends are working for.
+- **Group challenges:** when locking a gym-days reward, pick up to five friends. Same goal and date, each works for their own reward, and the card shows a board.
+- Friends are still sample people, so their rewards and progress are derived from their sample check-in history (`rwOf`). Real groups need real friend accounts on a server.
