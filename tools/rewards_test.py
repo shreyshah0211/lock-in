@@ -8,7 +8,7 @@ if len(sys.argv) > 2:
     js = open(sys.argv[2] + '/p.js', encoding='utf8', errors='replace').read(); html = open(sys.argv[2] + '/p.html', encoding='utf8', errors='replace').read()
 else:
     js = json.dumps({'title': 'Bimbobox Dark Green Jacket', 'featured_image': '//cdn.shopify.com/s/files/x.jpg',
-        'variants': [{'id': 100 + i, 'title': t, 'price': 8900, 'available': True} for i, t in enumerate(['XS', 'S', 'M', 'L', 'XL', 'XXL'])]})
+        'variants': [{'id': 100 + i, 'title': t, 'price': 8900, 'available': True} for i, t in enumerate(['XS', 'S', 'M', 'L', 'XL', 'XXL'])]}, separators=(',', ':'))
     html = '<meta property="og:site_name" content="Scuffers"><meta property="og:price:currency" content="EUR">'
 fails = []
 def ok(name, cond, extra=''):
@@ -27,8 +27,10 @@ with sync_playwright() as pw:
     lbl = ev("document.querySelectorAll('.home-seg button')[1].textContent"); ok('tab shows sample progress', lbl.startswith('Reward '), lbl)
     shot('1-home-friends')
     ev("A.homeSeg({dataset:{k:'rewards'}});document.querySelector('#view').scrollTop=330;0"); shot('2-sample')
-    ok('sample card shows its cover', ev("document.querySelectorAll('.card.rw .rw-tiles i').length>=rwActive().target"))
-    ok('pieces uncovered match the days', ev("(()=>{const r=rwActive(),p=rwProg(r),g=rwGrid(r);return document.querySelectorAll('.card.rw .rw-tiles i.open').length===rwOpen(r,p.frac)})()"))
+    ok('sample card shows its cover', ev("document.querySelectorAll('.card.rw .rw-tiles > *').length>=rwActive().target"))
+    ok('sample has one piece waiting', ev("rwPend(rwActive(),rwProg(rwActive()).frac)") == 1 and ev("document.querySelectorAll('.card.rw .rw-tiles .pick').length") > 0)
+    n0 = ev("document.querySelectorAll('.card.rw .rw-tiles i.open').length"); pg.click('.card.rw .rw-tiles .pick >> nth=3'); pg.wait_for_timeout(200)
+    ok('tapping a tile uncovers that piece', ev("document.querySelectorAll('.card.rw .rw-tiles i.open').length") == n0 + 1 and ev("document.querySelectorAll('.card.rw .rw-tiles .pick').length") == 0)
     ev("S.rewards=[];render();document.querySelector('#view').scrollTop=330;0"); shot('3-empty')
     ok('empty state offers a pick', ev("!!document.querySelector('[data-a=rwNew]')")); ok('no numbered steps', ev("!document.querySelector('.rw-how')"))
     # product from a real store page
@@ -52,6 +54,7 @@ with sync_playwright() as pw:
     ok('sealed note is hidden while locked', '1234' not in ev("document.querySelector('#view').textContent") and 'sealed inside' in ev("document.querySelector('#view').textContent"))
     ok('asks to send the deal to the witness', 'Send the deal to Maya' in ev("document.querySelector('#view').textContent"))
     ev("document.querySelector('#view').scrollTop=330;0"); shot('7-locked', 3200)
+    ok('first lock offers two weeks', ev("rwPeriods().some(x=>x[0]==='14')"))
     ok('a new lock starts with a piece showing', ev("document.querySelectorAll('.card.rw .rw-tiles i.open').length>=1&&rwProg(rwActive()).done===0"))
     ok('second reward refused', ev("A.rwNew();!D.rw"))
     ev("window.__rwWatch=1;window.__js=__js.replace(/\"price\":8900/g,'\"price\":7900');rwActive().checked=0;render();0"); pg.wait_for_timeout(400)
@@ -67,7 +70,8 @@ with sync_playwright() as pw:
     ok('a check-in adds a day', ev("rwProg(rwActive()).done") == d0 + 1, (d0,))
     ev("doCheckin({type:'lift',mins:45,effort:3,lifts:[],caption:'',photo:null,verified:true});0"); ok('two in one day count once', ev("rwProg(rwActive()).done") == d0 + 1)
     g = ev("rwGridText(rwActive())"); ok('share grid has a square per day', g.count('\U0001F7E7') == ev("rwProg(rwActive()).done") and '\u2B1B' in g, g)
-    ok('after a check-in the new piece shows', ev("rwDoneLine().includes('Piece '+rwProg(rwActive()).done+' of')&&rwDoneLine().includes('open new')"))
+    ok('after a check-in a piece is ready', 'is ready' in ev("rwDoneLine()") and ev("rwPend(rwActive(),rwProg(rwActive()).frac)") >= 1)
+    ok('never more picks than earned', ev("(()=>{const r=rwActive();for(let i=0;i<60;i++)A.rwPick({dataset:{id:r.id,i:String(i)}});return rwPend(r,rwProg(r).frac)===0&&rwPicks(r).length+rwGrid(r).head===rwOpen(r,rwProg(r).frac)})()"))
     # win
     ev("rwActive().target=rwProg(rwActive()).done;closeAll();S.ui.tab='home';render();rwTick();0"); shot('10-won', 900)
     ok('win opens the celebration', ev("!!document.querySelector('.rw-win')")); ok('win shows the sealed note', '1234-5678' in ev("document.querySelector('.rw-win').textContent")); href = ev("(document.querySelector('.rw-win a.btn-go')||{}).href||''"); ok('celebration links to checkout', '/cart/' in href, href)
