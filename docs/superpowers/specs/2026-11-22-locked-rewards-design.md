@@ -61,3 +61,19 @@ goal really means no reward. No money is taken on failure, and Lock In never hol
 ## Left to the builder
 
 Layout, copy, icons, tests.
+
+## Added after the second research round (2026-11-22)
+
+Research: `reports/Reward ideas from other apps.md`. Check-in points were removed from the app at the user's request.
+
+- **Cover:** the photo sits under tiles. A lock starts with a head start, each gym day earns at least one piece, and the user taps the tile it lifts (`r.picks`). Quarter marks are called out after a check-in.
+- **Witness:** an optional name; the user sends the deal, progress grid and outcome through the share sheet. Nothing is sent by the app itself.
+- **Sealed note:** optional text hidden at lock, shown on a win, or 30 days after a miss. Stored on the phone, not encrypted.
+- **Miss:** named plainly, item locked out for 30 days, kept record beside past rewards. Out-of-reach rewards can be ended at once.
+- **Money set aside:** a label only. The app never touches money.
+- **Store watch:** twice a day the phone re-reads the product page for price and stock.
+- **Shelf:** earned rewards as a grid. **Today card:** shows the current reward.
+- **Reminders:** at most one a day (`notes` op in AppBridge), following the streak reminder switch.
+- **First lock** can run two weeks.
+
+Not built, and why: shielding the store's site (needs a paid Apple account and the Family Controls entitlement), a home-screen widget (untested on a free account), real friends as witnesses, duo or group rewards (need a server), brand discounts (need partners), arrival photo for the shelf.

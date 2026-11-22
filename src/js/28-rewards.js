@@ -510,3 +510,30 @@ function rwTodayRow() {
   const sub = r.state === 'won' ? 'Earned. Tap to get it.' : rwPend(r, fr[0]) ? 'A piece is ready to uncover' : r.pausedAt ? 'Paused' : p.kind === 'gym' ? (p.spare < 0 ? 'Out of reach this time' : p.need + ' to go, ' + plural(p.daysLeft, 'day') + ' left') : wShow(p.gap) + ' ' + wUnit() + ' to go, ' + plural(p.daysLeft, 'day') + ' left';
   return '<button class="td-row td-rw" data-a="homeSeg" data-k="rewards">' + rwCover(r, fr[0], null) + '<span class="grow"><b>' + esc(r.name) + '</b><small>' + sub + '</small></span><span class="td-go">' + ic('chevR', 18) + '</span></button>';
 }
+
+/* ---- reminders ----
+   At most one a day, and only when it would change something: a piece waiting, spare days
+   nearly gone, the last few days. They follow the streak reminder switch in Settings. */
+function rwNotes() {
+  const r = rwActive(), out = []; if (!r || r.sample || r.pausedAt || !(S.settings.remind && S.settings.remind.closing)) return out;
+  const p = rwProg(r), at = (day, h) => dayStart(day) + h * HOUR, today = dayNum(now()), endDay = dayNum(r.end), used = {};
+  const add = (id, when, body) => { const d = dayNum(when); if (when > now() + 2 * MIN && when < r.end && !used[d]) { used[d] = 1; out.push({ id: id, at: realTime(when), title: r.name, body: body }); } };
+  if (p.kind === 'gym') {
+    if (p.need > 0 && p.spare >= 0) {
+      if (!p.todayDone && p.spare <= 2) add('spare', at(today, 18), p.spare === 0 ? 'No spare days left. A gym day today keeps it in reach.' : plural(p.spare, 'spare day') + ' left. A gym day today keeps it safe.');
+      if (p.need === 1) add('last', at(p.todayDone ? today + 1 : today, 9), 'One more gym day and it is yours.');
+      add('three', at(endDay - 2, 9), p.need + ' gym ' + (p.need === 1 ? 'day' : 'days') + ' to go and 3 days left.');
+    }
+    if (rwPend(r, p.frac)) add('piece', at(today + 1, 10), 'A piece is ready to uncover.');
+  } else if (!p.hit) add('weigh', at(endDay - 2, 9), '3 days left. Log your weight to see where you stand.');
+  return out;
+}
+let _rwNoteKey = '';
+function rwRemindSync() {
+  const h = appNative(); if (!h || !S || !S.checkins) return;
+  const items = rwNotes(), key = JSON.stringify(items.map(x => [x.id, Math.round(x.at / 60000), x.body]));
+  if (key === _rwNoteKey) return; _rwNoteKey = key;
+  h.postMessage({ op: 'notes', items: items }).catch(() => { });
+}
+setTimeout(rwRemindSync, 2500);
+setInterval(rwRemindSync, 60000);

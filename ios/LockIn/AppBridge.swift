@@ -40,6 +40,9 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             let deadline = (body["deadline"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
             let days = body["days"] as? Int ?? 0
             Reminders.schedule(on: on, deadline: deadline, days: days) { granted in replyHandler(granted, nil) }
+        case "notes":
+            // Reward reminders: the page says what to send and when; anything it sent before is replaced.
+            Reminders.notes(body["items"] as? [[String: Any]] ?? []) { replyHandler($0, nil) }
         case "listen":
             SpeechInput.shared.start(web: message.webView) { err in replyHandler(err == nil, err) }
         case "gymHere":
@@ -211,6 +214,30 @@ enum Reminders {
                 center.add(req)
             }
             DispatchQueue.main.async { done(true) }
+        }
+    }
+
+    // [{id, at: <ms since 1970>, title, body}], at most 8. Used for locked rewards.
+    static func notes(_ items: [[String: Any]], done: @escaping (Bool) -> Void) {
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { reqs in
+            center.removePendingNotificationRequests(withIdentifiers: reqs.map(\.identifier).filter { $0.hasPrefix("rw-") })
+            guard !items.isEmpty else { DispatchQueue.main.async { done(true) }; return }
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                guard granted else { DispatchQueue.main.async { done(false) }; return }
+                for it in items.prefix(8) {
+                    guard let id = it["id"] as? String, let at = it["at"] as? Double, let text = it["body"] as? String else { continue }
+                    let wait = at / 1000 - Date().timeIntervalSince1970
+                    guard wait > 60 else { continue }
+                    let content = UNMutableNotificationContent()
+                    content.title = it["title"] as? String ?? "Lock In"
+                    content.body = text
+                    content.sound = .default
+                    center.add(UNNotificationRequest(identifier: "rw-" + id, content: content,
+                                                     trigger: UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false)))
+                }
+                DispatchQueue.main.async { done(true) }
+            }
         }
     }
 }
