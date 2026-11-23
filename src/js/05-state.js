@@ -1,4 +1,6 @@
-const KEY = 'lockin.v5', PKEY = 'lockin.photos.v4';
+// Opened with ?sample=1 the app shows made-up data, kept apart from anyone's real data. Tests use it.
+const DEMO = /[?&]sample=1\b/.test(location.search);
+const KEY = DEMO ? 'lockin.demo.v6' : 'lockin.v6', PKEY = DEMO ? 'lockin.demo.photos.v6' : 'lockin.photos.v6';
 let PHOTOS = {};   // photo key -> data URL (photos the person took)
 let MEM = false;   // true when browser storage is unavailable
 let FRESH = false; // true when this page load found nothing saved in the browser
@@ -129,7 +131,7 @@ function loadState() {
     if (raw) { const st = JSON.parse(raw); if (st && st.v === 4 && st.me && st.checkins) { S = st; } }
     const p = localStorage.getItem(PKEY); if (p) PHOTOS = JSON.parse(p) || {};
   } catch (e) { MEM = true; }
-  if (!S) { S = seedState(); FRESH = true; }
+  if (!S) { S = DEMO ? seedState() : emptyState(); FRESH = true; }
   upgradeState();
   S.ui.tab = S.ui.tab || 'home';
 }
@@ -144,13 +146,20 @@ function upgradeState() {
   if (!S.weights) { S.weights = []; if (S.mode === 'sample') { const r = rng(91); for (let d = 34; d >= 0; d -= 1 + Math.floor(r() * 2)) S.weights.push({ ts: now() - d * DAY - 15 * HOUR, kg: Math.round((78.6 - (34 - d) * .045 + (r() - .5) * .7) * 10) / 10 }); } }
   if (!S.rev) S.rev = 0;
 }
-// Your own data, from zero. The sample friends stay, so the social screens have people in them.
+// A brand new person: no name yet, no streak, no friends, nothing logged.
+function emptyState() {
+  const st = realState(seedState());
+  Object.assign(st.me, { name: '', handle: '', campus: '', gym: '', bio: '', color: ['#141A33', '#2D6CDF', '#12996B', '#D9466B', '#B25E09', '#6B4FD8'][Math.floor(Math.random() * 6)] });
+  st.friends = []; st.posts = []; st.requests = []; st.meets = []; st.activity = []; st.challenges = []; st.rev = 0;
+  return st;
+}
+// The sample, emptied of your own entries. Only used with ?sample=1.
 function realState(from) {
   const st = seedState(), old = from || S;
   Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
   st.checkins = []; st.meals = []; st.lifts = {}; st.progress = []; st.badges = {}; st.activity = []; st.requests = []; st.squads = [];
   st.posts = st.posts.filter(p => p.uid !== 'me'); st.friends.forEach(f => { f.duo = 0; });
-  st.weights = []; st.water = []; st.coachLog = []; st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
+  st.weights = []; st.rewards = []; st.water = []; st.coachLog = []; st.goals = Object.assign({}, old.goals); st.body = old.body ? Object.assign({}, old.body) : undefined; st.settings = JSON.parse(JSON.stringify(old.settings));
   st.mode = 'real'; st.rev = Date.now(); st.ui.coach = false;
   return st;
 }
@@ -162,6 +171,7 @@ function save() {
     if (typeof remindSync === 'function') remindSync();   // streak reminders follow the clock
     if (!MEM) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { MEM = true; } }
     syncPush();
+    if (typeof acctAfterSave === 'function') acctAfterSave();
   }, 250);
 }
 function savePhoto(key, dataURL, localOnly) {
@@ -178,5 +188,5 @@ function savePhoto(key, dataURL, localOnly) {
 }
 function resetDemo() {
   try { localStorage.removeItem(KEY); localStorage.removeItem(PKEY); } catch (e) { }
-  PHOTOS = {}; S = seedState(); upgradeState(); save();
+  PHOTOS = {}; S = DEMO ? seedState() : emptyState(); upgradeState(); save();
 }

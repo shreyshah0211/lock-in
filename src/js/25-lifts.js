@@ -29,11 +29,13 @@ function liftFromAI(r) {
 }
 
 /* ---- the lift sheet ---- */
-function startLiftPhoto(ph) {
+// read: what the camera's first look already found, so the photo is not read twice.
+function startLiftPhoto(ph, read) {
   D.snap = null;
   D.lift = { photo: ph ? ph.key : null, blob: ph ? ph.blob : null, art: ph ? null : sceneURI('rack', 14), state: ph ? 'reading' : 'sample', name: '', w: '', reps: '', sets: '', how: '', conf: '' };
   const L = D.lift;
   openSheet(liftSheet, { cls: 'full', onClose: () => { if (D.lift === L) D.lift = null; } });
+  if (ph && read) { liftFill(L, read); L.state = 'ok'; drawSheets(false); return; }
   if (!ph) { liftFill(L, { name: 'Bench press', w: S.settings.units === 'kg' ? 60 : 135, how: 'a 45 on each side plus the bar (sample)', conf: 'high' }); L.state = 'sample'; drawSheets(false); return; }
   aiLiftPhoto(ph.blob).then(r => {
     if (D.lift !== L) return;
@@ -89,7 +91,8 @@ A.liftSave = () => {
     D.pendingLift = lift; startCheckin(ph); return;
   }
   const r = addLiftToday(c, lift);
-  D.lift = null; closeAll(); save(); render();
+  D.lift = null; closeAll(); save();
+  if (S.ui.tab === 'cam') A.camClose(); else render();   // back to where you were, not the camera
   toast(r.pr ? 'New best on ' + name.toLowerCase() + ': ' + lift.w + ' ' + S.settings.units : name + ' ' + lift.w + ' × ' + lift.reps + ' added to today', r.pr ? 'trend' : 'check');
 };
 // A lift added after posting: it goes on the check-in, the lift history and the points.

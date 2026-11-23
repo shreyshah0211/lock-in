@@ -3,25 +3,17 @@ const onFood = () => S.ui.tab === 'you' && (S.ui.youSeg || 'food') === 'food';
    next-weight suggestions, a weight log, and Coach. Nothing here removes a feature;
    it puts the ones that were already there where they are easier to reach. */
 
-/* ---- one capture button ----
-   The orange button opens every way to log something. Photo stays first and still
-   works out on its own whether it is the gym or a meal. */
+/* ---- adding food ----
+   The camera button opens the camera, which works out on its own whether a photo is the
+   gym, a lift or food. Food's Add keeps the other ways to log a meal. */
 A.openCapture = () => {
-  const si = snapInfo();
   openSheet(() => {
     const opt = (a, k, icon, t, s, extra) => '<button class="cap-o' + (extra || '') + '" data-a="' + a + '"' + (k ? ' data-k="' + k + '"' : '') + '><span class="cap-i">' + ic(icon, 24) + '</span><span class="grow"><b>' + t + '</b><small>' + s + '</small></span>' + ic('chevR', 18) + '</button>';
-    return sheetHead('Log something') + '<div class="sh-b capture">' +
-      (si.alive ? '<p class="cap-clock"><span class="dot" style="background:' + si.color + '"></span>' + fmtLeftShort(si.left) + ' left on your clock</p>' : si.rep ? '<p class="cap-clock warn"><span class="dot" style="background:' + si.color + '"></span>Snap a gym photo to save your streak</p>' : '') +
-      (onFood() ? opt('scanMeal', '', 'camera', 'Meal photo', 'Lock In estimates the calories and macros.', ' main') : '') +
-      opt('goCam', '', 'camera', onFood() ? 'Gym photo' : 'Photo', todayCheckin() ? 'Checked in today. A gym photo adds a lift; a meal logs food.' : onFood() ? 'Check in at the gym.' : 'Gym check-in or a meal. Lock In works out which.', onFood() ? '' : ' main') +
-      opt('openLiftCam', '', 'dumbbell', 'Lift photo', 'Snap the machine or weights. Lock In reads the weight for today\'s workout.') +
+    return sheetHead('Add food') + '<div class="sh-b capture">' +
+      opt('scanMeal', '', 'camera', 'Photo', 'Lock In estimates the calories and protein.', ' main') +
       '<div class="cap-row">' +
       '<button class="cap-s" data-a="capGo" data-to="scanBarcode">' + ic('scan', 22) + '<b>Barcode</b></button>' +
-      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="' + (onFood() ? 'meal' : 'auto') + '">' + ic('mic', 22) + '<b>Say it</b></button>' +
-      '<button class="cap-s" data-a="capGo" data-to="openWater">' + ic('drop', 22) + '<b>Water</b></button>' +
-      '<button class="cap-s" data-a="capProgress">' + ic('lock', 22) + '<b>Progress</b></button>' +
-      '<button class="cap-s" data-a="openWeigh">' + ic('trend', 22) + '<b>Weight</b></button></div>' +
-      '<button class="link cap-nophoto" data-a="capGo" data-to="openNoPhoto">' + ic('info', 16) + 'No photos allowed in your gym?</button></div>';
+      '<button class="cap-s" data-a="capGo" data-to="openSay" data-k="meal">' + ic('mic', 22) + '<b>Say it</b></button></div></div>';
   });
 };
 A.capProgress = (el, e) => openCam('progress', e);
@@ -34,7 +26,7 @@ function todayCard() {
   const done = todayCheckin(), si = snapInfo(), gt = S.gymLoc && typeof gymToday === 'function' ? gymToday() : null;
   const row = done ? '<span class="td-ok">' + ic('check', 16) + '</span><span class="grow"><b>Trained today</b><small>' + esc(TYPE[done.type] ? TYPE[done.type].n : 'Workout') + ' at ' + clock(done.ts) + (gt && gt.mins >= 10 ? ', ' + fmtMins(gt.mins) : '') + '</small></span>'
     : '<span class="td-dot" style="background:' + si.color + '"></span><span class="grow"><b>' + (gt && gt.inside ? 'At ' + esc(S.gymLoc.name) + ' now' : 'Not trained yet') + '</b><small>' + (gt && gt.inside ? fmtMins(gt.mins) + ' so far' : 'Tap to check in') + '</small></span>';
-  return '<div class="card today"><button class="td-row" data-a="' + (done ? 'openLiftCam' : 'openCapture') + '">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button></div>';
+  return '<div class="card today"><button class="td-row" data-a="goCam">' + row + '<span class="td-go">' + ic('chevR', 18) + '</span></button>' + (S.ui.homeSeg === 'rewards' ? '' : rwTodayRow()) + '</div>';
 }
 
 /* ---- next weight ----

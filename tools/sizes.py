@@ -2,7 +2,7 @@
 import pathlib, sys
 from playwright.sync_api import sync_playwright
 import os; CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')   # set CHROME to your own Chrome or Chromium
-root = pathlib.Path(__file__).resolve().parent.parent; url='file://'+str(root/'dist/index.html'); bad = 0
+root = pathlib.Path(__file__).resolve().parent.parent; url='file://'+str(root/'dist/index.html') + '?sample=1'; bad = 0
 OV = "(() => { const v=document.querySelector('%s'); if(!v) return [false,['missing']]; const vr=v.getBoundingClientRect(); const bad=[...v.querySelectorAll('*')].filter(e=>{const r=e.getBoundingClientRect(); return r.width>0 && (r.right>vr.right+1) && !e.closest('.frow') && !e.closest('.hscroll')}).slice(0,3).map(e=>String(e.className||e.tagName)); return [v.scrollWidth>v.clientWidth+1, bad]; })()"
 def vis(pg, sel): pg.locator(sel).locator('visible=true').first.click()
 with sync_playwright() as pw:

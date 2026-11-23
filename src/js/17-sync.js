@@ -96,6 +96,7 @@ function syncMeet(remote) {
 // The account is read through one listener. Only an answer the store has confirmed counts: a copy
 // cached from an earlier visit, or silence, must never be mistaken for "the account is empty".
 function initSync() {
+  if (!DEMO) { if (S.mode === 'real') SYNC.seen = canon(coreOf()); return; }   // real accounts are started by acctBoot
   if (S.mode === 'real') SYNC.seen = canon(coreOf());   // what was loaded counts as already stamped
   if (!(window.claude && typeof window.claude.use === 'function')) return;
   SYNC.state = 'connecting';
@@ -148,6 +149,7 @@ function photoFlush() {
   Object.keys(PHOTOS).forEach(k => { if (used[k] && !(S.sentPhotos || {})[k]) photoPush(k, PHOTOS[k]); });
 }
 function photoSrc(key) {
+  if (key.indexOf('r:') === 0) return acctPostPhoto(key);   // a friend's check-in photo
   if (PHOTOS[key]) return PHOTOS[key];
   if (SYNC.ready && S.mode === 'real' && !_photoAsked[key]) {
     _photoAsked[key] = 1;
@@ -195,6 +197,7 @@ function syncOfferCard() {
 }
 // Settings: whose data this is and where it is kept, in plain words.
 function dataCard() {
+  if (acctOn()) return acctDataCard();
   const real = S.mode === 'real', st = SYNC.state;
   const where = !real ? 'Sample data, for looking around. Nothing here is saved to your account.'
     : st === 'on' ? 'Saved to your Claude account. It follows you to any device and survives a cleared browser.'

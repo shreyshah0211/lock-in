@@ -10,6 +10,7 @@ import WebKit
 // Native pieces the page asks for through the "app" message handler (see src/js/22-native.js):
 //   {op: "map", places: [{name, city, lat, lon, count}], focus: "name"} -> shows the gyms in Apple Maps
 //   {op: "remind", on: true, deadline: <ms since 1970>, days: 23}   -> schedules streak reminders
+//   {op: "page", url: "https://..."}                              -> the text of a product page, for locked rewards
 //   {op: "listen"} / {op: "listenStop"}                               -> speech to text; words arrive through window.__speech
 final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "app"
@@ -39,6 +40,13 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             let deadline = (body["deadline"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
             let days = body["days"] as? Int ?? 0
             Reminders.schedule(on: on, deadline: deadline, days: days) { granted in replyHandler(granted, nil) }
+        case "chrome":
+            // Light clock and battery over dark screens, dark over light ones.
+            Chrome.shared.light = body["light"] as? Bool ?? false
+            replyHandler(true, nil)
+        case "notes":
+            // Reward reminders: the page says what to send and when; anything it sent before is replaced.
+            Reminders.notes(body["items"] as? [[String: Any]] ?? []) { replyHandler($0, nil) }
         case "listen":
             SpeechInput.shared.start(web: message.webView) { err in replyHandler(err == nil, err) }
         case "gymHere":
@@ -55,6 +63,18 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(["visits": w.visits, "inside": w.inside, "status": w.statusName, "watching": w.gym != nil], nil)
         case "gymMap":
             GymWatcher.shared.showMap(); replyHandler(true, nil)
+        case "page":
+            // The text of a store's product page, so a pasted link can show its photo, name and price.
+            // https only, no cookies, nothing about you is sent.
+            guard let s = body["url"] as? String, let url = URL(string: s), url.scheme == "https" else { replyHandler(nil, "bad_request"); return }
+            var req = URLRequest(url: url, timeoutInterval: 12)
+            req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            req.setValue("text/html,application/json;q=0.9,*/*;q=0.5", forHTTPHeaderField: "Accept")
+            URLSession(configuration: .ephemeral).dataTask(with: req) { data, resp, _ in
+                let ok = (resp as? HTTPURLResponse).map { (200..<300).contains($0.statusCode) } ?? false
+                let text = ok ? String(decoding: (data ?? Data()).prefix(1_500_000), as: UTF8.self) : ""
+                DispatchQueue.main.async { replyHandler(["text": text], nil) }
+            }.resume()
         case "listenStop":
             SpeechInput.shared.finish(); replyHandler(true, nil)
         default:
@@ -198,6 +218,30 @@ enum Reminders {
                 center.add(req)
             }
             DispatchQueue.main.async { done(true) }
+        }
+    }
+
+    // [{id, at: <ms since 1970>, title, body}], at most 8. Used for locked rewards.
+    static func notes(_ items: [[String: Any]], done: @escaping (Bool) -> Void) {
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { reqs in
+            center.removePendingNotificationRequests(withIdentifiers: reqs.map(\.identifier).filter { $0.hasPrefix("rw-") })
+            guard !items.isEmpty else { DispatchQueue.main.async { done(true) }; return }
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                guard granted else { DispatchQueue.main.async { done(false) }; return }
+                for it in items.prefix(8) {
+                    guard let id = it["id"] as? String, let at = it["at"] as? Double, let text = it["body"] as? String else { continue }
+                    let wait = at / 1000 - Date().timeIntervalSince1970
+                    guard wait > 60 else { continue }
+                    let content = UNMutableNotificationContent()
+                    content.title = it["title"] as? String ?? "Lock In"
+                    content.body = text
+                    content.sound = .default
+                    center.add(UNNotificationRequest(identifier: "rw-" + id, content: content,
+                                                     trigger: UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false)))
+                }
+                DispatchQueue.main.async { done(true) }
+            }
         }
     }
 }

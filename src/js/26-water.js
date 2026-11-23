@@ -45,22 +45,11 @@ const WATER_ADD = () => waterUS() ? [[8 * ML_OZ, '8 oz', 'Glass'], [16.9 * ML_OZ
 
 // The water card on the Food tab: drops filling up, three buttons that always fit, and
 // today's drinks, each with its own remove.
+// Water on Food: how much and a bar. Adding and everything else is under More.
 function waterCard(fd) {
-  const today = fd === foodDay(now()), w = waterDay(fd), g = waterGoal(fd), frac = clamp(w.ml / g, 0, 1), n = 8, full = Math.round(frac * n);
-  const drops = Array.from({ length: n }, (_, i) => '<i class="' + (i < full ? 'on' : '') + '">' + ic('drop', 22) + '</i>').join('');
-  const tile = (a, extra, icon, name, amt) => '<button class="wc-t" data-a="' + a + '"' + extra + '><span><b>' + esc(name) + '</b><small>+' + amt + '</small></span></button>';
-  const bt = bottleButtons(1)[0], adds = WATER_ADD();
-  const tiles = '<button class="wc-t wc-cam" data-a="openWaterCam" aria-label="Snap a bottle">' + ic('camera', 20) + '</button>' +
-    (bt ? tile('bottleUse', ' data-id="' + bt[3] + '" data-ml="' + Math.round(bt[0]) + '" data-name="' + esc(bt[2]) + '"', 'plus', bt[2], bt[1]) : tile('waterAdd', ' data-ml="' + Math.round(adds[1][0]) + '" data-name="Bottle"', 'plus', 'Bottle', adds[1][1])) +
-    tile('waterAdd', ' data-ml="' + Math.round(adds[0][0]) + '" data-name="Glass"', 'plus', 'Glass', adds[0][1]);
-  const log = w.list.slice().reverse(), shown = log.slice(0, 4);
-  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + '</span></span>' +
-    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' +
-    '<div class="wc-drops" aria-label="' + Math.round(frac * 100) + '% of your water goal">' + drops + '</div>' +
-    (today ? '<div class="wc-add">' + tiles + '</div>' : '') +
-    (today && shown.length ? '<div class="wc-log">' + shown.map(x => '<span class="wc-chip"><span>' + esc(waterName(x)) + '</span><b>' + waterFmt(x.ml) + '</b><button data-a="waterDel" data-id="' + x.id + '" aria-label="Remove ' + esc(waterName(x)) + ', ' + waterFmt(x.ml) + '">' + ic('x', 14) + '</button></span>').join('') +
-      (log.length > shown.length ? '<button class="wc-chip more" data-a="openWater">+' + (log.length - shown.length) + ' more</button>' : '') + '</div>' : '') +
-    (w.meals.length ? '<p class="mute wc-note">' + ic('bowl', 14) + ' Includes ' + waterFmt(w.meals.reduce((a, m) => a + m.ml, 0)) + ' from ' + listNames(w.meals.map(m => m.name.toLowerCase()).slice(0, 3)) + '.</p>' : '') + '</div>';
+  const today = fd === foodDay(now()), w = waterDay(fd), g = waterGoal(fd);
+  return '<div class="card water-c"><div class="wc-h"><span class="wc-n"><b class="num">' + waterFmt(w.ml, true) + '</b>' + waterUnit() + ' <span>of ' + waterFmt(g) + ' water</span></span>' +
+    (today ? '<button class="link" data-a="openWater">More</button>' : '') + '</div>' + bar(w.ml / g, 'var(--water)') + '</div>';
 }
 const waterName = x => x.name || 'Water';
 A.waterAdd = el => {

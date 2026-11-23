@@ -3,7 +3,7 @@
 import pathlib, json, sys, os
 from playwright.sync_api import sync_playwright
 CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')
-root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html'); IMG = str(root/'tools/test.jpg')
+root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html') + '?sample=1'; IMG = str(root/'tools/test.jpg')
 DB = {}
 MOCK = '''
 window.__dbDelay = %d;
@@ -62,7 +62,7 @@ with sync_playwright() as pw:
         check('empty %s tab fits the phone' % t, ev(OV % '#view'), 0)
     check('empty charts say what unlocks them', ev("(() => { const k = S.ui.youSeg; S.ui.tab = 'you'; S.ui.youSeg = 'training'; render(); let n = document.querySelectorAll('#view .thresh').length; A.openCharts(); n += document.querySelectorAll('.sheet .thresh').length; closeAll(); S.ui.youSeg = k; render(); return n; })()"), 3)
     # a real photo becomes day 1
-    vis(A, '.tabbar [data-tab="home"]'); vis(A, '[data-a="openCapture"]'); A.wait_for_timeout(300); vis(A, '.capture [data-a="goCam"]'); A.wait_for_timeout(200); A.set_input_files('#cam-input', IMG); A.wait_for_timeout(1300)
+    vis(A, '.snap'); A.wait_for_timeout(200); A.set_input_files('#cam-input', IMG); A.wait_for_timeout(1300)
     vis(A, '[data-a="snapPick"][data-k="gym"]'); A.wait_for_timeout(500); shot(A, '04-composer')
     check('composer fits the phone', ev(OV % '#layer .sheet:last-of-type'), 0)
     vis(A, '[data-a="ciPost"]'); A.wait_for_timeout(1700); shot(A, '05-day1')
@@ -84,7 +84,7 @@ with sync_playwright() as pw:
     check('laptop: data from the account can be changed, and the change reaches the phone', [B.evaluate("S.goals.p"), core()['goals']['p'], ev("S.goals.p")], [150, 150, 150])
     n = len(DB); B.wait_for_timeout(1200)
     check('two open devices do not keep rewriting the account', [len(DB), B.evaluate("SYNC.seen === SYNC.sent"), ev("SYNC.seen === SYNC.sent")], [n, True, True])
-    B.evaluate("S.ui.tab = 'food'; render()"); vis(B, '[data-a="mealAgain"]'); A.wait_for_timeout(1500)
+    B.evaluate("A.mealAgain({dataset:{id:S.meals[0].id}})"); A.wait_for_timeout(1500)
     check('a meal logged on the laptop shows on the phone', [ev("S.meals.length"), len(core()['meals'])], [2, 2])
     # both devices log at the same moment: nothing is lost
     ev("A.mealAgain({dataset:{id:S.meals[0].id}})"); B.evaluate("A.mealAgain({dataset:{id:S.meals[0].id}})"); A.wait_for_timeout(2500)

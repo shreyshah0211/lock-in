@@ -4,7 +4,7 @@
 
 /* ---- every number opens its sessions ---- */
 function sessRow(c) {
-  return '<button class="sess" data-a="openSession" data-id="' + c.id + '"><img src="' + imgOf(c) + '" alt=""><span class="grow"><b>' + esc(TYPE[c.type].v) + (c.tag ? '<span class="pill">' + esc(c.tag) + '</span>' : '') + '</b><small>' + dateLong(c.ts) + ', ' + c.mins + ' min, ' + EFFORT[c.effort].toLowerCase() + '</small></span><span class="pts">' + c.pts + '<small>points</small></span></button>';
+  return '<button class="sess" data-a="openSession" data-id="' + c.id + '"><img src="' + imgOf(c) + '" alt=""><span class="grow"><b>' + esc(TYPE[c.type].v) + (c.tag ? '<span class="pill">' + esc(c.tag) + '</span>' : '') + '</b><small>' + dateLong(c.ts) + ', ' + c.mins + ' min, ' + EFFORT[c.effort].toLowerCase() + '</small></span>' + ic('chevR', 16) + '</button>';
 }
 A.openSessions = el => {
   const i = el.dataset.i;
@@ -12,7 +12,7 @@ A.openSessions = el => {
     const wk = i == null ? null : weeklyTotals(8)[+i], a = wk ? wk.start : now() - 7 * DAY, b = wk ? wk.start + 7 * DAY + 1 : now() + 1;
     const cs = S.checkins.filter(c => c.ts >= a && c.ts < b).sort((x, y) => y.ts - x.ts), d = new Date(a);
     return sheetHead(i == null || +i === 7 ? 'Your last 7 days' : 'Week from ' + MO[d.getMonth()] + ' ' + d.getDate(), { back: true }) + '<div class="sh-b">' +
-      '<div class="stats" style="margin:0;grid-template-columns:repeat(3,1fr)"><div><b>' + cs.length + '</b><span>check-ins</span></div><div><b>' + (cs.reduce((x, c) => x + c.mins, 0) / 60).toFixed(1) + '</b><span>hours</span></div><div><b>' + cs.reduce((x, c) => x + c.pts, 0) + '</b><span>effort points</span></div></div>' +
+      '<div class="stats" style="margin:0;grid-template-columns:repeat(2,1fr)"><div><b>' + cs.length + '</b><span>check-ins</span></div><div><b>' + (cs.reduce((x, c) => x + c.mins, 0) / 60).toFixed(1) + '</b><span>hours</span></div></div>' +
       (cs.length ? '<div class="sesslist">' + cs.map(sessRow).join('') + '</div>' : '<p class="empty">No check-ins in these 7 days.</p>') + '</div>';
   }, { cls: 'full' });
 };
@@ -32,8 +32,7 @@ A.openSession = el => {
     return sheetHead(TYPE[c.type].v) + '<div class="sh-b"><div class="prev"><img src="' + imgOf(c) + '" alt=""></div>' +
       '<p class="mute" style="font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + dateLong(c.ts) + ' at ' + clock(c.ts) + '<span class="pill">' + ic(pf[1], 13) + pf[0] + '</span>' + (c.tag ? '<span class="pill">' + esc(c.tag) + '</span>' : '') + '</p>' +
       (c.caption ? '<p>' + esc(c.caption) + '</p>' : '') +
-      '<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px"><b style="font-size:16px">' + c.pts + ' effort points</b><span class="pill" style="background:' + band[3] + ';color:' + band[4] + '">' + band[0] + ' session</span></div><div class="rows">' +
-      ptsParts(c).map(p => '<div class="row" style="padding:9px 0"><div class="grow" style="font-size:14px">' + p[0] + '</div><b class="num" style="font-size:18px">+' + (Math.round(p[1] * 10) / 10) + '</b></div>').join('') + '</div></div>' +
+      '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:16px">' + c.mins + ' min, ' + EFFORT[c.effort].toLowerCase() + '</b><span class="pill" style="background:' + band[3] + ';color:' + band[4] + '">' + band[0] + ' session</span></div>' +
       (c.pr ? '<div class="aicheck ok">' + ic('trend', 18) + 'New best: ' + esc(c.pr.lift) + ' ' + c.pr.w + ' ' + u + '</div>' : '') +
       (c.lifts && c.lifts.length ? '<div class="card" style="padding:6px 16px"><div class="rows">' + c.lifts.map(l => '<div class="row" style="padding:10px 0"><div class="grow">' + esc(l.name) + '</div><span class="mute" style="font-size:13.5px;font-weight:600">' + l.w + ' ' + u + (l.reps ? ', ' + plural(+l.reps, 'rep') : '') + (l.sets ? ', ' + plural(+l.sets, 'set') : '') + '</span></div>').join('') + '</div></div>' : '') + '</div>';
   });
@@ -113,8 +112,7 @@ A.openRecap = () => {
     return sheetHead(r.name + ' recap', { back: true }) + '<div class="sh-b"><div class="two">' +
       '<div class="tile"><div class="k">Check-ins</div><div class="v">' + r.n + '</div><div class="d">' + dn + '</div></div>' +
       '<div class="tile"><div class="k">Time trained</div><div class="v">' + r.hours.toFixed(1) + '<small>hours</small></div><div class="d">About ' + Math.round(r.hours * 60 / r.n) + ' minutes a session.</div></div>' +
-      '<div class="tile"><div class="k">Days you showed up</div><div class="v">' + r.days + '<small>of ' + r.len + '</small></div></div>' +
-      '<div class="tile"><div class="k">Effort points</div><div class="v">' + fmtN(r.pts) + '</div></div></div>' +
+      '<div class="tile" style="grid-column:1/-1"><div class="k">Days you showed up</div><div class="v">' + r.days + '<small>of ' + r.len + '</small></div></div></div>' +
       '<div class="card"><div class="card-k">' + r.name + ', day by day</div><div class="mcal-h">' + WD.map(w => '<span>' + w[0] + '</span>').join('') + '</div><div class="mcal">' + cal + '</div></div>' +
       '<div class="card" style="padding:6px 16px"><div class="rows"><div class="row" style="padding:12px 0"><div class="grow"><div class="t" style="font-weight:700">Trained most</div><div class="s mute" style="font-size:13px">' + TYPE[r.top].n + ', ' + plural(r.topN, 'session') + '</div></div>' + ic('dumbbell', 20) + '</div>' +
       (r.lift ? '<div class="row" style="padding:12px 0"><div class="grow"><div class="t" style="font-weight:700">Biggest gain</div><div class="s mute" style="font-size:13px">' + esc(r.lift.n) + ', up ' + r.lift.g + ' ' + S.settings.units + '</div></div>' + ic('trend', 20) + '</div>' : '') + '</div></div>' +

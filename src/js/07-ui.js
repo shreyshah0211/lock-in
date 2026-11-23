@@ -8,6 +8,7 @@ const scrollPos = {};
 let curTab = null;
 
 function render() {
+  if (acctGate()) return;   // signed out: the sign-in screens stand in for the whole app
   const v = $('#view');
   if (curTab) scrollPos[curTab] = v.scrollTop;
   if (S.ui.tab === 'food') { S.ui.tab = 'you'; S.ui.youSeg = 'food'; }   // Food lives inside You now
@@ -20,7 +21,7 @@ function render() {
   curTab = tab;
   if (tab === 'cam') { camAttach(); camStart(); } else camStop();
   renderTabs(); renderRail();
-  live(); globeMini();
+  live(); globeMini(); heroTop();
 }
 // The camera button: always in the middle, always the same. The ring around it is your clock.
 function snapInfo() {
@@ -35,7 +36,7 @@ function renderTabs() {
   const tabBtn = it => '<button data-a="tab" data-tab="' + it[0] + '"' + (t === it[0] ? ' aria-current="page"' : '') + '>' + ic(it[1], 23) + '<span>' + it[2] + '</span></button>';
   // phone: Home, the camera, You
   $('#tabs').innerHTML = '<div class="tabbar">' + tabBtn(NAV[0]) + '<span class="snap-lbl' + (si.urgent || si.rep ? ' warn' : '') + '">' + si.label + '</span>' + tabBtn(NAV[1]) + '</div>' +
-    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="openCapture" aria-label="Log something: photo, barcode, say it">' +
+    '<button class="snap' + (si.urgent || si.rep ? ' urgent' : '') + '" data-a="goCam" aria-label="Camera: gym, lift or food">' +
     '<svg class="snap-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" fill="none" stroke="rgba(18,22,43,.1)" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="' + si.color + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (si.frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 38 38)"/></svg>' +
     '<span class="snap-core">' + ic('camera', 28) + '</span></button>' ;
   // computer: the same places down the side, with words next to everything
@@ -162,7 +163,7 @@ function userCard(p) {
   let sq = '', n = 0;
   for (let d = today - 13; d <= today; d++) { const lv = me ? level(dp[d] || 0) : Math.max(0, friendLevel(p, d)); if (lv > 0) n++; sq += '<i class="l' + lv + '"></i>'; }
   return '<section class="ucard"><div class="uc-top">' + av(p, 68, { dark: true, nowarn: true }) +
-    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc(p.campus) + ', trains at ' + esc(p.gym) + '</span></div>' +
+    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc([p.campus, p.gym ? 'trains at ' + p.gym : ''].filter(Boolean).join(', ')) + '</span></div>' +
     '<div class="uc-streak ' + tierCls(days) + '"><span class="uc-n">' + flame(24) + '<span class="num">' + days + '</span></span><small>day streak</small></div></div>' +
     '<div><div class="uc-lbl"><span>Last 14 days</span><span>' + n + ' with a check-in</span></div><div class="uc-days">' + sq + '</div></div>' +
     '<div class="uc-foot">' + (alive ? '<span style="color:' + timeColor(left, true) + '">' + (me ? '<span data-live="left">' + fmtLeft(left) + '</span>' : fmtLeft(left)) + ' left</span><div class="bar"><i style="width:' + (clamp(left / WINDOW, 0, 1) * 100).toFixed(1) + '%;background:' + timeColor(left, true) + '"></i></div>'

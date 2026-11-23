@@ -62,6 +62,7 @@ function proteinRun() {
   return n;
 }
 function friendLevel(f, d) {
+  if (f.real) return d > dayNum(now()) ? -1 : (f.days && f.days[d]) || 0;   // real friends: the days they checked in
   const today = dayNum(now()); if (d > today) return -1;
   const u = hash(f.id + ':' + d) / 4294967296, ld = dayNum(f.lastCheckin);
   if (d === ld) return 2 + hash(f.id + 'L' + d) % 3;
@@ -171,7 +172,7 @@ function doCheckin(o) {
   // how this check-in was proven: photo, photo plus a recorded workout, a photo from outside, or the workout alone
   c.proof = o.proof || 'photo'; c.aud = o.audience || 'friends'; if (o.tag) c.tag = o.tag; if (o.screen) c.screen = true;
   const earned = [];
-  if (comeback) { c.pts += COMEBACK_PTS; c.bonus = COMEBACK_PTS; earned.push({ icon: 'bolt', text: 'Comeback bonus, +' + COMEBACK_PTS + ' points' }); }
+  if (comeback) { c.pts += COMEBACK_PTS; c.bonus = COMEBACK_PTS; earned.push({ icon: 'bolt', text: 'Back after a break' }); }
   S.checkins.push(c);
   if (repaired) { earned.push({ icon: 'check', text: 'Streak restored' }); addActivity({ icon: 'check', text: 'You got your streak back. One comeback a month.' }); }
   m.sincePass++;

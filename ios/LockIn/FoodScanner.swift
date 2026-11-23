@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import Vision
 import VisionKit
 import WebKit
 
@@ -11,6 +12,7 @@ import WebKit
 //   {op: "canScan"}            -> true when this iPhone can scan live
 //   {op: "scan"}               -> the barcode digits, or rejects "cancelled" / "unsupported"
 //   {op: "product", code: "…"} -> the product as JSON text, or rejects "not_found" / "offline"
+//   {op: "detect", image: "<base64 JPEG>"} -> what a barcode or QR code in the image says, or null
 // Products come from Open Food Facts (world.openfoodfacts.org), a free, open database.
 final class FoodScanner: NSObject, WKScriptMessageHandlerWithReply {
     static let handlerName = "food"
@@ -42,9 +44,25 @@ final class FoodScanner: NSObject, WKScriptMessageHandlerWithReply {
                     await MainActor.run { replyHandler(nil, "offline") }
                 }
             }
+        case "detect":
+            guard let b64 = body["image"] as? String, let data = Data(base64Encoded: b64), let img = UIImage(data: data)?.cgImage else { replyHandler(nil, nil); return }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let code = Self.barcode(in: img)
+                DispatchQueue.main.async { replyHandler(code, nil) }
+            }
         default:
             replyHandler(nil, "bad_request")
         }
+    }
+
+    // MARK: A barcode in a photo taken with the app's one camera
+
+    static func barcode(in img: CGImage) -> String? {
+        let req = VNDetectBarcodesRequest()
+        req.symbologies = [.ean13, .ean8, .upce, .code128, .itf14, .qr]
+        try? VNImageRequestHandler(cgImage: img, options: [:]).perform([req])
+        // The page decides what counts: product numbers, and QR codes that carry one.
+        return (req.results ?? []).filter { $0.confidence > 0.5 }.compactMap { $0.payloadStringValue }.first { !$0.isEmpty }
     }
 
     // MARK: Scanning
