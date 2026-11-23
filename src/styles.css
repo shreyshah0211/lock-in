@@ -1225,3 +1225,28 @@ body{overscroll-behavior:none}
 #phone.dark-top .snap-ring circle:first-child{stroke:rgba(255,255,255,.14)}
 #phone.dark-top #view .streak,#phone.dark-top #view .frow .nm{color:#fff}
 }
+
+/* ---- signed out: the screens before you are in ---- */
+#phone.gate{background:#0B0D18}
+#phone.gate #tabs,#phone.gate #side,#phone.gate #rail{display:none}
+#phone.gate #view{background:#0B0D18;color:#fff;padding-bottom:0}
+.gate{min-height:100%;display:flex;flex-direction:column;padding:22px 24px 28px;max-width:440px;margin:0 auto}
+.gate-top{padding:6px 0 0}
+.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:24px 0 60px}
+.gate h1{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.gate-sub{color:#9AA0B8;font-size:15px;line-height:1.45;margin-bottom:6px}
+.gate-sub b{color:#fff}
+.gate .input{background:rgba(255,255,255,.08);color:#fff;font-size:17px}
+.gate .input::placeholder{color:#6F7590}
+.gate .input:focus{border-color:rgba(255,255,255,.35);outline:none}
+.gate-code{font-size:30px !important;font-weight:700;letter-spacing:.32em;text-align:center;font-variant-numeric:tabular-nums}
+.gate .field label{color:#9AA0B8;font-size:13.5px}
+.gate-err{display:flex;gap:8px;align-items:flex-start;color:#FF8A7E;font-size:14px;font-weight:600;line-height:1.4}
+.gate-err svg{flex:none;margin-top:2px}
+.gate-fine{color:#6F7590;font-size:12.5px;text-align:center}
+.gate-links{display:flex;justify-content:center;gap:22px;margin-top:4px}
+.gate .link{color:#9AA0B8}
+.card.add-fr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px}
+.add-fr .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.add-fr small{font-size:13px;color:var(--mute);line-height:1.35}
+.add-fr b{font-size:15.5px}

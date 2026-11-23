@@ -2,7 +2,7 @@ import sys, pathlib, json
 from playwright.sync_api import sync_playwright
 import os; CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')   # set CHROME to your own Chrome or Chromium
 root = pathlib.Path(__file__).resolve().parent.parent
-url = 'file://' + str(root/'dist/index.html')
+url = 'file://' + str(root/'dist/index.html') + '?sample=1'
 which = sys.argv[1:] or ['all']
 def run(pw, name, vw, vh, steps):
     b = pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox'])

@@ -3,7 +3,7 @@
 import pathlib, json, sys, os
 from playwright.sync_api import sync_playwright
 CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')
-root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html'); IMG = str(root/'tools/test.jpg')
+root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html') + '?sample=1'; IMG = str(root/'tools/test.jpg')
 DB = {}
 MOCK = '''
 window.__dbDelay = %d;

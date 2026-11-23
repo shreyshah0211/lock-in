@@ -40,7 +40,8 @@ VIEWS.home = () => {
   if (seg === 'rewards') return h + rewardsView();
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
-  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">No photos yet.</p>') + '</div>';
+  if (!fr.length && !DEMO) h += '<div class="pad"><button class="card add-fr" data-a="openFriends" data-seg="find">' + ic('users', 22) + '<span class="grow"><b>Add your friends</b><small>' + (S.requests.length ? plural(S.requests.length, 'request') + ' waiting for you' : 'Find them by username. You see each other\'s clocks and gym photos.') + '</small></span>' + ic('chevR', 18) + '</button></div>';
+  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">' + (fr.length || DEMO ? 'No photos yet.' : 'Your gym photos and your friends\' show up here.') + '</p>') + '</div>';
   return h;
 };
 
@@ -104,6 +105,8 @@ function friendsList() {
     const l = following().filter(match).sort((a, b) => (pAlive(b) - pAlive(a)) || pLeft(a) - pLeft(b));
     return l.length ? '<p class="mute" style="font-size:13px;margin-bottom:2px">Least time left first, so you know who to nudge.</p><div class="rows">' + l.map(friendRow).join('') + '</div>' : '<p class="empty">No friends match that name.</p>';
   }
+  if (seg === 'find' && acctOn()) return acctFindHTML();
+  if (seg === 'find' && !DEMO) return '<p class="empty">Sign in to find friends.</p>';
   if (seg === 'find') {
     const l = S.friends.filter(f => !f.fol).filter(match);
     return '<div class="card" style="display:flex;gap:12px;align-items:center"><div class="grow" style="flex:1"><div style="font-weight:700">Find a training partner</div><div class="mute" style="font-size:13px">Show me to people at ' + esc(S.me.gym) + ' who want someone to train with.</div></div>' + sw(S.ui.spot, 'toggleSpot') + '</div>' +
@@ -152,10 +155,13 @@ A.openProfile = el => {
     const posts = S.posts.filter(p => p.uid === id).slice(0, 6);
     let h = sheetHead(f.name, { back: true }) + '<div class="sh-b" style="gap:16px">' + userCard(f).replace('class="ucard', 'style="margin:0" class="ucard');
     if (f.bio) h += '<p>' + esc(f.bio) + '</p>';
+    if (f.real) h += '<button class="btn btn-line btn-w" data-a="unfollow" data-id="' + id + '">' + ic('check', 18) + 'Friends. Tap to remove</button>';
+    else {
     h += '<div style="display:flex;gap:8px">' + (f.fol ? '<button class="btn btn-line" style="flex:1" data-a="unfollow" data-id="' + id + '">' + ic('check', 18) + 'Following</button>' : '<button class="btn btn-ink" style="flex:1" data-a="follow" data-id="' + id + '">Follow</button>') +
       '<button class="btn btn-soft" style="flex:1" data-a="nudge" data-id="' + id + '"' + (f.nudged ? ' disabled' : '') + '>' + ic('bolt', 18) + (f.nudged ? 'Nudged' : 'Nudge') + '</button></div><button class="btn btn-soft btn-w" data-a="trainWith" data-id="' + id + '">' + ic('dumbbell', 18) + 'Ask to train together</button>';
     if (!f.duo && f.fol) h += duoCount() < DUO_MAX ? '<button class="btn btn-line btn-w" data-a="startDuo" data-id="' + id + '">' + ic('users', 18) + 'Start a duo streak with ' + esc(first(f.name)) + '</button>' : '<p class="mute" style="font-size:13px;text-align:center">You have ' + DUO_MAX + ' duo streaks, the most you can keep at once.</p>';
     if (f.duo) h += duoCard(f);
+    }
     h += '<div class="stats" style="margin:0;grid-template-columns:repeat(2,1fr)"><div><b>' + Math.max(f.best, days) + '</b><span>best streak</span></div><div><b>' + fmtN(f.total) + '</b><span>check-ins</span></div></div>';
     h += '<div class="card">' + heatGrid(d => friendLevel(f, d), 26, false) + '<div class="heat-f"><span>Last 6 months</span>' + heatLegend + '</div></div>';
     if (posts.length) h += '<div><h3 class="h2" style="margin-bottom:10px">Recent check-ins</h3><div class="pgrid">' + posts.map(p => '<button data-a="noop"><img src="' + imgOf(p) + '" alt="' + esc(TYPE[p.type].v) + '"><span>' + ago(p.ts) + '</span></button>').join('') + '</div></div>';

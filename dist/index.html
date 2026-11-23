@@ -1239,6 +1239,31 @@ body{overscroll-behavior:none}
 #phone.dark-top #view .streak,#phone.dark-top #view .frow .nm{color:#fff}
 }
 
+/* ---- signed out: the screens before you are in ---- */
+#phone.gate{background:#0B0D18}
+#phone.gate #tabs,#phone.gate #side,#phone.gate #rail{display:none}
+#phone.gate #view{background:#0B0D18;color:#fff;padding-bottom:0}
+.gate{min-height:100%;display:flex;flex-direction:column;padding:22px 24px 28px;max-width:440px;margin:0 auto}
+.gate-top{padding:6px 0 0}
+.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:24px 0 60px}
+.gate h1{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.gate-sub{color:#9AA0B8;font-size:15px;line-height:1.45;margin-bottom:6px}
+.gate-sub b{color:#fff}
+.gate .input{background:rgba(255,255,255,.08);color:#fff;font-size:17px}
+.gate .input::placeholder{color:#6F7590}
+.gate .input:focus{border-color:rgba(255,255,255,.35);outline:none}
+.gate-code{font-size:30px !important;font-weight:700;letter-spacing:.32em;text-align:center;font-variant-numeric:tabular-nums}
+.gate .field label{color:#9AA0B8;font-size:13.5px}
+.gate-err{display:flex;gap:8px;align-items:flex-start;color:#FF8A7E;font-size:14px;font-weight:600;line-height:1.4}
+.gate-err svg{flex:none;margin-top:2px}
+.gate-fine{color:#6F7590;font-size:12.5px;text-align:center}
+.gate-links{display:flex;justify-content:center;gap:22px;margin-top:4px}
+.gate .link{color:#9AA0B8}
+.card.add-fr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px}
+.add-fr .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.add-fr small{font-size:13px;color:var(--mute);line-height:1.35}
+.add-fr b{font-size:15.5px}
+
 </style>
 </head>
 <body>
@@ -1764,7 +1789,9 @@ const BADGES = [
   { k: 'saved', n: 'Saved by a pass', icon: 'pass', c: '#12996B', sh: 'hex', d: 'Let a rest pass rescue your streak.' }
 ];
 
-const KEY = 'lockin.v5', PKEY = 'lockin.photos.v4';
+// Opened with ?sample=1 the app shows made-up data, kept apart from anyone's real data. Tests use it.
+const DEMO = /[?&]sample=1\b/.test(location.search);
+const KEY = DEMO ? 'lockin.demo.v6' : 'lockin.v6', PKEY = DEMO ? 'lockin.demo.photos.v6' : 'lockin.photos.v6';
 let PHOTOS = {};   // photo key -> data URL (photos the person took)
 let MEM = false;   // true when browser storage is unavailable
 let FRESH = false; // true when this page load found nothing saved in the browser
@@ -1895,7 +1922,7 @@ function loadState() {
     if (raw) { const st = JSON.parse(raw); if (st && st.v === 4 && st.me && st.checkins) { S = st; } }
     const p = localStorage.getItem(PKEY); if (p) PHOTOS = JSON.parse(p) || {};
   } catch (e) { MEM = true; }
-  if (!S) { S = seedState(); FRESH = true; }
+  if (!S) { S = DEMO ? seedState() : emptyState(); FRESH = true; }
   upgradeState();
   S.ui.tab = S.ui.tab || 'home';
 }
@@ -1910,7 +1937,14 @@ function upgradeState() {
   if (!S.weights) { S.weights = []; if (S.mode === 'sample') { const r = rng(91); for (let d = 34; d >= 0; d -= 1 + Math.floor(r() * 2)) S.weights.push({ ts: now() - d * DAY - 15 * HOUR, kg: Math.round((78.6 - (34 - d) * .045 + (r() - .5) * .7) * 10) / 10 }); } }
   if (!S.rev) S.rev = 0;
 }
-// Your own data, from zero. The sample friends stay, so the social screens have people in them.
+// A brand new person: no name yet, no streak, no friends, nothing logged.
+function emptyState() {
+  const st = realState(seedState());
+  Object.assign(st.me, { name: '', handle: '', campus: '', gym: '', bio: '', color: ['#141A33', '#2D6CDF', '#12996B', '#D9466B', '#B25E09', '#6B4FD8'][Math.floor(Math.random() * 6)] });
+  st.friends = []; st.posts = []; st.requests = []; st.meets = []; st.activity = []; st.challenges = []; st.rev = 0;
+  return st;
+}
+// The sample, emptied of your own entries. Only used with ?sample=1.
 function realState(from) {
   const st = seedState(), old = from || S;
   Object.assign(st.me, { name: old.me.name, handle: old.me.handle, campus: old.me.campus, gym: old.me.gym, goalPerWeek: old.me.goalPerWeek, lastCheckin: 0, streakStart: null, passes: 2, ext: 0, sincePass: 0, best: 0, lost: null, usedPass: false, lastRepair: 0 });
@@ -1928,6 +1962,7 @@ function save() {
     if (typeof remindSync === 'function') remindSync();   // streak reminders follow the clock
     if (!MEM) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { MEM = true; } }
     syncPush();
+    if (typeof acctAfterSave === 'function') acctAfterSave();
   }, 250);
 }
 function savePhoto(key, dataURL, localOnly) {
@@ -1944,7 +1979,7 @@ function savePhoto(key, dataURL, localOnly) {
 }
 function resetDemo() {
   try { localStorage.removeItem(KEY); localStorage.removeItem(PKEY); } catch (e) { }
-  PHOTOS = {}; S = seedState(); upgradeState(); save();
+  PHOTOS = {}; S = DEMO ? seedState() : emptyState(); upgradeState(); save();
 }
 
 /* The rules of the app: the 48-hour window, streak days, rest passes,
@@ -2011,6 +2046,7 @@ function proteinRun() {
   return n;
 }
 function friendLevel(f, d) {
+  if (f.real) return d > dayNum(now()) ? -1 : (f.days && f.days[d]) || 0;   // real friends: the days they checked in
   const today = dayNum(now()); if (d > today) return -1;
   const u = hash(f.id + ':' + d) / 4294967296, ld = dayNum(f.lastCheckin);
   if (d === ld) return 2 + hash(f.id + 'L' + d) % 3;
@@ -2167,6 +2203,7 @@ const scrollPos = {};
 let curTab = null;
 
 function render() {
+  if (acctGate()) return;   // signed out: the sign-in screens stand in for the whole app
   const v = $('#view');
   if (curTab) scrollPos[curTab] = v.scrollTop;
   if (S.ui.tab === 'food') { S.ui.tab = 'you'; S.ui.youSeg = 'food'; }   // Food lives inside You now
@@ -2321,7 +2358,7 @@ function userCard(p) {
   let sq = '', n = 0;
   for (let d = today - 13; d <= today; d++) { const lv = me ? level(dp[d] || 0) : Math.max(0, friendLevel(p, d)); if (lv > 0) n++; sq += '<i class="l' + lv + '"></i>'; }
   return '<section class="ucard"><div class="uc-top">' + av(p, 68, { dark: true, nowarn: true }) +
-    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc(p.campus) + ', trains at ' + esc(p.gym) + '</span></div>' +
+    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc([p.campus, p.gym ? 'trains at ' + p.gym : ''].filter(Boolean).join(', ')) + '</span></div>' +
     '<div class="uc-streak ' + tierCls(days) + '"><span class="uc-n">' + flame(24) + '<span class="num">' + days + '</span></span><small>day streak</small></div></div>' +
     '<div><div class="uc-lbl"><span>Last 14 days</span><span>' + n + ' with a check-in</span></div><div class="uc-days">' + sq + '</div></div>' +
     '<div class="uc-foot">' + (alive ? '<span style="color:' + timeColor(left, true) + '">' + (me ? '<span data-live="left">' + fmtLeft(left) + '</span>' : fmtLeft(left)) + ' left</span><div class="bar"><i style="width:' + (clamp(left / WINDOW, 0, 1) * 100).toFixed(1) + '%;background:' + timeColor(left, true) + '"></i></div>'
@@ -2370,7 +2407,8 @@ VIEWS.home = () => {
   if (seg === 'rewards') return h + rewardsView();
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
-  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">No photos yet.</p>') + '</div>';
+  if (!fr.length && !DEMO) h += '<div class="pad"><button class="card add-fr" data-a="openFriends" data-seg="find">' + ic('users', 22) + '<span class="grow"><b>Add your friends</b><small>' + (S.requests.length ? plural(S.requests.length, 'request') + ' waiting for you' : 'Find them by username. You see each other\'s clocks and gym photos.') + '</small></span>' + ic('chevR', 18) + '</button></div>';
+  h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">' + (fr.length || DEMO ? 'No photos yet.' : 'Your gym photos and your friends\' show up here.') + '</p>') + '</div>';
   return h;
 };
 
@@ -2434,6 +2472,8 @@ function friendsList() {
     const l = following().filter(match).sort((a, b) => (pAlive(b) - pAlive(a)) || pLeft(a) - pLeft(b));
     return l.length ? '<p class="mute" style="font-size:13px;margin-bottom:2px">Least time left first, so you know who to nudge.</p><div class="rows">' + l.map(friendRow).join('') + '</div>' : '<p class="empty">No friends match that name.</p>';
   }
+  if (seg === 'find' && acctOn()) return acctFindHTML();
+  if (seg === 'find' && !DEMO) return '<p class="empty">Sign in to find friends.</p>';
   if (seg === 'find') {
     const l = S.friends.filter(f => !f.fol).filter(match);
     return '<div class="card" style="display:flex;gap:12px;align-items:center"><div class="grow" style="flex:1"><div style="font-weight:700">Find a training partner</div><div class="mute" style="font-size:13px">Show me to people at ' + esc(S.me.gym) + ' who want someone to train with.</div></div>' + sw(S.ui.spot, 'toggleSpot') + '</div>' +
@@ -2482,10 +2522,13 @@ A.openProfile = el => {
     const posts = S.posts.filter(p => p.uid === id).slice(0, 6);
     let h = sheetHead(f.name, { back: true }) + '<div class="sh-b" style="gap:16px">' + userCard(f).replace('class="ucard', 'style="margin:0" class="ucard');
     if (f.bio) h += '<p>' + esc(f.bio) + '</p>';
+    if (f.real) h += '<button class="btn btn-line btn-w" data-a="unfollow" data-id="' + id + '">' + ic('check', 18) + 'Friends. Tap to remove</button>';
+    else {
     h += '<div style="display:flex;gap:8px">' + (f.fol ? '<button class="btn btn-line" style="flex:1" data-a="unfollow" data-id="' + id + '">' + ic('check', 18) + 'Following</button>' : '<button class="btn btn-ink" style="flex:1" data-a="follow" data-id="' + id + '">Follow</button>') +
       '<button class="btn btn-soft" style="flex:1" data-a="nudge" data-id="' + id + '"' + (f.nudged ? ' disabled' : '') + '>' + ic('bolt', 18) + (f.nudged ? 'Nudged' : 'Nudge') + '</button></div><button class="btn btn-soft btn-w" data-a="trainWith" data-id="' + id + '">' + ic('dumbbell', 18) + 'Ask to train together</button>';
     if (!f.duo && f.fol) h += duoCount() < DUO_MAX ? '<button class="btn btn-line btn-w" data-a="startDuo" data-id="' + id + '">' + ic('users', 18) + 'Start a duo streak with ' + esc(first(f.name)) + '</button>' : '<p class="mute" style="font-size:13px;text-align:center">You have ' + DUO_MAX + ' duo streaks, the most you can keep at once.</p>';
     if (f.duo) h += duoCard(f);
+    }
     h += '<div class="stats" style="margin:0;grid-template-columns:repeat(2,1fr)"><div><b>' + Math.max(f.best, days) + '</b><span>best streak</span></div><div><b>' + fmtN(f.total) + '</b><span>check-ins</span></div></div>';
     h += '<div class="card">' + heatGrid(d => friendLevel(f, d), 26, false) + '<div class="heat-f"><span>Last 6 months</span>' + heatLegend + '</div></div>';
     if (posts.length) h += '<div><h3 class="h2" style="margin-bottom:10px">Recent check-ins</h3><div class="pgrid">' + posts.map(p => '<button data-a="noop"><img src="' + imgOf(p) + '" alt="' + esc(TYPE[p.type].v) + '"><span>' + ago(p.ts) + '</span></button>').join('') + '</div></div>';
@@ -3641,7 +3684,7 @@ A.openSettings = () => {
 };
 A.stLive = () => {
   const d = D.st, m = S.me;
-  if (d.name.trim()) m.name = d.name.trim(); if (d.handle.trim()) m.handle = d.handle.trim().replace(/^@/, '').replace(/\s+/g, '').toLowerCase();
+  if (d.name.trim()) m.name = d.name.trim(); if (d.handle.trim()) { const hd = d.handle.trim().replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20); if (hd.length >= 3 || DEMO) m.handle = hd; }
   if (d.campus.trim()) m.campus = d.campus.trim(); if (d.gym.trim()) m.gym = d.gym.trim(); save();
 };
 A.setToggle = el => {
@@ -4125,6 +4168,7 @@ function syncMeet(remote) {
 // The account is read through one listener. Only an answer the store has confirmed counts: a copy
 // cached from an earlier visit, or silence, must never be mistaken for "the account is empty".
 function initSync() {
+  if (!DEMO) { if (S.mode === 'real') SYNC.seen = canon(coreOf()); return; }   // real accounts are started by acctBoot
   if (S.mode === 'real') SYNC.seen = canon(coreOf());   // what was loaded counts as already stamped
   if (!(window.claude && typeof window.claude.use === 'function')) return;
   SYNC.state = 'connecting';
@@ -4177,6 +4221,7 @@ function photoFlush() {
   Object.keys(PHOTOS).forEach(k => { if (used[k] && !(S.sentPhotos || {})[k]) photoPush(k, PHOTOS[k]); });
 }
 function photoSrc(key) {
+  if (key.indexOf('r:') === 0) return acctPostPhoto(key);   // a friend's check-in photo
   if (PHOTOS[key]) return PHOTOS[key];
   if (SYNC.ready && S.mode === 'real' && !_photoAsked[key]) {
     _photoAsked[key] = 1;
@@ -4224,6 +4269,7 @@ function syncOfferCard() {
 }
 // Settings: whose data this is and where it is kept, in plain words.
 function dataCard() {
+  if (acctOn()) return acctDataCard();
   const real = S.mode === 'real', st = SYNC.state;
   const where = !real ? 'Sample data, for looking around. Nothing here is saved to your account.'
     : st === 'on' ? 'Saved to your Claude account. It follows you to any device and survives a cleared browser.'
@@ -6214,6 +6260,308 @@ function rwRemindSync() {
 setTimeout(rwRemindSync, 2500);
 setInterval(rwRemindSync, 60000);
 
+/* Accounts. Lock In opens signed out. You type your email, get a 6-digit code, type it
+   in, pick a name and a username, and you are in. Your streak, check-ins, meals and
+   photos are saved to your account, and friends are real people who also signed up.
+
+   The server is a Supabase project (see supabase/schema.sql and docs/accounts-setup.md).
+   Its address and public key come from backend.json at build time; neither is a secret,
+   every copy of the app carries them, and the database only lets a signed-in person
+   read and change what the rules in schema.sql allow.
+
+   Opened with ?sample=1 the app shows made-up data instead, for testing only. */
+const BACKEND = null;
+const SKEY = 'lockin.session.v1', LKEY = 'lockin.local.v1';
+const ACCT = { s: null, busy: false, pulled: 0, profile: '', find: null, findQ: '', findT: 0, sent: {} };
+const acctReady = () => !!(BACKEND && BACKEND.url && BACKEND.key);
+const acctOn = () => !DEMO && !!ACCT.s;
+function acctLoad() {
+  try { const s = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (s && s.refresh && s.uid) ACCT.s = s; } catch (e) { }
+}
+function acctKeep() { try { if (ACCT.s) localStorage.setItem(SKEY, JSON.stringify(ACCT.s)); else localStorage.removeItem(SKEY); } catch (e) { } }
+
+/* ---- talking to the server ---- */
+function acctErr(code, msg) { const e = new Error(msg || code); e.code = code; return e; }
+async function acctCall(path, opts) {
+  opts = opts || {};
+  if (!acctReady()) throw acctErr('no_server');
+  if (opts.auth !== false && ACCT.s && ACCT.s.exp < Date.now() + 60000) await acctRefresh();
+  const h = { apikey: BACKEND.key, Authorization: 'Bearer ' + (opts.auth !== false && ACCT.s ? ACCT.s.token : BACKEND.key) };
+  if (opts.body !== undefined) h['Content-Type'] = 'application/json';
+  if (opts.prefer) h.Prefer = opts.prefer;
+  let res;
+  try { res = await fetch(BACKEND.url.replace(/\/+$/, '') + path, { method: opts.method || (opts.body !== undefined ? 'POST' : 'GET'), headers: h, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined }); }
+  catch (e) { throw acctErr('unavailable'); }
+  const txt = await res.text(); let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { }
+  if (res.status === 401 && opts.auth !== false && ACCT.s && !opts.again) { await acctRefresh(true); return acctCall(path, Object.assign({}, opts, { again: true })); }
+  if (!res.ok) throw acctErr((data && (data.error_code || data.code || data.error)) || 'http_' + res.status, (data && (data.msg || data.message || data.error_description)) || '');
+  return data;
+}
+let _refreshing = null;
+function acctRefresh(force) {
+  if (_refreshing) return _refreshing;
+  const s = ACCT.s; if (!s) return Promise.reject(acctErr('signed_out'));
+  _refreshing = acctCall('/auth/v1/token?grant_type=refresh_token', { auth: false, body: { refresh_token: s.refresh } })
+    .then(d => { acctSession(d); }, e => { if (e.code !== 'unavailable') acctSignedOut('Please sign in again.'); throw e; })
+    .finally(() => { _refreshing = null; });
+  return _refreshing;
+}
+function acctSession(d) {
+  ACCT.s = { token: d.access_token, refresh: d.refresh_token, exp: Date.now() + (d.expires_in || 3600) * 1000, uid: d.user ? d.user.id : ACCT.s.uid, email: d.user ? d.user.email : ACCT.s.email };
+  acctKeep();
+}
+const qs = o => Object.keys(o).map(k => k + '=' + encodeURIComponent(o[k])).join('&');
+
+/* ---- the screens before you are in ---- */
+// What stands between you and the app: 'email', 'code', 'profile', or '' when you are in.
+function acctStep() {
+  if (DEMO) return '';
+  if (!ACCT.s) { try { if (!acctReady() && localStorage.getItem(LKEY)) return ''; } catch (e) { } return D.gate && D.gate.step === 'code' ? 'code' : 'email'; }
+  return S.me.handle && S.me.name ? '' : 'profile';
+}
+function acctGate() {
+  const step = acctStep(), ph = $('#phone'); ph.classList.toggle('gate', !!step);
+  if (!step) return false;
+  const G = D.gate || (D.gate = { step: 'email', email: '', code: '', name: '', handle: '', err: '', busy: false });
+  const err = G.err ? '<p class="gate-err">' + ic('info', 16) + '<span>' + esc(G.err) + '</span></p>' : '';
+  const btn = (a, label) => '<button class="btn btn-go btn-w" data-a="' + a + '"' + (G.busy ? ' disabled' : '') + '>' + (G.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>' : '') + label + '</button>';
+  let h = '<div class="gate"><div class="gate-top">' + wordmark() + '</div><div class="gate-body">';
+  if (step === 'email') {
+    h += '<h1>One gym photo.<br>48 hours on the clock.</h1><p class="gate-sub">Sign in or join with your email. We send you a 6-digit code; there is no password.</p>' +
+      '<input class="input gate-in" id="gate-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="you@example.com" data-m="gate.email" data-enter="gateSend" value="' + esc(G.email) + '">' + err +
+      (acctReady() ? btn('gateSend', 'Send my code') : '<p class="gate-err">' + ic('info', 16) + '<span>This copy of Lock In is not connected to its server yet, so codes cannot be sent.</span></p><button class="btn btn-go btn-w" data-a="gateLocal">Use it on this phone only</button>') +
+      '<p class="gate-fine">Your email is used to sign you in and nothing else.</p>';
+  } else if (step === 'code') {
+    h += '<h1>Check your email</h1><p class="gate-sub">We sent a 6-digit code to <b>' + esc(G.email) + '</b>.</p>' +
+      '<input class="input gate-in gate-code" id="gate-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" data-m="gate.code" data-on="gateCodeLive" data-enter="gateVerify" value="' + esc(G.code) + '">' + err + btn('gateVerify', 'Sign in') +
+      '<div class="gate-links"><button class="link" data-a="gateSend">Send a new code</button><button class="link" data-a="gateBack">Use another email</button></div>';
+  } else {
+    h += '<h1>Who are you?</h1><p class="gate-sub">Friends find you by your username.</p>' +
+      '<div class="field"><label for="gate-name">Name</label><input class="input gate-in" id="gate-name" autocomplete="given-name" maxlength="28" placeholder="Your first name" data-m="gate.name" value="' + esc(G.name) + '"></div>' +
+      '<div class="field"><label for="gate-handle">Username</label><input class="input gate-in" id="gate-handle" autocomplete="off" autocapitalize="off" maxlength="20" placeholder="letters, numbers, _" data-m="gate.handle" data-enter="gateProfile" value="' + esc(G.handle) + '"></div>' + err + btn('gateProfile', 'Start') +
+      '<div class="gate-links"><button class="link" data-a="acctSignOut">Sign out</button></div>';
+  }
+  const v = $('#view'); v.innerHTML = h + '</div></div>'; v.scrollTop = 0; curTab = null;
+  $('#tabs').innerHTML = ''; const sd = $('#side'); if (sd) sd.innerHTML = '';
+  if (!G.busy && !G.focused) { G.focused = step; const i = v.querySelector('.gate-in'); if (i) setTimeout(() => { try { i.focus(); } catch (e) { } }, 50); }
+  return true;
+}
+function gateSet(o) { Object.assign(D.gate, o); if (o.step) D.gate.focused = ''; render(); }
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+A.gateSend = async () => {
+  const G = D.gate; if (!G || G.busy) return;
+  const email = String(G.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) { gateSet({ err: 'That does not look like an email address.' }); return; }
+  gateSet({ email: email, err: '', busy: true });
+  try { await acctCall('/auth/v1/otp', { auth: false, body: { email: email, create_user: true } }); gateSet({ busy: false, step: 'code', code: '' }); }
+  catch (e) { gateSet({ busy: false, err: e.code === 'unavailable' ? 'No connection. Check your internet and try again.' : /rate|429/.test(e.code) ? 'Too many codes asked for. Wait a minute and try again.' : 'Could not send the code. Try again in a moment.' }); }
+};
+A.gateCodeLive = el => { const v = el.value.replace(/\D/g, '').slice(0, 6); if (v !== el.value) el.value = v; D.gate.code = v; if (v.length === 6) A.gateVerify(); };
+A.gateVerify = async () => {
+  const G = D.gate; if (!G || G.busy) return;
+  const code = String(G.code || '').replace(/\D/g, ''); if (code.length !== 6) { gateSet({ err: 'Type the 6 digits from the email.' }); return; }
+  gateSet({ err: '', busy: true });
+  try {
+    const d = await acctCall('/auth/v1/verify', { auth: false, body: { type: 'email', email: G.email, token: code } });
+    acctSession(d); G.busy = false; G.err = ''; G.step = 'profile'; G.focused = '';
+    await acctEnter();
+  } catch (e) { gateSet({ busy: false, code: '', err: e.code === 'unavailable' ? 'No connection. Check your internet and try again.' : 'That code is wrong or has expired. Check it, or send a new one.' }); }
+};
+A.gateBack = () => gateSet({ step: 'email', code: '', err: '' });
+A.gateLocal = () => { try { localStorage.setItem(LKEY, '1'); } catch (e) { } D.gate = null; render(); };
+const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+A.gateProfile = async () => {
+  const G = D.gate; if (!G || G.busy) return;
+  const name = String(G.name || '').trim().slice(0, 28), handle = String(G.handle || '').trim().replace(/^@/, '').toLowerCase();
+  if (!name) { gateSet({ err: 'Add your name.' }); return; }
+  if (!HANDLE_RE.test(handle)) { gateSet({ err: 'A username is 3 to 20 letters, numbers or underscores.' }); return; }
+  gateSet({ err: '', busy: true, name: name, handle: handle });
+  try {
+    await acctCall('/rest/v1/profiles?on_conflict=id', { prefer: 'resolution=merge-duplicates,return=minimal', body: acctProfileRow(name, handle) });
+    S.me.name = name; S.me.handle = handle; ACCT.profile = ''; D.gate = null; save(); render(); acctPull();
+    toast('You are in. Your streak starts with your first gym photo.', 'check');
+  } catch (e) { gateSet({ busy: false, err: e.code === '23505' ? 'That username is taken. Try another.' : e.code === 'unavailable' ? 'No connection. Check your internet and try again.' : 'Could not save that. Try again.' }); }
+};
+
+/* ---- signing in, out, and leaving ---- */
+// Just signed in, or the app opened already signed in: load the profile, then the saved data, then friends.
+async function acctEnter() {
+  try {
+    const rows = await acctCall('/rest/v1/profiles?' + qs({ id: 'eq.' + ACCT.s.uid, select: '*' }));
+    const p = rows && rows[0];
+    if (p) { S.me.name = p.name || S.me.name; S.me.handle = p.username; if (p.color) S.me.color = p.color; if (D.gate) D.gate = null; }
+  } catch (e) { if (e.code === 'signed_out') return; }
+  render();
+  acctSyncStart(); acctPull();
+}
+function acctWipe() {
+  ACCT.s = null; ACCT.profile = ''; ACCT.pulled = 0; ACCT.sent = {}; acctKeep();
+  SYNC.doc = null; SYNC.ready = false; SYNC.remote = null; SYNC.seen = ''; SYNC.sent = ''; SYNC.state = 'none';
+  try { localStorage.removeItem(KEY); localStorage.removeItem(PKEY); } catch (e) { }
+  PHOTOS = {}; S = emptyState(); upgradeState(); _dp = null; _lz = null;
+}
+function acctSignedOut(msg) { acctWipe(); closeAll(); D.gate = { step: 'email', email: '', code: '', name: '', handle: '', err: msg || '', busy: false }; render(); }
+A.acctSignOut = async () => {
+  try { if (ACCT.s) await acctCall('/auth/v1/logout', { method: 'POST', body: {} }); } catch (e) { }
+  acctSignedOut('');
+};
+// Deleting takes two taps. It removes the account and everything saved with it, for good.
+A.acctDelete = async () => {
+  if (!D.delArmed) { D.delArmed = true; drawSheets(false); setTimeout(() => { if (D.delArmed) { D.delArmed = false; if (sheets.length) drawSheets(false); } }, 6000); return; }
+  D.delArmed = false;
+  try { await acctCall('/rest/v1/rpc/delete_me', { body: {} }); acctSignedOut('Your account and everything in it were deleted.'); }
+  catch (e) { toast(e.code === 'unavailable' ? 'No connection. Your account was not deleted.' : 'Could not delete the account just now. Try again.'); drawSheets(false); }
+};
+function acctDataCard() {
+  const st = SYNC.state, where = st === 'on' ? 'Saved to your account. It follows you to any phone you sign in on.' : st === 'connecting' ? 'Connecting to your account.' : 'Your account could not be reached just now, so changes stay on this phone until it can.';
+  return '<div class="card"><h3 class="h2" style="margin-bottom:4px">Your account</h3><p class="mute" style="font-size:13.5px;margin-bottom:4px">' + esc(ACCT.s.email || '') + '</p><p class="mute" style="font-size:13.5px;margin-bottom:12px">' + where + '</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-white btn-s" data-a="acctSignOut">Sign out</button><button class="btn btn-white btn-s" data-a="acctDelete"' + (D.delArmed ? ' style="background:#FCE3E0;color:#A61D11"' : '') + '>' + (D.delArmed ? 'Tap again to delete everything' : 'Delete my account') + '</button></div></div>';
+}
+
+/* ---- your own data, saved to your account ----
+   The same saving the app already does, pointed at one row per person on the server.
+   Photos are a row each. It reads again whenever the app comes back to the front. */
+function acctDoc() {
+  const uid0 = () => ACCT.s.uid;
+  return {
+    set: body => acctCall('/rest/v1/user_state?on_conflict=user_id', { prefer: 'resolution=merge-duplicates,return=minimal', body: { user_id: uid0(), data: body, updated_at: new Date().toISOString() } }),
+    read: () => acctCall('/rest/v1/user_state?' + qs({ user_id: 'eq.' + uid0(), select: 'data' })).then(r => (r && r[0] && r[0].data) || null),
+    collection: () => ({ doc: key => ({
+      set: v => acctCall('/rest/v1/user_photos?on_conflict=user_id,key', { prefer: 'resolution=merge-duplicates,return=minimal', body: { user_id: uid0(), key: key, data: v.d } }),
+      get: () => acctCall('/rest/v1/user_photos?' + qs({ user_id: 'eq.' + uid0(), key: 'eq.' + key, select: 'data' })).then(r => ({ exists: !!(r && r[0]), data: () => ({ d: r[0].data }) }))
+    }) })
+  };
+}
+function acctSyncStart() {
+  if (!acctOn()) return false;
+  SYNC.doc = acctDoc(); SYNC.ready = false; SYNC.state = 'connecting';
+  SYNC.wait = SYNC.doc.read().then(data => { if (acctOn()) syncFirst(data); }, () => { syncState('error'); setTimeout(() => { if (acctOn() && !SYNC.ready) acctSyncStart(); }, 8000); });
+  return true;
+}
+function acctSyncAgain() { if (acctOn() && SYNC.ready && SYNC.doc) SYNC.doc.read().then(d => { if (d && acctOn()) syncRemote(d); }, () => { }); }
+
+/* ---- what friends see of you: your profile row and your check-in photos ---- */
+function acctProfileRow(name, handle) {
+  const m = S.me;
+  return { id: ACCT.s.uid, username: handle || m.handle, name: name || m.name, color: m.color || '#141A33', campus: m.campus || '', gym: m.gym || '', bio: m.bio || '',
+    last_checkin: Math.round(m.lastCheckin || 0), streak_start: m.streakStart ? Math.round(m.streakStart) : null, best: Math.max(m.best || 0, pDays(m)), total: S.checkins.length, lost: m.lost || null, updated_at: new Date().toISOString() };
+}
+// Runs after every save: sends the profile when it changed, and any check-in friends have not been sent yet.
+function acctAfterSave() {
+  if (!acctOn() || acctStep()) return;
+  const row = acctProfileRow(), key = JSON.stringify(Object.assign({}, row, { updated_at: 0 }));
+  if (key !== ACCT.profile) {
+    const was = ACCT.profile; ACCT.profile = key;
+    acctCall('/rest/v1/profiles?on_conflict=id', { prefer: 'resolution=merge-duplicates,return=minimal', body: row }).catch(e => { ACCT.profile = was; if (e.code === '23505') { toast('That username is taken. Yours was not changed.'); } });
+  }
+  S.posts.filter(p => p.uid === 'me' && p.aud !== 'me' && !p.up && !ACCT.sent[p.id] && p.ts > now() - 4 * DAY).forEach(p => {
+    ACCT.sent[p.id] = 1;
+    const ph = p.photo && PHOTOS[p.photo];
+    acctCall('/rest/v1/posts?on_conflict=id', { prefer: 'resolution=merge-duplicates,return=minimal', body: { id: p.id, user_id: ACCT.s.uid, ts: Math.round(p.ts), type: p.type, mins: p.mins || 0, effort: p.effort || 0, caption: String(p.caption || '').slice(0, 300), day: p.day || 1, photo: ph && ph.length <= 400000 ? ph : null, scene: p.scene || null, pr: p.pr || null, verified: p.verified === true } })
+      .then(() => { p.up = true; save(); }, () => { delete ACCT.sent[p.id]; });
+  });
+}
+
+/* ---- friends: real people ---- */
+function acctPerson(p) {
+  return { id: p.id, real: true, name: p.name || p.username, handle: p.username, color: p.color || '#5B6388', campus: p.campus || '', gym: p.gym || '', bio: p.bio || '', streakStart: p.streak_start || null, lastCheckin: p.last_checkin || 0,
+    total: p.total || 0, best: p.best || 0, lost: p.lost || null, rel: .5, weekPts: 0, types: ['full'], fol: true, days: {} };
+}
+// Friends, requests waiting on you, and the last few days of check-ins. Asked for at start-up, when the app returns, and every minute or so.
+async function acctPull() {
+  if (!acctOn() || acctStep() || ACCT.busy) return;
+  ACCT.busy = true;
+  try {
+    const me = ACCT.s.uid;
+    const [out, inc, posts] = await Promise.all([
+      acctCall('/rest/v1/follows?' + qs({ follower: 'eq.' + me, select: 'status,p:profiles!follows_followee_fkey(*)' })),
+      acctCall('/rest/v1/follows?' + qs({ followee: 'eq.' + me, status: 'eq.pending', select: 'p:profiles!follows_follower_fkey(*)' })),
+      acctCall('/rest/v1/posts?' + qs({ ts: 'gt.' + Math.round(now() - 35 * DAY), select: 'id,user_id,ts,type,mins,effort,caption,day,scene,pr,verified', order: 'ts.desc', limit: 400 }))
+    ]);
+    if (!acctOn()) return;
+    const was = JSON.stringify([S.friends.map(f => [f.id, f.lastCheckin, f.fol, f.name]), S.requests.map(r => r.id), S.posts.length]);
+    const old = {}; S.friends.forEach(f => { old[f.id] = f; });
+    ACCT.pending = {}; (out || []).forEach(r => { if (r.p && r.status === 'pending') ACCT.pending[r.p.id] = 1; });
+    S.friends = (out || []).filter(r => r.p && r.status === 'ok').map(r => Object.assign(acctPerson(r.p), { nudged: old[r.p.id] && old[r.p.id].nudged }));
+    S.requests = (inc || []).filter(r => r.p).map(r => ({ id: r.p.id, name: r.p.name || r.p.username, color: r.p.color || '#5B6388', note: '@' + r.p.username }));
+    const by = {}; S.friends.forEach(f => { by[f.id] = f; });
+    const mine = S.posts.filter(p => p.uid === 'me'), theirs = [];
+    (posts || []).forEach(p => {
+      const f = by[p.user_id]; if (!f) return;
+      f.days[dayNum(p.ts)] = clamp(p.effort || 2, 1, 4);
+      if (p.ts > now() - 4 * DAY) theirs.push({ id: p.id, uid: p.user_id, ts: p.ts, type: TYPE[p.type] ? p.type : 'full', mins: p.mins, effort: p.effort, caption: p.caption || '', scene: p.scene && p.scene.kind ? p.scene : sceneFor('full', hash(p.id) % 1000), photo: 'r:' + p.id,
+        gym: f.gym, day: p.day || 1, rx: { fire: 0, flex: 0, clap: 0 }, mine: null, comments: [], pr: p.pr || null, verified: p.verified, aud: 'friends', proof: 'photo', by: [] });
+    });
+    S.posts = mine.concat(theirs).sort((a, b) => b.ts - a.ts);
+    ACCT.pulled = Date.now();
+    if (JSON.stringify([S.friends.map(f => [f.id, f.lastCheckin, f.fol, f.name]), S.requests.map(r => r.id), S.posts.length]) !== was) { save(); softRefresh(); }
+  } catch (e) { } finally { ACCT.busy = false; }
+}
+// A friend's check-in photo, fetched the first time a screen shows it.
+const _postAsked = {};
+function acctPostPhoto(key) {
+  if (PHOTOS[key]) return PHOTOS[key];
+  if (!acctOn() || _postAsked[key]) return null;
+  _postAsked[key] = 1;
+  acctCall('/rest/v1/posts?' + qs({ id: 'eq.' + key.slice(2), select: 'photo' })).then(r => { const d = r && r[0] && r[0].photo; if (!d || !/^data:image\//.test(d)) return; PHOTOS[key] = d; clearTimeout(_photoT); _photoT = setTimeout(softRefresh, 250); }).catch(() => { delete _postAsked[key]; });
+  return null;
+}
+// Finding people by username.
+function acctFindHTML() {
+  const q = (D.frq || '').trim().replace(/^@/, '').toLowerCase();
+  if (q.length < 2) return '<p class="empty">Search for a friend by their username.</p>';
+  if (ACCT.findQ !== q || !ACCT.find) return '<p class="empty"><span class="spin"></span></p>';
+  if (!ACCT.find.length) return '<p class="empty">Nobody has the username "' + esc(q) + '".</p>';
+  return '<div class="rows">' + ACCT.find.map(p => {
+    const f = S.friends.find(x => x.id === p.id), pend = (ACCT.pending || {})[p.id];
+    return '<div class="row">' + avPlain(p.name || p.username, p.color || '#5B6388', 48) + '<div class="grow"><div class="t">' + esc(p.name || p.username) + '</div><div class="s">@' + esc(p.username) + (p.gym ? ', ' + esc(p.gym) : '') + '</div></div>' +
+      (f ? '<span class="pill">Friends</span>' : pend ? '<span class="pill">Requested</span>' : '<button class="btn btn-ink btn-s" data-a="follow" data-id="' + p.id + '">Add</button>') + '</div>';
+  }).join('') + '</div>';
+}
+function acctFind() {
+  const q = (D.frq || '').trim().replace(/^@/, '').toLowerCase(); if (q.length < 2 || q === ACCT.findQ) return;
+  clearTimeout(ACCT.findT);
+  ACCT.findT = setTimeout(() => {
+    ACCT.findQ = q; ACCT.find = null;
+    acctCall('/rest/v1/profiles?' + qs({ username: 'ilike.' + q.replace(/[%_*\\]/g, '') + '*', id: 'neq.' + ACCT.s.uid, select: 'id,username,name,color,gym', limit: 12 }))
+      .then(r => { if (ACCT.findQ === q) { ACCT.find = r || []; A.frSearch(); } }, () => { if (ACCT.findQ === q) { ACCT.find = []; A.frSearch(); } });
+  }, 300);
+}
+// The Friends sheet's actions, pointed at real people when signed in.
+(() => {
+  const follow = A.follow, unfollow = A.unfollow, yes = A.reqYes, no = A.reqNo, search = A.frSearch;
+  A.frSearch = () => { if (acctOn() && S.ui.frSeg === 'find') acctFind(); search(); };
+  A.follow = el => {
+    if (!acctOn()) return follow(el);
+    const id = el.dataset.id; (ACCT.pending || (ACCT.pending = {}))[id] = 1; A.frSearch(); drawSheets(false);
+    acctCall('/rest/v1/follows', { prefer: 'return=minimal', body: { follower: ACCT.s.uid, followee: id } }).then(() => toast('Request sent', 'check'), e => { if (e.code !== '23505') { delete ACCT.pending[id]; drawSheets(false); toast('Could not send the request. Try again.'); } });
+  };
+  A.unfollow = el => {
+    if (!acctOn()) return unfollow(el);
+    const id = el.dataset.id, me = ACCT.s.uid; S.friends = S.friends.filter(f => f.id !== id); S.posts = S.posts.filter(p => p.uid !== id); closeAll(); save(); render();
+    Promise.all([acctCall('/rest/v1/follows?' + qs({ follower: 'eq.' + me, followee: 'eq.' + id }), { method: 'DELETE' }), acctCall('/rest/v1/follows?' + qs({ follower: 'eq.' + id, followee: 'eq.' + me }), { method: 'DELETE' })]).then(() => toast('Removed from your friends'), () => acctPull());
+  };
+  A.reqYes = el => {
+    if (!acctOn()) return yes(el);
+    const id = el.dataset.id; S.requests = S.requests.filter(r => r.id !== id); drawSheets(false);
+    acctCall('/rest/v1/rpc/accept_follow', { body: { from_id: id } }).then(() => { toast('You are friends now', 'check'); acctPull(); }, () => { toast('Could not accept just now. Try again.'); acctPull(); });
+  };
+  A.reqNo = el => {
+    if (!acctOn()) return no(el);
+    const id = el.dataset.id; S.requests = S.requests.filter(r => r.id !== id); drawSheets(false);
+    acctCall('/rest/v1/follows?' + qs({ follower: 'eq.' + id, followee: 'eq.' + ACCT.s.uid }), { method: 'DELETE' }).catch(() => acctPull());
+  };
+})();
+
+/* ---- start-up ---- */
+function acctBoot() {
+  if (DEMO) return;
+  acctLoad();
+  if (ACCT.s) acctEnter();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && acctOn()) { acctSyncAgain(); acctPull(); } });
+  setInterval(() => { if (!document.hidden && acctOn() && Date.now() - ACCT.pulled > 60000) acctPull(); }, 15000);
+}
+
 /* The right-hand panel on a computer, and start-up. On a phone the same
    things live on Home, Food and You. */
 function renderRail() {
@@ -6226,7 +6574,7 @@ function renderRail() {
   if (S.ui.tab !== 'food') h += '<section class="rcard"><div class="rc-t"><h2>Food today</h2><button class="link" data-a="openFood">Open Food</button></div>' + nutritionBar(foodDay(now()), false) + '</section>';
   if (S.ui.tab !== 'you') h += '<section class="rcard"><div class="rc-t"><h2>Workouts this week</h2><button class="link" data-a="tab" data-tab="you">See progress</button></div>' +
     '<div class="rc-stat"><span><b class="num">' + ws.n + '</b> of ' + ws.goal + ' check-ins</span></div>' + bar(ws.n / ws.goal, 'var(--go)') + '</section>';
-  h += S.mode === 'real' ? '<section class="rcard plain"><h2>This is your own data</h2><p>Your streak, check-ins, meals and lifts are yours' + (SYNC.state === 'on' ? ' and are saved to your Claude account' : '') + '. Friends, squads and rewards are still samples.</p><div class="rowb"><button class="btn btn-line btn-s" data-a="openIntro">How it works</button><button class="btn btn-line btn-s" data-a="openSettings">Your data</button></div></section>'
+  h += S.mode === 'real' ? '<section class="rcard plain"><h2>This is your own data</h2><p>Your streak, check-ins, meals and lifts are yours' + (SYNC.state === 'on' ? ' and are saved to your Claude account' : '') + '. Friends are real people who signed up.</p><div class="rowb"><button class="btn btn-line btn-s" data-a="openIntro">How it works</button><button class="btn btn-line btn-s" data-a="openSettings">Your data</button></div></section>'
     : '<section class="rcard plain"><h2>This is a working prototype</h2><p>Friends and their posts are sample data. What you do here is saved in this browser only. Use these to see how the clock behaves.</p>' +
     '<div class="rowb"><button class="btn btn-ink btn-s" data-a="skip" data-h="6">Skip 6 hours</button><button class="btn btn-ink btn-s" data-a="skip" data-h="24">Skip 24 hours</button></div>' +
     '<div class="rowb"><button class="btn btn-line btn-s" data-a="openIntro">How it works</button><button class="btn btn-line btn-s" data-a="resetDemo">Start over</button></div></section>';
@@ -6234,13 +6582,13 @@ function renderRail() {
 }
 
 function boot() {
-  loadState(); initAI(); initVoice(); initMCP(); initSync(); camProbe();
+  loadState(); acctBoot(); initAI(); initVoice(); initMCP(); initSync(); camProbe();
   document.addEventListener('touchstart', () => { }, { passive: true });   // lets iPhone show pressed states
   if (S.ui.tab === 'cam') S.ui.tab = 'home';   // never reopen on the camera
   $('#cam-input').addEventListener('change', onCamFile);
   $('#pick-input').addEventListener('change', onCamFile);
   tick(); refreshDetected(); render();
-  if (S.ui.coach) A.openIntro();   // first visit: three screens, then the camera
+  if (S.ui.coach && DEMO) A.openIntro();   // the sample opens with three screens, then the camera
   let urgent = pAlive(S.me) && leftMs() < 6 * HOUR, alive = pAlive(S.me), n = 0;
   setInterval(() => {
     const had = !!S.detected; refreshDetected();

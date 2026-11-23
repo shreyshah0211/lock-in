@@ -62,6 +62,7 @@ function proteinRun() {
   return n;
 }
 function friendLevel(f, d) {
+  if (f.real) return d > dayNum(now()) ? -1 : (f.days && f.days[d]) || 0;   // real friends: the days they checked in
   const today = dayNum(now()); if (d > today) return -1;
   const u = hash(f.id + ':' + d) / 4294967296, ld = dayNum(f.lastCheckin);
   if (d === ld) return 2 + hash(f.id + 'L' + d) % 3;

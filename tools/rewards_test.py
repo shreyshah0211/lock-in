@@ -3,7 +3,7 @@ from playwright.sync_api import sync_playwright
 # Locked rewards, end to end: read a product, lock it, count days, win, miss, weight guardrails.
 # usage: rewards_test.py [screenshot folder] [folder with a saved store page as p.js and p.html]
 import tempfile
-out = sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(); url = 'file://' + os.path.abspath('dist/index.html')
+out = sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(); url = 'file://' + os.path.abspath('dist/index.html') + '?sample=1'
 if len(sys.argv) > 2:
     js = open(sys.argv[2] + '/p.js', encoding='utf8', errors='replace').read(); html = open(sys.argv[2] + '/p.html', encoding='utf8', errors='replace').read()
 else:

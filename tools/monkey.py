@@ -1,7 +1,7 @@
 import sys, random, pathlib, json
 from playwright.sync_api import sync_playwright
 import os; CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')   # set CHROME to your own Chrome or Chromium
-root = pathlib.Path(__file__).resolve().parent.parent; url='file://'+str(root/'dist/index.html')
+root = pathlib.Path(__file__).resolve().parent.parent; url='file://'+str(root/'dist/index.html') + '?sample=1'
 seed = int(sys.argv[1]) if len(sys.argv)>1 else 1
 VW, VH = (int(sys.argv[2]), int(sys.argv[3])) if len(sys.argv)>3 else (390, 844)
 random.seed(seed)

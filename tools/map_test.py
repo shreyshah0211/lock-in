@@ -3,7 +3,7 @@
 import pathlib, json, os
 from playwright.sync_api import sync_playwright
 CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')
-root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html')
+root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html') + '?sample=1'
 fails = []
 def check(name, got, want):
     ok = got == want

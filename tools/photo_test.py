@@ -2,7 +2,7 @@
 import pathlib, json, sys
 from playwright.sync_api import sync_playwright
 import os; CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')   # set CHROME to your own Chrome or Chromium
-root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html'); IMG = str(root/'tools/test.jpg')
+root = pathlib.Path(__file__).resolve().parent.parent; url = 'file://' + str(root/'dist/index.html') + '?sample=1'; IMG = str(root/'tools/test.jpg')
 MOCK = '''
 window.__cal = []; window.__imgs = 0; window.__calls = []; window.__snapKind = 'gym'; window.__screen = false; window.__inputs = [];
 window.claude = { use: async (n) => {

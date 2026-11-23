@@ -8,6 +8,7 @@ const scrollPos = {};
 let curTab = null;
 
 function render() {
+  if (acctGate()) return;   // signed out: the sign-in screens stand in for the whole app
   const v = $('#view');
   if (curTab) scrollPos[curTab] = v.scrollTop;
   if (S.ui.tab === 'food') { S.ui.tab = 'you'; S.ui.youSeg = 'food'; }   // Food lives inside You now
@@ -162,7 +163,7 @@ function userCard(p) {
   let sq = '', n = 0;
   for (let d = today - 13; d <= today; d++) { const lv = me ? level(dp[d] || 0) : Math.max(0, friendLevel(p, d)); if (lv > 0) n++; sq += '<i class="l' + lv + '"></i>'; }
   return '<section class="ucard"><div class="uc-top">' + av(p, 68, { dark: true, nowarn: true }) +
-    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc(p.campus) + ', trains at ' + esc(p.gym) + '</span></div>' +
+    '<div class="uc-id"><b>' + esc(p.name) + '</b>' + (me ? '<span>@' + esc(p.handle) + '</span>' : '') + '<span>' + esc([p.campus, p.gym ? 'trains at ' + p.gym : ''].filter(Boolean).join(', ')) + '</span></div>' +
     '<div class="uc-streak ' + tierCls(days) + '"><span class="uc-n">' + flame(24) + '<span class="num">' + days + '</span></span><small>day streak</small></div></div>' +
     '<div><div class="uc-lbl"><span>Last 14 days</span><span>' + n + ' with a check-in</span></div><div class="uc-days">' + sq + '</div></div>' +
     '<div class="uc-foot">' + (alive ? '<span style="color:' + timeColor(left, true) + '">' + (me ? '<span data-live="left">' + fmtLeft(left) + '</span>' : fmtLeft(left)) + ' left</span><div class="bar"><i style="width:' + (clamp(left / WINDOW, 0, 1) * 100).toFixed(1) + '%;background:' + timeColor(left, true) + '"></i></div>'

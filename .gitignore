@@ -9,3 +9,4 @@ xcuserdata/
 *.xcuserstate
 DerivedData/
 ios/Config/Secrets.xcconfig
+backend.json

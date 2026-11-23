@@ -187,7 +187,7 @@ A.openSettings = () => {
 };
 A.stLive = () => {
   const d = D.st, m = S.me;
-  if (d.name.trim()) m.name = d.name.trim(); if (d.handle.trim()) m.handle = d.handle.trim().replace(/^@/, '').replace(/\s+/g, '').toLowerCase();
+  if (d.name.trim()) m.name = d.name.trim(); if (d.handle.trim()) { const hd = d.handle.trim().replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20); if (hd.length >= 3 || DEMO) m.handle = hd; }
   if (d.campus.trim()) m.campus = d.campus.trim(); if (d.gym.trim()) m.gym = d.gym.trim(); save();
 };
 A.setToggle = el => {
