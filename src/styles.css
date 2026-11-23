@@ -799,7 +799,7 @@ button.tile{display:flex;flex-direction:column;align-items:stretch;justify-conte
 @media (max-height:720px){.it-bar .macros{display:none}}
 
 /* ---------- iPhone ---------- */
-html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;touch-action:pan-x pan-y}   /* scrolling only: no pinch or double-tap zoom of the app */
 body{overscroll-behavior:none}
 [data-a]{cursor:pointer}   /* Safari on iPhone only sends taps to elements it considers clickable */
 #view,.sheet{-webkit-overflow-scrolling:touch}
@@ -813,6 +813,7 @@ body{overscroll-behavior:none}
   #view{top:calc(var(--sat) * 1.2)}
   #phone.cam-on #view{top:0}
   #view{background:var(--ground)}
+  #phone{transition:background .18s}
   #phone.dark-top{background:var(--iron)}
   .sheet{max-height:calc(100% - var(--sat) * 1.2 - 12px)}
   .sheet.full{max-height:none}
@@ -1191,3 +1192,7 @@ body{overscroll-behavior:none}
 .you-me>svg{color:var(--faint);flex:none}
 .rw-giveup{align-self:center;font-size:13px;font-weight:600;padding:2px 0}
 .dial .mid b,.hero-streak b,.wordmark,.done h2,.tile .v,.stats b{letter-spacing:-.03em}
+
+/* Pulling Home down past the top shows more of the dark clock's colour, not a white gap. */
+.hero-bleed{position:absolute;left:0;right:0;top:-900px;height:900px;background:var(--iron);pointer-events:none}
+@media (min-width:900px){.hero-bleed{display:none}}

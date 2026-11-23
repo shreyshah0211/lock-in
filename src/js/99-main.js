@@ -37,3 +37,6 @@ function boot() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) camStop(); else { tick(); softRefresh(); if (S.ui.tab === 'cam') camStart(); } });
 }
 boot();
+
+// Belt and braces against zooming the whole app: Safari's own pinch events, outside the camera.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));

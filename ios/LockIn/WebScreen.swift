@@ -25,6 +25,11 @@ struct WebScreen: UIViewRepresentable {
         web.navigationDelegate = context.coordinator
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.scrollView.bounces = false
+        // The app never zooms: no pinch, no double tap. (The camera has its own pinch for its picture.)
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false
+        web.scrollView.minimumZoomScale = 1
+        web.scrollView.maximumZoomScale = 1
+        web.scrollView.bouncesZoom = false
         web.allowsLinkPreview = false
         web.isOpaque = false
         web.backgroundColor = UIColor(red: 0.071, green: 0.086, blue: 0.169, alpha: 1)

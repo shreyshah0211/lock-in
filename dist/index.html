@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Lock In">
@@ -812,7 +812,7 @@ button.tile{display:flex;flex-direction:column;align-items:stretch;justify-conte
 @media (max-height:720px){.it-bar .macros{display:none}}
 
 /* ---------- iPhone ---------- */
-html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;touch-action:pan-x pan-y}   /* scrolling only: no pinch or double-tap zoom of the app */
 body{overscroll-behavior:none}
 [data-a]{cursor:pointer}   /* Safari on iPhone only sends taps to elements it considers clickable */
 #view,.sheet{-webkit-overflow-scrolling:touch}
@@ -826,6 +826,7 @@ body{overscroll-behavior:none}
   #view{top:calc(var(--sat) * 1.2)}
   #phone.cam-on #view{top:0}
   #view{background:var(--ground)}
+  #phone{transition:background .18s}
   #phone.dark-top{background:var(--iron)}
   .sheet{max-height:calc(100% - var(--sat) * 1.2 - 12px)}
   .sheet.full{max-height:none}
@@ -1204,6 +1205,10 @@ body{overscroll-behavior:none}
 .you-me>svg{color:var(--faint);flex:none}
 .rw-giveup{align-self:center;font-size:13px;font-weight:600;padding:2px 0}
 .dial .mid b,.hero-streak b,.wordmark,.done h2,.tile .v,.stats b{letter-spacing:-.03em}
+
+/* Pulling Home down past the top shows more of the dark clock's colour, not a white gap. */
+.hero-bleed{position:absolute;left:0;right:0;top:-900px;height:900px;background:var(--iron);pointer-events:none}
+@media (min-width:900px){.hero-bleed{display:none}}
 
 </style>
 </head>
@@ -2145,7 +2150,7 @@ function render() {
   curTab = tab;
   if (tab === 'cam') { camAttach(); camStart(); } else camStop();
   renderTabs(); renderRail();
-  live(); globeMini();
+  live(); globeMini(); heroTop();
 }
 // The camera button: always in the middle, always the same. The ring around it is your clock.
 function snapInfo() {
@@ -2332,7 +2337,7 @@ function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
   const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
-  let h = heroPanel() + todayCard() + homeCard() + homeSeg(seg);
+  let h = '<div class="hero-bleed"></div>' + heroPanel() + todayCard() + homeCard() + homeSeg(seg);
   if (seg === 'rewards') return h + rewardsView();
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
@@ -2474,6 +2479,14 @@ A.openPasses = () => {
 };
 A.toggleAutoPass = () => { S.settings.autoPass = !S.settings.autoPass; save(); drawSheets(false); };
 A.usePass = () => { if (useRestPass(true)) { save(); refresh(); } };
+
+// The strip behind the status bar is dark only while the dark clock is under it. Once the clock
+// has scrolled away it turns white with the page, so there is never a dark bar cut off from it.
+function heroTop() {
+  const ph = $('#phone'), v = $('#view'), hero = v && v.querySelector('.hero'); if (!ph || !v) return;
+  ph.classList.toggle('dark-top', S.ui.tab === 'home' && !!hero && v.scrollTop < hero.offsetHeight - 6);
+}
+document.addEventListener('scroll', e => { if (e.target && e.target.id === 'view' && S.ui.tab === 'home') heroTop(); }, true);
 
 /* Being seen, without being rated. How a check-in was proven, who noticed it,
    one kind of props for the effort, plans to train together, and duo streaks
@@ -6219,6 +6232,9 @@ function boot() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) camStop(); else { tick(); softRefresh(); if (S.ui.tab === 'cam') camStart(); } });
 }
 boot();
+
+// Belt and braces against zooming the whole app: Safari's own pinch events, outside the camera.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
 
 </script>
 </body>
