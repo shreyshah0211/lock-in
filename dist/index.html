@@ -1188,6 +1188,13 @@ body{overscroll-behavior:none}
 .shot .post-rwi{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none}
 .post-rw{z-index:2}
 
+.rw-code{display:grid;grid-template-columns:1fr 96px;gap:8px}
+.rw-code .input{min-width:0}
+.rw-codebox{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;border-radius:18px;padding:13px 16px;background:#DFF3EA;color:#0B5A40}
+.rw-codebox small{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800}
+.rw-codebox b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:22px;letter-spacing:.06em;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
+.rw-codebox span{font-size:13px;line-height:1.4}
+
 </style>
 </head>
 <body>
@@ -5729,7 +5736,7 @@ function rwSample() {
   S.checkins.forEach(c => { if (c.ts >= start) days[dayNum(c.ts)] = 1; });
   const r = { id: uid(), sample: true, name: 'Grey zip hoodie', img: '', price: 119, cur: 'USD', url: '', buy: '', store: 'Sample store', size: 'M', kind: 'gym',
     target: Object.keys(days).length + 14, start: start, end: rwEndOfDay(now() + 18 * DAY), lockedAt: start, state: 'locked' };
-  r.spare0 = 12; r.group = S.friends.filter(f => f.fol).slice(0, 3).map(f => f.id);
+  r.code = 'SAMPLE15'; r.off = 15; r.spare0 = 12; r.group = S.friends.filter(f => f.fol).slice(0, 3).map(f => f.id);
   return r;
 }
 
@@ -5805,17 +5812,38 @@ function rwCard(r) {
   if (p.kind === 'gym') h += rwBoard(r, p);
   return h + '</div>';
 }
+/* ---- discounts ----
+   A reward can carry a discount code that stays sealed until it is earned. On a win it is
+   shown and, for Shopify stores, already on the checkout link. A code comes from the person
+   (a welcome code they found) or from a brand that gives finishers a discount.
+   Partner brands go here once there is a deal: store host -> { off: percent, code, by }.
+   A code kept in the app can be read by anyone who digs for it, so a brand that needs
+   one-time codes needs a server that hands one out on a verified win. */
+const RW_PARTNERS = {};
+function rwPartner(url) { try { return RW_PARTNERS[new URL(url).hostname.replace(/^www\./, '')] || null; } catch (e) { return null; } }
+const rwCode = s0 => String(s0 || '').trim().replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 40);
+function rwBuyUrl(r) {
+  const u = rwHttps(r.buy) || rwHttps(r.url); if (!u || !r.code || r.state !== 'won') return u;
+  return /\/cart\/\d+:\d+$/.test(u) ? u + '?discount=' + encodeURIComponent(r.code) : u;
+}
+function rwOffTxt(r) { return r.off > 0 ? r.off + '% off' : 'A discount'; }
+// Shown only once it is earned: the code, and what it should come to.
+function rwCodeBox(r) {
+  if (!r.code || r.state !== 'won') return '';
+  const u = rwBuyUrl(r), on = /[?&]discount=/.test(u || ''), was = r.priceNow > 0 ? r.priceNow : r.price, now1 = r.off > 0 && was > 0 ? was * (1 - r.off / 100) : 0;
+  return '<div class="rw-codebox"><small>' + ic('sparkle', 13) + (r.off > 0 ? r.off + '% off for finishing' : 'Your discount for finishing') + '</small><b>' + esc(r.code) + '</b><span>' + (on ? 'Already on the checkout.' : 'Enter it at the checkout.') + (now1 ? ' About ' + esc(rwMoney(Math.round(now1 * 100) / 100, r.cur)) + ', down from ' + esc(rwMoney(was, r.cur)) + '.' : '') + '</span></div>';
+}
 function rwBuyBtn(r) {
-  const u = rwHttps(r.buy) || rwHttps(r.url);
-  return u ? '<a class="btn btn-go btn-w" href="' + esc(u) + '" target="_blank" rel="noopener">' + ic('trophy', 18) + 'Get it: open the checkout</a><p class="rw-fine">Opens ' + esc(r.store || 'the store') + ' with it ready to buy. You pay the store, not Lock In. The price may have changed since you locked it.</p>'
-    : '<button class="btn btn-go btn-w" data-a="rwNoLink">' + ic('trophy', 18) + 'Go and get it</button>';
+  const u = rwBuyUrl(r);
+  return rwCodeBox(r) + (u ? '<a class="btn btn-go btn-w" href="' + esc(u) + '" target="_blank" rel="noopener">' + ic('trophy', 18) + 'Get it: open the checkout</a><p class="rw-fine">Opens ' + esc(r.store || 'the store') + ' with it ready to buy. You pay the store, not Lock In. The price may have changed since you locked it.</p>'
+    : '<button class="btn btn-go btn-w" data-a="rwNoLink">' + ic('trophy', 18) + 'Go and get it</button>');
 }
 A.rwNoLink = () => toast('This one has no link. It is yours: go and buy it.', 'trophy');
 function rwPast(r) {
   const won = r.state === 'won', what = r.kind === 'gym' ? (r.got != null ? r.got + ' of ' + r.target + ' gym days' : plural(r.target, 'gym day')) : 'Goal ' + wShow(r.toKg) + ' ' + wUnit();
   const sealAt = r.seal && !won ? (r.doneAt || r.end) + RW_OUT : 0;
   return '<div class="row rw-past">' + rwImg(r, 'rw-thumb') + '<div class="grow"><div class="t">' + esc(r.name) + '</div><div class="s">' + what + ', ' + rwDate(r.doneAt || r.end) + '</div>' +
-    (r.seal ? '<button class="link rw-sealed" data-a="rwSealOpen" data-id="' + r.id + '">' + ic('lock', 13) + (won || sealAt <= now() ? 'Read what you sealed' : 'Sealed until ' + rwDate(sealAt)) + '</button>' : '') + '</div>' +
+    (r.seal || (r.code && !won && !r.partner) ? '<button class="link rw-sealed" data-a="rwSealOpen" data-id="' + r.id + '">' + ic('lock', 13) + (won || sealAt <= now() ? 'Read what you sealed' : 'Sealed until ' + rwDate(sealAt)) + '</button>' : '') + '</div>' +
     '<span class="pill' + (won ? ' rw-ok' : '') + '">' + (won ? 'Earned' : r.state === 'quit' ? 'Gave up' : 'Missed') + '</span>' +
     (won || r.sample ? '' : rwLockedOut(r) ? '<span class="rw-back">Back ' + rwDate(rwLockedOut(r)) + '</span>' : '<button class="link" data-a="rwAgain" data-id="' + r.id + '">Try again</button>') + '</div>';
 }
@@ -5929,7 +5957,7 @@ function rwWeightCheck(G, end) {
 A.rwNew = () => {
   if (rwActive()) { toast('One locked reward at a time. Finish this one first.'); return; }
   closeAll();
-  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', seal: '', aside: false, hide: false, group: [] }, D.rwSeed || {}); D.rwSeed = null;
+  D.rw = Object.assign({ step: 'pick', url: '', busy: false, err: '', p: null, manual: false, name: '', price: '', kind: 'gym', period: rwPeriods()[0][0], target: 0, toW: '', seal: '', aside: false, hide: false, group: [], code: '', off: '' }, D.rwSeed || {}); D.rwSeed = null;
   openSheet(rwSheet, { cls: 'full', onClose: () => { D.rw = null; } });
 };
 A.rwAgain = el => {
@@ -5993,6 +6021,8 @@ function rwSheet() {
     '<li>' + ic('heart', 16) + '<span>Hurt or ill? You can pause once, for up to two weeks.</span></li></ul>' +
     '<div class="setrow rw-aside"><div class="grow"><div class="t">Friends can see this reward</div><div class="s">What it is and how far along you are, on your profile and your check-ins.' + ((G.group || []).length ? ' Your group always sees it.' : '') + '</div></div>' + sw(!G.hide, 'rwHide') + '</div>' +
     (d.price > 0 ? '<div class="setrow rw-aside"><div class="grow"><div class="t">I have set the ' + esc(rwMoney(d.price, d.cur)) + ' aside</div><div class="s">Move it somewhere you will not spend it, like a savings pot. Money with a name on it gets spent on that. Lock In never touches it.</div></div>' + sw(G.aside, 'rwAside') + '</div>' : '') +
+    (rwPartner(d.url) ? '<div class="aicheck ok">' + ic('sparkle', 18) + '<span>' + esc(d.store || 'This store') + ' gives finishers ' + rwPartner(d.url).off + '% off. It is added to your checkout when you earn it.</span></div>'
+      : '<div class="field"><label for="rw-code">Discount code (optional)</label><div class="rw-code"><input class="input" id="rw-code" data-m="rw.code" placeholder="WELCOME15" maxlength="40" autocomplete="off" autocapitalize="characters" value="' + esc(G.code) + '"><input class="input" id="rw-off" type="number" inputmode="numeric" min="0" max="90" data-m="rw.off" placeholder="% off" value="' + esc(G.off) + '"></div><p class="rw-fine left">Got a code for this store? It is sealed with the reward and put on the checkout for you when you finish. Until then you cannot see it here.</p></div>') +
     '<div class="field"><label for="rw-seal">Seal something inside (optional)</label><textarea class="input" id="rw-seal" data-m="rw.seal" maxlength="400" placeholder="A note to yourself, a gift card code, a lockbox combination">' + esc(G.seal) + '</textarea><p class="rw-fine left">Hidden the moment you lock, and shown again only when you earn it. Miss, and it stays sealed for 30 more days. It is kept on this phone only.</p></div>' +
     '<p class="rw-fine">The deal is with yourself: do not buy it until you have earned it.</p></div>' +
     '<div class="sticky-cta"><button class="btn btn-go btn-w rw-hold" data-hold="rwLock" data-a="rwHoldHint">' + ic('lock', 18) + '<span>Hold to lock it in</span></button></div>';
@@ -6032,6 +6062,7 @@ A.rwLock = () => {
   r.aside = !!G.aside && d.price > 0;
   r.hide = !!G.hide; r.group = G.kind === 'gym' ? (G.group || []).filter(id => person(id)).slice(0, 5) : [];
   r.seal = String(G.seal || '').trim().slice(0, 400);
+  const pt = rwPartner(r.url); r.code = pt ? pt.code : rwCode(G.code); r.off = r.code ? clamp(Math.round(pt ? pt.off : +G.off || 0), 0, 90) : 0; r.partner = !!pt;
   rewards().push(r); addActivity({ icon: 'lock', text: 'You locked ' + r.name + ': ' + rwGoalTxt(r) + '.' }); S.ui.homeSeg = 'rewards'; S.ui.tab = 'home'; D.rw = null;
   closeAll(); save(); render();
   if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { }
@@ -6102,7 +6133,8 @@ function rwWatch() {
 A.rwAck = el => { const r = rewards().find(x => x.id === el.dataset.id); if (r) { r.ack = true; save(); render(); } };
 // What is sealed inside, money set aside, and what the store says today.
 function rwExtras(r) {
-  const bits = []; if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
+  const bits = []; if (r.code && r.state === 'locked') bits.push(ic('sparkle', 13) + rwOffTxt(r) + ' waiting when you finish');
+  if (r.seal && r.state === 'locked') bits.push(ic('lock', 13) + 'Something is sealed inside');
   if (r.aside && r.state === 'locked') bits.push(ic('dollar', 13) + esc(rwMoney(r.price, r.cur)) + ' set aside for it');
   if (r.state === 'locked' || (r.state === 'won' && !r.bought)) {
     if (r.inStock === false) bits.push(ic('info', 13) + (r.size ? 'Size ' + esc(r.size) + ' is' : 'It is') + ' sold out right now');
@@ -6110,9 +6142,12 @@ function rwExtras(r) {
   }
   return bits.length ? '<span class="rw-x">' + bits.map(b => '<span>' + b + '</span>').join('') + '</span>' : '';
 }
-function rwSealBox(r) { return r.seal ? '<div class="rw-sealbox"><small>' + ic('lock', 13) + 'You sealed this inside</small><p>' + esc(r.seal) + '</p></div>' : ''; }
+function rwSealBox(r) {
+  const code = r.code && r.state !== 'won' && !r.partner ? 'Code: ' + r.code + (r.off ? ' (' + r.off + '% off)' : '') : '', txt = [r.seal, code].filter(Boolean).join('\n');
+  return txt ? '<div class="rw-sealbox"><small>' + ic('lock', 13) + 'You sealed this inside</small><p>' + esc(txt) + '</p></div>' : '';
+}
 A.rwSealOpen = el => {
-  const r = rewards().find(x => x.id === el.dataset.id); if (!r || (!r.seal && r.state !== 'won')) return;
+  const r = rewards().find(x => x.id === el.dataset.id); if (!r || (!r.seal && !(r.code && !r.partner) && r.state !== 'won')) return;
   const at = r.state === 'won' ? 0 : (r.doneAt || r.end) + RW_OUT;
   if (at > now()) { toast('Sealed until ' + rwDate(at) + '.', 'lock'); return; }
   openSheet(() => sheetHead(r.name) + '<div class="sh-b">' + (r.state === 'won' ? rwCover(r) + '<p class="mute">Earned ' + rwDate(r.doneAt) + (r.kind === 'gym' ? ' with ' + plural(r.got || r.target, 'gym day') : '') + '.</p>' : '') + rwSealBox(r) + '</div>');
