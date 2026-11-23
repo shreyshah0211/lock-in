@@ -161,7 +161,7 @@ def live(pw):
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type=='error' else None)
     pg.goto(url); pg.wait_for_timeout(500); pg.evaluate('closeAll()')
     vis(pg, '.snap'); pg.wait_for_timeout(1500); pg.screenshot(path=str(root/'shots/ph-live-0.png'))
-    check('live', 'viewfinder is on', pg.evaluate("[cam.live, !!cam.stream, (document.querySelector('#cam-video')||{}).videoWidth > 0, !!document.querySelector('[data-a=\"camFlip\"]')]"), [True, True, True, True])
+    check('live', 'viewfinder is on', pg.evaluate("[cam.live, !!cam.stream, (document.querySelector('#cam-video')||{}).videoWidth > 0, !document.querySelector('[data-a=\"camFlip\"]')]"), [True, True, True, True])
     vis(pg, '[data-a="camShoot"]'); pg.wait_for_timeout(900); pg.screenshot(path=str(root/'shots/ph-live-1.png'))
     check('live', 'shutter takes the frame', pg.evaluate("[!!(D.snap && D.snap.ph), Object.keys(PHOTOS).length, D.snap.state]"), [True, 1, 'off'])
     pg.evaluate("A.snapCancel(); A.camClose()"); pg.wait_for_timeout(300)

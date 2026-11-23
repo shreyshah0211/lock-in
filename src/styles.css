@@ -1198,9 +1198,13 @@ body{overscroll-behavior:none}
    fades in behind the status bar so the page reads cleanly under the clock and battery. */
 @media (max-width:500px){
   #phone.dark-top{background:var(--ground)}
-  #phone.dark-top #view{top:0}
   #phone.dark-top .hero{padding-top:calc(var(--sat) * 1.2 + 14px)}
-  .hero-bleed{position:absolute;left:0;right:0;top:-900px;height:900px;background:var(--iron);pointer-events:none}
+  /* Pulling the page down past its top shows the scroller's own background, so its top half is the
+     box's colour. Everything under the box sits on a white sheet that tucks up behind the box's
+     rounded corners, so that colour never shows anywhere else. */
+  #phone.dark-top #view{top:0;background:linear-gradient(to bottom,var(--iron) 0,var(--iron) 45%,var(--ground) 45%)}
+  #phone.dark-top .hero{z-index:1}
+  .home-body{position:relative;background:var(--ground);margin-top:-44px;padding-top:44px;min-height:calc(100vh - 260px)}
   #topstrip{position:absolute;top:0;left:0;right:0;height:calc(var(--sat) * 1.2);z-index:5;pointer-events:none;opacity:0;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);transition:opacity .18s}
   #phone.dark-top.past #topstrip{opacity:1}
 }

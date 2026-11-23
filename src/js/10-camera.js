@@ -81,7 +81,7 @@ VIEWS.cam = () => {
   const alt = said && !intent ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : out ? '<button class="cam-alt" data-a="camOutsideOff">Back to the normal camera</button>' : '';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span></span>' +
-    (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
+    '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
     '<div class="cam-bot">' + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
     alt + '</div></div>';

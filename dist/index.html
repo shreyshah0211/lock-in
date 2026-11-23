@@ -1211,9 +1211,13 @@ body{overscroll-behavior:none}
    fades in behind the status bar so the page reads cleanly under the clock and battery. */
 @media (max-width:500px){
   #phone.dark-top{background:var(--ground)}
-  #phone.dark-top #view{top:0}
   #phone.dark-top .hero{padding-top:calc(var(--sat) * 1.2 + 14px)}
-  .hero-bleed{position:absolute;left:0;right:0;top:-900px;height:900px;background:var(--iron);pointer-events:none}
+  /* Pulling the page down past its top shows the scroller's own background, so its top half is the
+     box's colour. Everything under the box sits on a white sheet that tucks up behind the box's
+     rounded corners, so that colour never shows anywhere else. */
+  #phone.dark-top #view{top:0;background:linear-gradient(to bottom,var(--iron) 0,var(--iron) 45%,var(--ground) 45%)}
+  #phone.dark-top .hero{z-index:1}
+  .home-body{position:relative;background:var(--ground);margin-top:-44px;padding-top:44px;min-height:calc(100vh - 260px)}
   #topstrip{position:absolute;top:0;left:0;right:0;height:calc(var(--sat) * 1.2);z-index:5;pointer-events:none;opacity:0;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);transition:opacity .18s}
   #phone.dark-top.past #topstrip{opacity:1}
 }
@@ -2381,13 +2385,13 @@ function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
   const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
-  let h = '<div class="hero-bleed"></div>' + heroPanel() + todayCard() + homeCard() + homeSeg(seg);
-  if (seg === 'rewards') return h + rewardsView();
+  let h = heroPanel() + '<div class="home-body">' + todayCard() + homeCard() + homeSeg(seg);
+  if (seg === 'rewards') return h + rewardsView() + '</div>';
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
   if (!fr.length && !DEMO) h += '<div class="pad"><button class="card add-fr" data-a="openFriends" data-seg="find">' + ic('users', 22) + '<span class="grow"><b>Add your friends</b><small>' + (S.requests.length ? plural(S.requests.length, 'request') + ' waiting for you' : 'Find them by username. You see each other\'s clocks and gym photos.') + '</small></span>' + ic('chevR', 18) + '</button></div>';
   h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">' + (fr.length || DEMO ? 'No photos yet.' : 'Your gym photos and your friends\' show up here.') + '</p>') + '</div>';
-  return h;
+  return h + '</div>';
 };
 
 A.hideConnHint = () => { S.ui.connHint = false; save(); render(); };
@@ -2894,7 +2898,7 @@ VIEWS.cam = () => {
   const alt = said && !intent ? '<button class="cam-alt" data-a="saidClear">Forget what I said</button>' : out ? '<button class="cam-alt" data-a="camOutsideOff">Back to the normal camera</button>' : '';
   return '<div class="cam' + (live ? ' live' : '') + '">' + (live ? '<video id="cam-video" class="cam-bg" autoplay playsinline muted></video>' : '<div class="cam-bg cam-idle"></div>') + '<div class="cam-shade"></div>' +
     '<div class="cam-top"><button class="cam-txt" data-a="camClose">' + ic('x', 20) + 'Close</button><span></span>' +
-    (live ? '<button class="cam-txt" data-a="camFlip">' + ic('flip', 20) + 'Flip</button>' : '') + '</div>' +
+    '</div>' +
     '<div class="cam-mid"><div class="cam-frame"><i></i><p>' + (live ? '' : '<span class="cam-big">' + ic(out ? 'pin' : 'camera', 44) + '</span>') + title + '<small>' + sub + '</small></p></div></div>' +
     '<div class="cam-bot">' + '<div class="cam-shoot">' + left + '<button class="shutter" data-a="camShoot" aria-label="Take a photo"><i></i></button>' + right + '</div>' +
     alt + '</div></div>';

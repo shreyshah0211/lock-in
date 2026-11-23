@@ -36,13 +36,13 @@ function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
   const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
-  let h = '<div class="hero-bleed"></div>' + heroPanel() + todayCard() + homeCard() + homeSeg(seg);
-  if (seg === 'rewards') return h + rewardsView();
+  let h = heroPanel() + '<div class="home-body">' + todayCard() + homeCard() + homeSeg(seg);
+  if (seg === 'rewards') return h + rewardsView() + '</div>';
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
   if (!fr.length && !DEMO) h += '<div class="pad"><button class="card add-fr" data-a="openFriends" data-seg="find">' + ic('users', 22) + '<span class="grow"><b>Add your friends</b><small>' + (S.requests.length ? plural(S.requests.length, 'request') + ' waiting for you' : 'Find them by username. You see each other\'s clocks and gym photos.') + '</small></span>' + ic('chevR', 18) + '</button></div>';
   h += '<div class="feed">' + (posts.length ? posts.map(p => postHTML(p, !alive && p.uid !== 'me')).join('') : '<p class="empty">' + (fr.length || DEMO ? 'No photos yet.' : 'Your gym photos and your friends\' show up here.') + '</p>') + '</div>';
-  return h;
+  return h + '</div>';
 };
 
 A.hideConnHint = () => { S.ui.connHint = false; save(); render(); };
