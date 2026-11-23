@@ -813,7 +813,6 @@ body{overscroll-behavior:none}
   #view{top:calc(var(--sat) * 1.2)}
   #phone.cam-on #view{top:0}
   #view{background:var(--ground)}
-  #phone{transition:background .18s}
   #phone.dark-top{background:var(--iron)}
   .sheet{max-height:calc(100% - var(--sat) * 1.2 - 12px)}
   .sheet.full{max-height:none}
@@ -1193,6 +1192,36 @@ body{overscroll-behavior:none}
 .rw-giveup{align-self:center;font-size:13px;font-weight:600;padding:2px 0}
 .dial .mid b,.hero-streak b,.wordmark,.done h2,.tile .v,.stats b{letter-spacing:-.03em}
 
-/* Pulling Home down past the top shows more of the dark clock's colour, not a white gap. */
-.hero-bleed{position:absolute;left:0;right:0;top:-900px;height:900px;background:var(--iron);pointer-events:none}
-@media (min-width:900px){.hero-bleed{display:none}}
+/* ---- Home is one dark screen, top to bottom ----
+   The clock has no box of its own: it sits on the page, and the page is the same colour
+   behind the status bar, so nothing changes colour or splits when you scroll or pull. */
+@media (max-width:500px){
+#phone.dark-top{background:#0B0D18}
+#phone.dark-top #view{--ground:#0B0D18;--mist:rgba(255,255,255,.07);--wash:rgba(255,255,255,.12);--line:rgba(255,255,255,.1);--mute:#9AA0B8;--faint:#6F7590;--ink:#fff;background:#0B0D18;color:#fff}
+#phone.dark-top .hero{background:none;border-radius:0;padding-bottom:10px}
+#phone.dark-top .card.today{background:none;padding:0;margin:8px 16px 0}
+#phone.dark-top .td-row{background:rgba(255,255,255,.07)}
+#phone.dark-top #view .h2,#phone.dark-top #view .td-row b,#phone.dark-top #view .rw-name,#phone.dark-top #view .nm,#phone.dark-top #view .row .t,#phone.dark-top #view .rw-n .num,#phone.dark-top #view .rw-n span,#phone.dark-top #view .rw-miss b,#phone.dark-top #view .rw-shelf b{color:#fff}
+#phone.dark-top #view .seg button[aria-pressed="true"]{background:#fff;color:#0B0D18;box-shadow:none}
+#phone.dark-top #view .btn-ink{background:#fff;color:#0B0D18}
+#phone.dark-top #view .btn-line,#phone.dark-top #view .btn-soft{background:rgba(255,255,255,.1);color:#fff}
+#phone.dark-top #view .link{color:#9AA0B8}
+#phone.dark-top #view .bar,#phone.dark-top #view .rw .bar{background:rgba(255,255,255,.12)}
+#phone.dark-top #view .rw-tag{background:rgba(11,13,24,.72);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#phone.dark-top #view .rw.won .rw-tag{background:var(--ok)}
+#phone.dark-top #view .rw-line.ok{color:#3DDC97}
+#phone.dark-top #view .rw-line.warn{color:#FFB020}
+#phone.dark-top #view .rw-line.bad{color:#FF6B5E}
+#phone.dark-top #view .rw-x{color:#fff}
+#phone.dark-top #view .card.rw-miss{background:rgba(255,83,71,.14)}
+#phone.dark-top #view .pill{background:rgba(255,255,255,.12);color:#fff}
+#phone.dark-top #view .pill.rw-ok{background:rgba(61,220,151,.18);color:#3DDC97}
+#phone.dark-top #view .rw-codebox{background:rgba(61,220,151,.14);color:#3DDC97}
+#phone.dark-top #view .rw-sealbox{background:rgba(255,255,255,.07)}
+#phone.dark-top #view .aicheck{background:rgba(255,255,255,.07);color:#fff}
+#phone.dark-top .tabbar{background:rgba(24,27,44,.78);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 12px 30px -10px rgba(0,0,0,.6)}
+#phone.dark-top .tabbar button{color:#8C92AC}
+#phone.dark-top .tabbar button[aria-current="page"]{color:#fff;background:rgba(255,255,255,.1)}
+#phone.dark-top .snap-ring circle:first-child{stroke:rgba(255,255,255,.14)}
+#phone.dark-top #view .streak,#phone.dark-top #view .frow .nm{color:#fff}
+}

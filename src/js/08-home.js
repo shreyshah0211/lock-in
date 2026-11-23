@@ -36,7 +36,7 @@ function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
   const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
-  let h = '<div class="hero-bleed"></div>' + heroPanel() + todayCard() + homeCard() + homeSeg(seg);
+  let h = heroPanel() + todayCard() + homeCard() + homeSeg(seg);
   if (seg === 'rewards') return h + rewardsView();
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
@@ -178,11 +178,3 @@ A.openPasses = () => {
 };
 A.toggleAutoPass = () => { S.settings.autoPass = !S.settings.autoPass; save(); drawSheets(false); };
 A.usePass = () => { if (useRestPass(true)) { save(); refresh(); } };
-
-// The strip behind the status bar is dark only while the dark clock is under it. Once the clock
-// has scrolled away it turns white with the page, so there is never a dark bar cut off from it.
-function heroTop() {
-  const ph = $('#phone'), v = $('#view'), hero = v && v.querySelector('.hero'); if (!ph || !v) return;
-  ph.classList.toggle('dark-top', S.ui.tab === 'home' && !!hero && v.scrollTop < hero.offsetHeight - 6);
-}
-document.addEventListener('scroll', e => { if (e.target && e.target.id === 'view' && S.ui.tab === 'home') heroTop(); }, true);
