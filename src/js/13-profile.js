@@ -67,7 +67,7 @@ VIEWS.you = () => {
   const dp = dayPts(), lz = lapseDays(), ws = weekStats(), lifts = myLifts(), seg = S.ui.youSeg || 'food';
   const pg = S.progress.slice().sort((a, b) => b.ts - a.ts).slice(0, 3), hl = healthToday(), off = S.ui.foodOff || 0;
   const sec = (title, link, body) => '<div class="sec"><div class="sec-h"><h2 class="h2">' + title + '</h2>' + (link || '') + '</div>' + body + '</div>';
-  let h = '<header class="top"><h1>You</h1><button class="icon-btn" data-a="openMore" aria-label="More and settings">' + ic('gear', 22) + '</button></header>';
+  let h = '<header class="top you-top"><button class="you-me" data-a="openMore" aria-label="Your profile and settings">' + av(S.me, 52, { nowarn: true }) + '<span><b>' + esc(S.me.name) + '</b><small>' + flameTxt(pDays(S.me)) + '</small></span>' + ic('chevR', 18) + '</button></header>';
   h += '<div class="pad"><div class="seg you-seg">' + [['food', 'Food'], ['training', 'Training'], ['body', 'Body']].map(x => '<button data-a="youSeg" data-k="' + x[0] + '" aria-pressed="' + (seg === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div>';
   if (seg === 'food') {
     h += '<div class="pad food-day"><h2>' + dayLabel(foodDay(now()) + off) + '</h2><button class="icon-btn" data-a="foodDay" data-d="-1" aria-label="Previous day"' + (off <= -6 ? ' disabled' : '') + '>' + ic('chevL', 20) + '</button><button class="icon-btn" data-a="foodDay" data-d="1" aria-label="Next day"' + (off >= 0 ? ' disabled' : '') + '>' + ic('chevR', 20) + '</button></div>';
@@ -90,17 +90,19 @@ A.openCharts = () => openSheet(() => { const ws = weekStats(); return sheetHead(
 // The gear: your profile, the tools, and settings.
 A.openMore = () => {
   const nc = connCount();
-  openSheet(() => sheetHead('More') + '<div class="sh-b">' + userCard(S.me) + '<div class="menu" style="margin:0">' +
-    menuRow('openCoach', 'sparkle', 'Coach', 'Ask about training or food') +
-    menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') +
-    menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
+  openSheet(() => sheetHead('Profile') + '<div class="sh-b">' + userCard(S.me) + '<div class="menu" style="margin:0">' +
+    menuRow('openCoach', 'sparkle', 'Coach', 'Training, food, and a plan for your next sessions') +
     menuRow('openMyGym', 'pin', 'My gym', S.gymLoc ? esc(S.gymLoc.name) : 'Notice when you arrive and leave') +
-    menuRow('openNoPhoto', 'info', 'No photos at your gym?', 'Other ways to check in') +
     menuRow('openConnections', 'heart', 'Connections', nc ? plural(nc, 'app') + ' connected' : 'Apple Health and more') +
-    menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
-    menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +
+    menuRow('openRecap', 'calendar', 'Monthly recap', 'Last month in one screen') +
+    menuRow('openHelp', 'info', 'Help', 'How streaks work, reminders, no-photo gyms') +
     menuRow('openSettings', 'gear', 'Settings', 'Profile, privacy, your data') + '</div></div>', { cls: 'full' });
 };
+A.openHelp = () => openSheet(() => sheetHead('Help', { back: true }) + '<div class="sh-b"><div class="menu" style="margin:0">' +
+  menuRow('openTiers', 'info', 'How streaks work', 'The 48 hours and rest passes') +
+  menuRow('openWidgets', 'clock', 'Widget and reminders', 'Your clock on your home screen') +
+  menuRow('openNoPhoto', 'info', 'No photos at your gym?', 'Other ways to check in') +
+  menuRow('openPlan', 'calendar', 'Plan my next 3 sessions', 'From what you trained lately') + '</div></div>', { cls: 'full' });
 A.youSeg = el => { S.ui.youSeg = el.dataset.k; save(); render(); $('#view').scrollTop = Math.min($('#view').scrollTop, 330); };
 A.heatSel = el => { const d = +el.dataset.d; S.ui.heatSel = S.ui.heatSel === d ? null : d; render(); };
 

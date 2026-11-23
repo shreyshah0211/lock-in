@@ -22,7 +22,7 @@ function postHTML(p, gated) {
   const mine = p.uid === 'me', days = p.day || 1;
   if (gated) return '<article class="post"><div class="shot gated"><img src="' + imgOf(p) + '" alt=""><div class="gate">' + avPlain(u.name, u.color, 54) + '<b>' + esc(first(u.name)) + ' checked in ' + ago(p.ts) + '</b><span>Check in to see it.</span></div></div></article>';
   return '<article class="post" id="p-' + p.id + '"><div class="shot"><img src="' + imgOf(p) + '" alt="' + esc((mine ? 'Your' : first(u.name) + '\'s') + ' check-in') + '" loading="lazy">' +
-    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 40, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : first(u.name)) + '</b><span>Day ' + days + '</span></span></button><time>' + ago(p.ts) + '</time></div>' + rwPostTag(p.uid) + '</div></article>';
+    '<div class="post-h"><button class="post-who" data-a="openProfile" data-id="' + p.uid + '">' + av(u, 40, { dark: true, nowarn: true }) + '<span class="who"><b>' + esc(mine ? 'You' : first(u.name)) + '</b><span>Day ' + days + '</span></span></button><time>' + ago(p.ts) + '</time></div></div></article>';
 }
 // One photo per person: their latest check-in from the last 48 hours.
 function feedPosts() {
@@ -156,7 +156,6 @@ A.openProfile = el => {
       '<button class="btn btn-soft" style="flex:1" data-a="nudge" data-id="' + id + '"' + (f.nudged ? ' disabled' : '') + '>' + ic('bolt', 18) + (f.nudged ? 'Nudged' : 'Nudge') + '</button></div><button class="btn btn-soft btn-w" data-a="trainWith" data-id="' + id + '">' + ic('dumbbell', 18) + 'Ask to train together</button>';
     if (!f.duo && f.fol) h += duoCount() < DUO_MAX ? '<button class="btn btn-line btn-w" data-a="startDuo" data-id="' + id + '">' + ic('users', 18) + 'Start a duo streak with ' + esc(first(f.name)) + '</button>' : '<p class="mute" style="font-size:13px;text-align:center">You have ' + DUO_MAX + ' duo streaks, the most you can keep at once.</p>';
     if (f.duo) h += duoCard(f);
-    h += rwFriendCard(f);
     h += '<div class="stats" style="margin:0;grid-template-columns:repeat(2,1fr)"><div><b>' + Math.max(f.best, days) + '</b><span>best streak</span></div><div><b>' + fmtN(f.total) + '</b><span>check-ins</span></div></div>';
     h += '<div class="card">' + heatGrid(d => friendLevel(f, d), 26, false) + '<div class="heat-f"><span>Last 6 months</span>' + heatLegend + '</div></div>';
     if (posts.length) h += '<div><h3 class="h2" style="margin-bottom:10px">Recent check-ins</h3><div class="pgrid">' + posts.map(p => '<button data-a="noop"><img src="' + imgOf(p) + '" alt="' + esc(TYPE[p.type].v) + '"><span>' + ago(p.ts) + '</span></button>').join('') + '</div></div>';
