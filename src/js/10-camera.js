@@ -54,7 +54,19 @@ const PINCH = { d0: 0, z0: 1 };
 const pinchDist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 document.addEventListener('touchstart', e => { if (e.touches.length === 2 && cam.stream && e.target.closest && e.target.closest('.cam.live')) { PINCH.d0 = pinchDist(e); PINCH.z0 = cam.zoom; } }, { passive: true });
 document.addEventListener('touchmove', e => { if (e.touches.length !== 2 || !PINCH.d0 || !cam.stream) return; e.preventDefault(); setZoom(PINCH.z0 * pinchDist(e) / PINCH.d0); }, { passive: false });
-document.addEventListener('touchend', e => { if (e.touches.length < 2) PINCH.d0 = 0; }, { passive: true });
+document.addEventListener('touchend', e => { if (e.touches.length < 2) { if (PINCH.d0) PINCH.end = Date.now(); PINCH.d0 = 0; } }, { passive: true });
+// Double tap the picture to flip between the back and front camera.
+let _camTap = 0;
+function camTapFlip(e) {
+  const t = e.target; if (!cam.stream || !t.closest || !t.closest('.cam.live') || t.closest('button,a,input')) return false;
+  A.camFlip(); return true;
+}
+document.addEventListener('touchend', e => {
+  if (e.touches.length || e.changedTouches.length !== 1 || Date.now() - (PINCH.end || 0) < 400) return;
+  const t = e.target; if (!cam.stream || !t.closest || !t.closest('.cam.live') || t.closest('button,a,input')) { _camTap = 0; return; }
+  const n = Date.now(); if (n - _camTap < 320) { _camTap = 0; camTapFlip(e); } else _camTap = n;
+}, { passive: true });
+document.addEventListener('dblclick', e => { if (!('ontouchstart' in window)) camTapFlip(e); });
 
 VIEWS.cam = () => {
   const intent = D.camIntent, live = !!cam.stream, det = !intent && D.fromDetected, out = !intent && D.camOutside;

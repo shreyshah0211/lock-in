@@ -40,6 +40,10 @@ final class AppBridge: NSObject, WKScriptMessageHandlerWithReply {
             let deadline = (body["deadline"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
             let days = body["days"] as? Int ?? 0
             Reminders.schedule(on: on, deadline: deadline, days: days) { granted in replyHandler(granted, nil) }
+        case "chrome":
+            // Light clock and battery over dark screens, dark over light ones.
+            Chrome.shared.light = body["light"] as? Bool ?? false
+            replyHandler(true, nil)
         case "notes":
             // Reward reminders: the page says what to send and when; anything it sent before is replaced.
             Reminders.notes(body["items"] as? [[String: Any]] ?? []) { replyHandler($0, nil) }

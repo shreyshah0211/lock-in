@@ -21,7 +21,7 @@ function render() {
   curTab = tab;
   if (tab === 'cam') { camAttach(); camStart(); } else camStop();
   renderTabs(); renderRail();
-  live(); globeMini();
+  live(); globeMini(); heroTop();
 }
 // The camera button: always in the middle, always the same. The ring around it is your clock.
 function snapInfo() {

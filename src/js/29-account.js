@@ -60,6 +60,7 @@ function acctStep() {
 function acctGate() {
   const step = acctStep(), ph = $('#phone'); ph.classList.toggle('gate', !!step);
   if (!step) return false;
+  ph.classList.remove('dark-top', 'cam-on', 'past'); setTimeout(chromeSync, 0);
   const G = D.gate || (D.gate = { step: 'email', email: '', code: '', name: '', handle: '', err: '', busy: false });
   const err = G.err ? '<p class="gate-err">' + ic('info', 16) + '<span>' + esc(G.err) + '</span></p>' : '';
   const btn = (a, label) => '<button class="btn btn-go btn-w" data-a="' + a + '"' + (G.busy ? ' disabled' : '') + '>' + (G.busy ? '<span class="spin" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>' : '') + label + '</button>';

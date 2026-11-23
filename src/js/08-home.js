@@ -36,7 +36,7 @@ function homeCard() { return syncOfferCard() || detectedCard(); }
 VIEWS.home = () => {
   const fr = following(), alive = pAlive(S.me), order = fr.slice().sort((a, b) => b.lastCheckin - a.lastCheckin), posts = feedPosts();
   const seg = S.ui.homeSeg === 'rewards' ? 'rewards' : 'friends';
-  let h = heroPanel() + todayCard() + homeCard() + homeSeg(seg);
+  let h = '<div class="hero-bleed"></div>' + heroPanel() + todayCard() + homeCard() + homeSeg(seg);
   if (seg === 'rewards') return h + rewardsView();
   h += '<div class="sec" style="padding:18px var(--pad) 0"><div class="sec-h"><h2 class="h2">Friends</h2><button class="link" data-a="openFriends">All</button></div></div><div class="frow">' +
     order.map(f => '<button data-a="openProfile" data-id="' + f.id + '">' + av(f, 60) + '<span class="nm">' + esc(first(f.name)) + '</span>' + streakChip(pDays(f)) + '</button>').join('') + '</div>';
@@ -184,3 +184,21 @@ A.openPasses = () => {
 };
 A.toggleAutoPass = () => { S.settings.autoPass = !S.settings.autoPass; save(); drawSheets(false); };
 A.usePass = () => { if (useRestPass(true)) { save(); refresh(); } };
+
+// Past the dark clock box, a frosted strip sits behind the status bar; over the box there is none.
+function heroTop() {
+  const ph = $('#phone'), v = $('#view'); if (!ph || !v) return;
+  if (!$('#topstrip')) { const d = document.createElement('div'); d.id = 'topstrip'; ph.appendChild(d); }
+  const hero = S.ui.tab === 'home' ? v.querySelector('.hero') : null;
+  ph.classList.toggle('past', !!hero && v.scrollTop > hero.offsetHeight - 70);
+  chromeSync();
+}
+document.addEventListener('scroll', e => { if (e.target && e.target.id === 'view' && S.ui.tab === 'home') heroTop(); }, true);
+// The phone's own clock and battery are drawn light over dark screens and dark over light ones.
+let _chrome = null;
+function chromeSync() {
+  const ph = $('#phone'), light = ph.classList.contains('gate') || ph.classList.contains('cam-on') || (ph.classList.contains('dark-top') && !ph.classList.contains('past'));
+  if (light === _chrome) return; _chrome = light;
+  const n = appNative(); if (n) n.postMessage({ op: 'chrome', light: light }).catch(() => { });
+}
+
